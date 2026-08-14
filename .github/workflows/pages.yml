@@ -1,0 +1,47 @@
+# Publie le site sur GitHub Pages à chaque envoi sur `main`.
+#
+# `enablement: true` active GitHub Pages tout seul au premier passage : il n'y a
+# donc rien à régler à la main dans Settings → Pages.
+
+name: Publier sur GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un seul déploiement à la fois, sans interrompre celui qui est en cours.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publier:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+
+    steps:
+      - name: Récupérer les fichiers
+        uses: actions/checkout@v4
+
+      - name: Configurer et activer Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Préparer le site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Le site est servi tel quel : ni compilation, ni dépendances.
+          path: .
+
+      - name: Déployer
+        id: deploiement
+        uses: actions/deploy-pages@v4
