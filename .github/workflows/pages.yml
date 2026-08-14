@@ -1,7 +1,10 @@
 # Publie le site sur GitHub Pages à chaque envoi sur `main`.
 #
-# `enablement: true` active GitHub Pages tout seul au premier passage : il n'y a
-# donc rien à régler à la main dans Settings → Pages.
+# Le travail est coupé en deux volontairement. Un job qui déclare
+# `environment: github-pages` échoue immédiatement si cet environnement
+# n'existe pas encore — or il n'est créé qu'au moment où Pages est activé.
+# Le premier job active donc Pages (`enablement: true`) sans déclarer
+# d'environnement ; le second, qui démarre après, le trouve en place.
 
 name: Publier sur GitHub Pages
 
@@ -21,27 +24,32 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publier:
+  preparer:
+    name: Activer Pages et préparer le site
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploiement.outputs.page_url }}
-
     steps:
       - name: Récupérer les fichiers
         uses: actions/checkout@v4
 
-      - name: Configurer et activer Pages
+      - name: Activer et configurer Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
 
-      - name: Préparer le site
+      - name: Empaqueter le site
         uses: actions/upload-pages-artifact@v3
         with:
           # Le site est servi tel quel : ni compilation, ni dépendances.
           path: .
 
-      - name: Déployer
+  deployer:
+    name: Déployer
+    needs: preparer
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      - name: Mettre le site en ligne
         id: deploiement
         uses: actions/deploy-pages@v4
