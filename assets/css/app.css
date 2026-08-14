@@ -1,0 +1,1309 @@
+/* =========================================================================
+   Mon Épicerie — feuille de style unique.
+   Aucune dépendance externe : ni framework, ni police distante, ni CDN.
+   ========================================================================= */
+
+/* --- Jetons de couleur et de mesure -------------------------------------- */
+
+:root {
+  color-scheme: light;
+
+  --fond: #f1f5f9;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --surface-3: #eef2f7;
+  --bord: #e2e8f0;
+  --bord-fort: #cbd5e1;
+
+  --texte: #1e293b;
+  --texte-doux: #64748b;
+  --texte-faible: #94a3b8;
+
+  --accent: #059669;
+  --accent-fort: #047857;
+  --accent-doux: #d1fae5;
+  --accent-texte: #065f46;
+  --sur-accent: #ffffff;
+
+  --alerte: #b45309;
+  --alerte-doux: #fef3c7;
+  --danger: #dc2626;
+  --danger-doux: #fee2e2;
+
+  --rayon: 0.75rem;
+  --rayon-l: 1rem;
+  --ombre: 0 1px 2px rgb(15 23 42 / 0.06), 0 1px 3px rgb(15 23 42 / 0.08);
+  --ombre-l: 0 10px 30px rgb(15 23 42 / 0.12);
+
+  --cible: 2.75rem; /* surface tactile minimale */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='clair']) {
+    color-scheme: dark;
+
+    --fond: #0b1220;
+    --surface: #131c2b;
+    --surface-2: #182234;
+    --surface-3: #1f2b3f;
+    --bord: #2a3850;
+    --bord-fort: #3b4c69;
+
+    --texte: #e6edf7;
+    --texte-doux: #9fb0c9;
+    --texte-faible: #7387a3;
+
+    --accent: #10b981;
+    --accent-fort: #34d399;
+    --accent-doux: #0d3a2c;
+    --accent-texte: #6ee7b7;
+    --sur-accent: #04231a;
+
+    --alerte: #fbbf24;
+    --alerte-doux: #3a2c09;
+    --danger: #f87171;
+    --danger-doux: #3d1618;
+
+    --ombre: 0 1px 2px rgb(0 0 0 / 0.4);
+    --ombre-l: 0 10px 30px rgb(0 0 0 / 0.5);
+  }
+}
+
+:root[data-theme='sombre'] {
+  color-scheme: dark;
+
+  --fond: #0b1220;
+  --surface: #131c2b;
+  --surface-2: #182234;
+  --surface-3: #1f2b3f;
+  --bord: #2a3850;
+  --bord-fort: #3b4c69;
+
+  --texte: #e6edf7;
+  --texte-doux: #9fb0c9;
+  --texte-faible: #7387a3;
+
+  --accent: #10b981;
+  --accent-fort: #34d399;
+  --accent-doux: #0d3a2c;
+  --accent-texte: #6ee7b7;
+  --sur-accent: #04231a;
+
+  --alerte: #fbbf24;
+  --alerte-doux: #3a2c09;
+  --danger: #f87171;
+  --danger-doux: #3d1618;
+
+  --ombre: 0 1px 2px rgb(0 0 0 / 0.4);
+  --ombre-l: 0 10px 30px rgb(0 0 0 / 0.5);
+}
+
+/* --- Réinitialisation ---------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, p, ul, ol, figure {
+  margin: 0;
+}
+
+ul, ol {
+  padding: 0;
+  list-style: none;
+}
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+svg {
+  display: block;
+  flex: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 0.35rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Accessible uniquement aux lecteurs d'écran. */
+.visuellement-cache {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.saut-contenu {
+  position: absolute;
+  left: 0.5rem;
+  top: 0.5rem;
+  z-index: 100;
+  padding: 0.6rem 1rem;
+  background: var(--surface);
+  color: var(--texte);
+  border-radius: var(--rayon);
+  box-shadow: var(--ombre-l);
+  /* Décalé plutôt que remonté : une simple position négative laisserait
+     l'ombre portée dépasser en haut de la page. */
+  transform: translateY(-250%);
+  transition: transform 0.15s;
+}
+
+.saut-contenu:focus {
+  transform: none;
+}
+
+/* --- Boutons ------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: var(--cible);
+  padding: 0.5rem 0.9rem;
+  border: 1px solid transparent;
+  border-radius: var(--rayon);
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.05s;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn--primaire {
+  background: var(--accent);
+  color: var(--sur-accent);
+}
+
+.btn--primaire:hover {
+  background: var(--accent-fort);
+}
+
+.btn--doux {
+  background: var(--surface-3);
+  color: var(--texte);
+  border-color: var(--bord);
+}
+
+.btn--doux:hover {
+  background: var(--bord);
+}
+
+.btn--fantome {
+  color: var(--texte-doux);
+}
+
+.btn--fantome:hover {
+  background: var(--surface-3);
+  color: var(--texte);
+}
+
+.btn--danger {
+  color: var(--danger);
+}
+
+.btn--danger:hover {
+  background: var(--danger-doux);
+}
+
+/* Bouton carré ne contenant qu'une icône. */
+.btn--icone {
+  min-width: var(--cible);
+  padding: 0.5rem;
+}
+
+.btn[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--sur-accent);
+  border-color: var(--accent);
+}
+
+/* --- Barre supérieure ---------------------------------------------------- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--surface);
+  border-bottom: 1px solid var(--bord);
+  box-shadow: var(--ombre);
+}
+
+.bandeau {
+  background: var(--accent);
+  color: var(--sur-accent);
+}
+
+.bandeau__interieur,
+.controles {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.bandeau__interieur {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 3.5rem;
+}
+
+.marque {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.marque__titre {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.marque__sous-titre {
+  font-size: 0.7rem;
+  opacity: 0.85;
+}
+
+.bandeau__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Libellé de bouton qui cède la place aux icônes sur petit écran. */
+.etiquette-large {
+  display: none;
+}
+
+@media (min-width: 30rem) {
+  .etiquette-large {
+    display: inline;
+  }
+}
+
+.bandeau .btn {
+  color: var(--sur-accent);
+  border-color: transparent;
+}
+
+.bandeau .btn:hover {
+  background: rgb(255 255 255 / 0.18);
+  color: var(--sur-accent);
+}
+
+/* En thème sombre, un bandeau vert vif fatigue : on garde une surface calme
+   et on réserve l'accent au texte. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='clair']) .bandeau {
+    background: var(--surface-2);
+    color: var(--texte);
+    border-bottom: 1px solid var(--bord);
+  }
+
+  :root:not([data-theme='clair']) .bandeau .btn {
+    color: var(--texte-doux);
+  }
+
+  :root:not([data-theme='clair']) .bandeau .btn:hover {
+    background: var(--surface-3);
+    color: var(--texte);
+  }
+
+  :root:not([data-theme='clair']) .marque__embleme {
+    color: var(--accent);
+  }
+
+  :root:not([data-theme='clair']) .progression__piste {
+    background: var(--surface-3);
+  }
+}
+
+:root[data-theme='sombre'] .bandeau {
+  background: var(--surface-2);
+  color: var(--texte);
+  border-bottom: 1px solid var(--bord);
+}
+
+:root[data-theme='sombre'] .bandeau .btn {
+  color: var(--texte-doux);
+}
+
+:root[data-theme='sombre'] .bandeau .btn:hover {
+  background: var(--surface-3);
+  color: var(--texte);
+}
+
+:root[data-theme='sombre'] .marque__embleme {
+  color: var(--accent);
+}
+
+:root[data-theme='sombre'] .progression__piste {
+  background: var(--surface-3);
+}
+
+/* --- Progression --------------------------------------------------------- */
+
+.progression {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.progression__piste {
+  flex: 1;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.18);
+  overflow: hidden;
+}
+
+.progression__barre {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: #fbbf24;
+  transition: width 0.3s ease;
+}
+
+.progression__texte {
+  white-space: nowrap;
+  opacity: 0.95;
+}
+
+/* --- Zone de contrôles --------------------------------------------------- */
+
+.controles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+}
+
+.rangee {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Sélecteur de vue (Ma liste / Catalogue). */
+.segmente {
+  display: flex;
+  padding: 0.2rem;
+  gap: 0.2rem;
+  background: var(--surface-3);
+  border: 1px solid var(--bord);
+  border-radius: var(--rayon);
+  flex: 1 1 16rem;
+}
+
+.segmente__option {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.25rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: calc(var(--rayon) - 0.2rem);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--texte-doux);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.segmente__option:hover {
+  color: var(--texte);
+}
+
+.segmente__option[aria-selected='true'] {
+  background: var(--surface);
+  color: var(--accent-texte);
+  box-shadow: var(--ombre);
+}
+
+.pastille {
+  min-width: 1.4rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--texte-doux);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.segmente__option[aria-selected='true'] .pastille {
+  background: var(--accent-doux);
+  color: var(--accent-texte);
+}
+
+/* Recherche. */
+.recherche {
+  position: relative;
+  flex: 1 1 12rem;
+  display: flex;
+  align-items: center;
+}
+
+.recherche__icone {
+  position: absolute;
+  left: 0.7rem;
+  color: var(--texte-faible);
+  pointer-events: none;
+}
+
+.recherche__champ {
+  width: 100%;
+  min-height: var(--cible);
+  padding: 0.5rem 2.5rem;
+  background: var(--surface-3);
+  border: 1px solid var(--bord);
+  border-radius: var(--rayon);
+  font-size: 0.9rem;
+}
+
+.recherche__champ:focus {
+  outline: none;
+  background: var(--surface);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-doux);
+}
+
+.recherche__effacer {
+  position: absolute;
+  right: 0.4rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  color: var(--texte-faible);
+}
+
+.recherche__effacer:hover {
+  background: var(--surface-3);
+  color: var(--texte);
+}
+
+.recherche__effacer[hidden] {
+  display: none;
+}
+
+/* Panneau de filtres repliable. */
+.filtres {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.15rem;
+}
+
+.filtres[hidden] {
+  display: none;
+}
+
+.filtres__groupe {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 0.15rem;
+}
+
+.filtres__groupe::-webkit-scrollbar {
+  display: none;
+}
+
+.filtres__etiquette {
+  flex: none;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--texte-faible);
+  padding-right: 0.15rem;
+}
+
+.puce {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--bord);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--texte-doux);
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.puce:hover {
+  background: var(--surface-3);
+  color: var(--texte);
+}
+
+.puce[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--sur-accent);
+}
+
+.puce__compte {
+  min-width: 1.2rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--texte-doux);
+  font-size: 0.68rem;
+  text-align: center;
+}
+
+.puce[aria-pressed='true'] .puce__compte {
+  background: rgb(0 0 0 / 0.22);
+  color: var(--sur-accent);
+}
+
+/* --- Liste --------------------------------------------------------------- */
+
+.contenu {
+  flex: 1;
+  width: 100%;
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.liste {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.groupe {
+  background: var(--surface);
+  border: 1px solid var(--bord);
+  border-radius: var(--rayon-l);
+  box-shadow: var(--ombre);
+  overflow: hidden;
+}
+
+.groupe__entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--bord);
+}
+
+.groupe__identite {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.groupe__embleme {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--rayon);
+  background: var(--accent-doux);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.groupe__titre {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.groupe__compte {
+  flex: none;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--texte-doux);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.groupe__compte[data-complet='true'] {
+  background: var(--accent-doux);
+  color: var(--accent-texte);
+}
+
+/* Ligne d'article.
+   Sur mobile : nom en haut, étiquettes en dessous, actions à droite sur deux
+   rangs. À partir de 40rem, tout tient sur une seule ligne. */
+.article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 0.5rem;
+  row-gap: 0.15rem;
+  padding: 0.35rem 0.5rem 0.45rem 0.75rem;
+  border-top: 1px solid var(--bord);
+  transition: background-color 0.15s;
+}
+
+.article__bascule { grid-area: 1 / 1; }
+.article__etiquettes { grid-area: 2 / 1; }
+.article__actions { grid-area: 1 / 2 / span 2 / 3; }
+
+@media (min-width: 40rem) {
+  .article {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    row-gap: 0;
+    padding-block: 0.25rem;
+  }
+
+  .article__bascule { grid-area: 1 / 1; }
+  .article__etiquettes { grid-area: 1 / 2; }
+  .article__actions { grid-area: 1 / 3; }
+}
+
+.article:first-child {
+  border-top: none;
+}
+
+.article:hover {
+  background: var(--surface-2);
+}
+
+/* La case et le nom forment une seule grande cible tactile. */
+.article__bascule {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1;
+  min-width: 0;
+  min-height: var(--cible);
+  padding: 0.15rem 0;
+  text-align: left;
+}
+
+.case {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 2px solid var(--bord-fort);
+  border-radius: 0.45rem;
+  background: var(--surface);
+  color: var(--sur-accent);
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.case svg {
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.12s, transform 0.12s;
+}
+
+.article[data-coche='true'] .case {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.article[data-coche='true'] .case svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.article__nom {
+  font-size: 0.92rem;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.article[data-coche='true'] .article__nom {
+  color: var(--texte-faible);
+  text-decoration: line-through;
+}
+
+.article__etiquettes {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  flex: none;
+}
+
+.article__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+  flex: none;
+}
+
+.article__actions .btn {
+  min-height: 2.25rem;
+  min-width: 2.25rem;
+  padding: 0.35rem;
+  color: var(--texte-faible);
+}
+
+.article__actions .btn:hover {
+  background: var(--surface-3);
+  color: var(--texte);
+}
+
+.article__actions .btn--danger:hover {
+  background: var(--danger-doux);
+  color: var(--danger);
+}
+
+/* Étiquettes « magasin » et « quantité ». */
+.etiquette {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 1.75rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--bord);
+  border-radius: 0.5rem;
+  background: var(--surface-3);
+  color: var(--texte-doux);
+  font-size: 0.72rem;
+  font-weight: 600;
+  transition: filter 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.etiquette:hover {
+  filter: brightness(0.96);
+  color: var(--texte);
+}
+
+.etiquette--vide {
+  border-style: dashed;
+  color: var(--texte-faible);
+  background: transparent;
+}
+
+.etiquette--qte[data-rempli='true'] {
+  background: var(--accent-doux);
+  border-color: transparent;
+  color: var(--accent-texte);
+  font-weight: 700;
+}
+
+/* Pastille de magasin : la teinte vient de `catalogue.js`, via --h. */
+.etiquette--magasin[data-rempli='true'] {
+  background: hsl(var(--h) 60% 94%);
+  border-color: hsl(var(--h) 45% 82%);
+  color: hsl(var(--h) 65% 27%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='clair']) .etiquette--magasin[data-rempli='true'] {
+    background: hsl(var(--h) 40% 17%);
+    border-color: hsl(var(--h) 35% 32%);
+    color: hsl(var(--h) 70% 76%);
+  }
+}
+
+:root[data-theme='sombre'] .etiquette--magasin[data-rempli='true'] {
+  background: hsl(var(--h) 40% 17%);
+  border-color: hsl(var(--h) 35% 32%);
+  color: hsl(var(--h) 70% 76%);
+}
+
+/* --- État vide ----------------------------------------------------------- */
+
+.vide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.vide[hidden] {
+  display: none;
+}
+
+.vide__embleme {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 999px;
+  background: var(--accent-doux);
+  color: var(--accent-texte);
+}
+
+.vide__titre {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.vide__texte {
+  max-width: 28rem;
+  color: var(--texte-doux);
+  font-size: 0.875rem;
+}
+
+/* --- Boîtes de dialogue -------------------------------------------------- */
+
+dialog {
+  width: min(30rem, calc(100vw - 2rem));
+  max-height: min(85dvh, 44rem);
+  padding: 0;
+  border: 1px solid var(--bord);
+  border-radius: var(--rayon-l);
+  background: var(--surface);
+  color: var(--texte);
+  box-shadow: var(--ombre-l);
+  overflow: hidden;
+}
+
+dialog::backdrop {
+  background: rgb(15 23 42 / 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.boite {
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+}
+
+.boite__entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--bord);
+}
+
+.boite__titre {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  min-width: 0;
+}
+
+.boite__titre svg {
+  color: var(--accent);
+}
+
+.boite__corps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.boite__pied {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--bord);
+  background: var(--surface-2);
+}
+
+.boite__pied--reparti {
+  justify-content: space-between;
+}
+
+.boite__note {
+  font-size: 0.8rem;
+  color: var(--texte-doux);
+}
+
+/* Champs de formulaire. */
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.champ__intitule {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--texte-doux);
+}
+
+.champ__saisie {
+  width: 100%;
+  min-height: var(--cible);
+  padding: 0.5rem 0.7rem;
+  background: var(--surface);
+  border: 1px solid var(--bord-fort);
+  border-radius: var(--rayon);
+  font-size: 0.9rem;
+}
+
+.champ__saisie:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-doux);
+}
+
+select.champ__saisie {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: right 1.05rem center, right 0.8rem center;
+  background-size: 0.3rem 0.3rem, 0.3rem 0.3rem;
+  background-repeat: no-repeat;
+  padding-right: 2rem;
+}
+
+.duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+@media (max-width: 26rem) {
+  .duo {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Grille de choix (magasins, quantités rapides). */
+.grille-magasins {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: 0.4rem;
+}
+
+.grille-qte {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+}
+
+.choix-magasin {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  min-height: var(--cible);
+  padding: 0.4rem 0.6rem;
+  border: 1px solid hsl(var(--h) 45% 82%);
+  border-radius: var(--rayon);
+  background: hsl(var(--h) 60% 95%);
+  color: hsl(var(--h) 65% 27%);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.choix-magasin[aria-pressed='true'] {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='clair']) .choix-magasin {
+    background: hsl(var(--h) 40% 17%);
+    border-color: hsl(var(--h) 35% 32%);
+    color: hsl(var(--h) 70% 76%);
+  }
+}
+
+:root[data-theme='sombre'] .choix-magasin {
+  background: hsl(var(--h) 40% 17%);
+  border-color: hsl(var(--h) 35% 32%);
+  color: hsl(var(--h) 70% 76%);
+}
+
+/* Options d'exportation. */
+.options-export {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.option-export {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.7rem;
+  border: 1px solid var(--bord);
+  border-radius: var(--rayon);
+  background: var(--surface);
+  text-align: left;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.option-export:hover {
+  background: var(--surface-2);
+  border-color: var(--accent);
+}
+
+.option-export__embleme {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--rayon);
+  background: var(--accent-doux);
+  color: var(--accent-texte);
+}
+
+.option-export__titre {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.option-export__texte {
+  font-size: 0.75rem;
+  color: var(--texte-doux);
+}
+
+/* --- Notifications ------------------------------------------------------- */
+
+.notifications {
+  position: fixed;
+  left: 50%;
+  bottom: 1rem;
+  z-index: 60;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 0.5rem;
+  width: min(26rem, calc(100vw - 2rem));
+  pointer-events: none;
+}
+
+.notification {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem 0.6rem 0.9rem;
+  border: 1px solid var(--bord);
+  border-radius: var(--rayon);
+  background: var(--surface);
+  box-shadow: var(--ombre-l);
+  font-size: 0.85rem;
+  pointer-events: auto;
+  animation: notification-entree 0.2s ease-out;
+}
+
+.notification__texte {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification--succes {
+  border-left: 3px solid var(--accent);
+}
+
+.notification--erreur {
+  border-left: 3px solid var(--danger);
+}
+
+.notification .btn {
+  min-height: 2rem;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+@keyframes notification-entree {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+/* --- Impression / PDF ---------------------------------------------------- */
+
+.entete-impression {
+  display: none;
+}
+
+@media print {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+    display: block;
+  }
+
+  /* On ne masque que ce qui est explicitement marqué : les sections de la
+     liste, elles, doivent évidemment s'imprimer. */
+  .topbar,
+  .notifications,
+  dialog,
+  .saut-contenu,
+  .sans-impression,
+  .article__actions,
+  .vide {
+    display: none !important;
+  }
+
+  .contenu {
+    max-width: none;
+    padding: 0;
+  }
+
+  .entete-impression {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #000;
+  }
+
+  .entete-impression__titre {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .entete-impression__meta {
+    font-size: 0.75rem;
+    color: #444;
+  }
+
+  .liste {
+    gap: 0.75rem;
+  }
+
+  .groupe {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    break-inside: avoid;
+  }
+
+  .groupe__entete {
+    background: none;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid #999;
+  }
+
+  .groupe__embleme {
+    display: none;
+  }
+
+  .groupe__titre {
+    font-size: 1rem;
+  }
+
+  .groupe__compte {
+    background: none;
+    color: #444;
+  }
+
+  .article {
+    break-inside: avoid;
+    padding: 0.25rem 0;
+    border-top: none;
+    border-bottom: 1px dotted #bbb;
+  }
+
+  .article__nom {
+    font-size: 0.9rem;
+  }
+
+  .case {
+    border-color: #000;
+    background: none;
+  }
+
+  .article[data-coche='true'] .case {
+    background: none;
+  }
+
+  .article[data-coche='true'] .case svg {
+    opacity: 1;
+    color: #000;
+  }
+
+  .etiquette {
+    background: none !important;
+    border-color: #999 !important;
+    color: #000 !important;
+  }
+
+  /* Sur papier, une étiquette « Magasin » vide n'apprend rien. */
+  .etiquette--vide {
+    display: none;
+  }
+
+  .article__etiquettes:empty {
+    display: none;
+  }
+}

@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <!-- Le zoom reste autorisé : le bloquer est un obstacle d'accessibilité. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mon Épicerie — liste de courses hebdomadaire</title>
+  <meta name="description" content="Liste d'épicerie hebdomadaire : catalogue de produits, quantités, magasins de la région de Québec, impression et sauvegarde. Fonctionne hors ligne, sans compte.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#059669" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#131c2b" media="(prefers-color-scheme: dark)">
+
+  <link rel="icon" href="assets/icones/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icones/icone-180.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+  <a class="saut-contenu" href="#liste">Aller à la liste</a>
+
+  <!-- Jeu d'icônes : un seul bloc SVG réutilisé par <use>, aucune requête. -->
+  <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+    <defs>
+      <g id="i-panier"><path d="M5 11h14l-1.4 8.1a2 2 0 0 1-2 1.9H8.4a2 2 0 0 1-2-1.9L5 11Z"/><path d="m8.5 11 2.2-6M15.5 11l-2.2-6"/><path d="M3 11h18"/></g>
+      <g id="i-exporter"><path d="M12 3v11"/><path d="m8 10 4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></g>
+      <g id="i-theme"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" stroke="none"/></g>
+      <g id="i-reinitialiser"><path d="M3.5 12a8.5 8.5 0 1 0 2.9-6.4L3 8.5"/><path d="M3 3.5v5h5"/></g>
+      <g id="i-corbeille"><path d="M4 7h16"/><path d="M10 4h4"/><path d="M10 11v6M14 11v6"/><path d="m6.5 7 .9 12.1a1.9 1.9 0 0 0 1.9 1.9h5.4a1.9 1.9 0 0 0 1.9-1.9L17.5 7"/></g>
+      <g id="i-loupe"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></g>
+      <g id="i-croix-cercle"><circle cx="12" cy="12" r="9"/><path d="m9.2 9.2 5.6 5.6M14.8 9.2l-5.6 5.6"/></g>
+      <g id="i-plus"><path d="M12 5v14M5 12h14"/></g>
+      <g id="i-moins"><path d="M5 12h14"/></g>
+      <g id="i-coche"><path d="m4.5 12.5 5 5L19.5 7"/></g>
+      <g id="i-crayon"><path d="M4 20h4L19.4 8.6a2.1 2.1 0 0 0-3-3L5 17v3Z"/><path d="m14.5 6.5 3 3"/></g>
+      <g id="i-magasin"><path d="M4 9h16v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9Z"/><path d="M3.5 9 5 4h14l1.5 5"/><path d="M9.5 20v-6h5v6"/></g>
+      <g id="i-chevron"><path d="m9 6 6 6-6 6"/></g>
+      <g id="i-imprimante"><path d="M7 9V3h10v6"/><path d="M7 18H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M7 15h10v6H7z"/></g>
+      <g id="i-copier"><rect x="9" y="9" width="11.5" height="11.5" rx="2.5"/><path d="M5.5 15H5a2 2 0 0 1-2-2V5.5A2.5 2.5 0 0 1 5.5 3H13a2 2 0 0 1 2 2v.5"/></g>
+      <g id="i-fichier-bas"><path d="M14 3H7.5A2.5 2.5 0 0 0 5 5.5v13A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V8l-5-5Z"/><path d="M13.8 3.2V8H19"/><path d="M12 11.5v5.5"/><path d="m9.5 14.5 2.5 2.5 2.5-2.5"/></g>
+      <g id="i-fichier-haut"><path d="M14 3H7.5A2.5 2.5 0 0 0 5 5.5v13A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V8l-5-5Z"/><path d="M13.8 3.2V8H19"/><path d="M12 17v-5.5"/><path d="m9.5 14 2.5-2.5 2.5 2.5"/></g>
+      <g id="i-croix"><path d="m6 6 12 12M18 6 6 18"/></g>
+      <g id="i-filtre"><path d="M3.5 5h17l-6.6 7.6V19l-3.8 2v-8.4L3.5 5Z"/></g>
+      <g id="i-liste"><path d="M9 4H7.5A2.5 2.5 0 0 0 5 6.5v12A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 16.5 4H15"/><rect x="9" y="2.5" width="6" height="3.5" rx="1.2"/><path d="m9.5 13.5 2 2 3.5-3.5"/></g>
+      <g id="i-boites"><rect x="3" y="13.5" width="18" height="7.5" rx="1.5"/><rect x="5.5" y="7.5" width="13" height="6" rx="1.5"/><rect x="8.5" y="3" width="7" height="4.5" rx="1.5"/></g>
+      <g id="i-quantite"><path d="M9.5 4 7.5 20M16.5 4l-2 16M4 9.5h16M3.5 15h16"/></g>
+    </defs>
+  </svg>
+
+  <!-- ================= Barre supérieure ================= -->
+  <div class="topbar">
+    <div class="bandeau">
+      <div class="bandeau__interieur">
+        <div class="marque">
+          <svg class="marque__embleme" width="28" height="28" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true"><use href="#i-panier"></use></svg>
+          <div>
+            <h1 class="marque__titre">Mon Épicerie</h1>
+            <p class="marque__sous-titre">Liste hebdomadaire</p>
+          </div>
+        </div>
+
+        <div class="bandeau__actions">
+          <button type="button" class="btn btn--icone" id="btn-theme" title="Changer de thème">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                 aria-hidden="true"><use href="#i-theme"></use></svg>
+            <span class="visuellement-cache">Changer de thème</span>
+          </button>
+
+          <button type="button" class="btn btn--icone" id="btn-vider-coches" title="Retirer les articles cochés">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                 aria-hidden="true"><use href="#i-corbeille"></use></svg>
+            <span class="visuellement-cache">Retirer les articles cochés</span>
+          </button>
+
+          <button type="button" class="btn btn--icone" id="btn-reinitialiser" title="Tout remettre à zéro">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                 aria-hidden="true"><use href="#i-reinitialiser"></use></svg>
+            <span class="visuellement-cache">Tout remettre à zéro</span>
+          </button>
+
+          <button type="button" class="btn" id="btn-export">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                 aria-hidden="true"><use href="#i-exporter"></use></svg>
+            <span class="etiquette-large">Exporter</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="bandeau__interieur progression" style="min-height:auto">
+        <div class="progression__piste">
+          <div class="progression__barre" id="progression-barre" role="progressbar"
+               aria-labelledby="progression-texte" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+        </div>
+        <span class="progression__texte" id="progression-texte">0 sur 0</span>
+      </div>
+    </div>
+
+    <div class="controles">
+      <div class="rangee">
+        <div class="segmente" role="tablist" aria-label="Vue de la liste">
+          <button type="button" class="segmente__option" id="onglet-preparee" role="tab"
+                  aria-selected="true" aria-controls="liste">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"
+                 aria-hidden="true"><use href="#i-liste"></use></svg>
+            <span>Ma liste</span>
+            <span class="pastille" id="compte-preparee">0</span>
+          </button>
+          <button type="button" class="segmente__option" id="onglet-catalogue" role="tab"
+                  aria-selected="false" aria-controls="liste" tabindex="-1">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"
+                 aria-hidden="true"><use href="#i-boites"></use></svg>
+            <span>Catalogue</span>
+            <span class="pastille" id="compte-catalogue">0</span>
+          </button>
+        </div>
+
+        <div class="recherche">
+          <svg class="recherche__icone" width="17" height="17" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true"><use href="#i-loupe"></use></svg>
+          <label class="visuellement-cache" for="champ-recherche">Rechercher un article</label>
+          <input type="search" id="champ-recherche" class="recherche__champ"
+                 placeholder="Rechercher…  (touche /)" autocomplete="off" enterkeyhint="search">
+          <button type="button" class="recherche__effacer" id="btn-effacer-recherche" hidden>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                 aria-hidden="true"><use href="#i-croix-cercle"></use></svg>
+            <span class="visuellement-cache">Effacer la recherche</span>
+          </button>
+        </div>
+
+        <button type="button" class="btn btn--doux" id="btn-filtres" aria-expanded="false" aria-controls="filtres">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true"><use href="#i-filtre"></use></svg>
+          <span>Filtres</span>
+          <span class="pastille" id="compte-filtres" hidden>0</span>
+        </button>
+
+        <button type="button" class="btn btn--primaire" id="btn-ajouter">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true"><use href="#i-plus"></use></svg>
+          <span>Ajouter</span>
+        </button>
+      </div>
+
+      <div class="filtres" id="filtres" hidden>
+        <div class="filtres__groupe" id="filtres-magasins" role="group" aria-label="Filtrer par magasin">
+          <span class="filtres__etiquette">Magasin</span>
+        </div>
+        <div class="filtres__groupe" id="filtres-rayons" role="group" aria-label="Filtrer par rayon">
+          <span class="filtres__etiquette">Rayon</span>
+        </div>
+        <div class="filtres__groupe" role="group" aria-label="Regrouper les articles">
+          <span class="filtres__etiquette">Grouper</span>
+          <button type="button" class="puce" data-groupement="rayon" aria-pressed="true">Par rayon</button>
+          <button type="button" class="puce" data-groupement="magasin" aria-pressed="false">Par magasin</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= Contenu ================= -->
+  <main class="contenu">
+    <!-- Visible seulement à l'impression. -->
+    <div class="entete-impression">
+      <div>
+        <p class="entete-impression__titre">Mon Épicerie — liste de courses</p>
+        <p class="entete-impression__meta" id="impression-date"></p>
+      </div>
+      <p class="entete-impression__meta" id="impression-compte"></p>
+    </div>
+
+    <div class="liste" id="liste" role="tabpanel" aria-labelledby="onglet-preparee"></div>
+
+    <div class="vide" id="etat-vide" hidden>
+      <div class="vide__embleme">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
+             aria-hidden="true"><use href="#i-panier"></use></svg>
+      </div>
+      <h2 class="vide__titre" id="vide-titre">Votre liste est vide</h2>
+      <p class="vide__texte" id="vide-texte">
+        Ouvrez le catalogue pour choisir les produits dont vous avez besoin cette semaine.
+      </p>
+      <button type="button" class="btn btn--primaire" id="btn-vers-catalogue">Ouvrir le catalogue</button>
+    </div>
+  </main>
+
+  <noscript>
+    <p style="padding:1rem;text-align:center">
+      Cette application a besoin de JavaScript pour fonctionner. Vos données restent
+      malgré tout entièrement sur votre appareil.
+    </p>
+  </noscript>
+
+  <!-- Notifications (remplacent alert()). -->
+  <div class="notifications" id="notifications" role="status" aria-live="polite"></div>
+
+  <!-- ================= Boîtes de dialogue ================= -->
+
+  <!-- Exporter -->
+  <dialog id="dlg-export" aria-labelledby="dlg-export-titre">
+    <div class="boite">
+      <div class="boite__entete">
+        <h2 class="boite__titre" id="dlg-export-titre">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true"><use href="#i-exporter"></use></svg>
+          Exporter la liste
+        </h2>
+        <button type="button" class="btn btn--icone btn--fantome" data-fermer>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" aria-hidden="true"><use href="#i-croix"></use></svg>
+          <span class="visuellement-cache">Fermer</span>
+        </button>
+      </div>
+
+      <div class="boite__corps">
+        <div class="options-export">
+          <button type="button" class="option-export" id="btn-imprimer">
+            <span class="option-export__embleme">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                   aria-hidden="true"><use href="#i-imprimante"></use></svg>
+            </span>
+            <span>
+              <span class="option-export__titre">Imprimer ou enregistrer en PDF</span>
+              <span class="option-export__texte">Feuille épurée, groupée comme à l'écran</span>
+            </span>
+          </button>
+
+          <button type="button" class="option-export" id="btn-copier">
+            <span class="option-export__embleme">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                   aria-hidden="true"><use href="#i-copier"></use></svg>
+            </span>
+            <span>
+              <span class="option-export__titre">Copier le texte</span>
+              <span class="option-export__texte">À coller dans un message ou une note</span>
+            </span>
+          </button>
+
+          <button type="button" class="option-export" id="btn-sauvegarde">
+            <span class="option-export__embleme">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                   aria-hidden="true"><use href="#i-fichier-bas"></use></svg>
+            </span>
+            <span>
+              <span class="option-export__titre">Sauvegarde (.json)</span>
+              <span class="option-export__texte">Fichier réutilisable, à conserver</span>
+            </span>
+          </button>
+
+          <button type="button" class="option-export" id="btn-restaurer">
+            <span class="option-export__embleme">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                   aria-hidden="true"><use href="#i-fichier-haut"></use></svg>
+            </span>
+            <span>
+              <span class="option-export__titre">Restaurer une sauvegarde</span>
+              <span class="option-export__texte">Remplace la liste actuelle par le fichier</span>
+            </span>
+          </button>
+          <input type="file" id="champ-fichier" accept="application/json,.json" hidden>
+        </div>
+      </div>
+
+      <div class="boite__pied">
+        <button type="button" class="btn btn--doux" data-fermer>Fermer</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Ajouter / Modifier (même formulaire) -->
+  <dialog id="dlg-article" aria-labelledby="dlg-article-titre">
+    <form class="boite" id="form-article" method="dialog">
+      <div class="boite__entete">
+        <h2 class="boite__titre" id="dlg-article-titre">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true"><use href="#i-plus"></use></svg>
+          <span id="dlg-article-libelle">Ajouter un article</span>
+        </h2>
+        <button type="button" class="btn btn--icone btn--fantome" data-fermer>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" aria-hidden="true"><use href="#i-croix"></use></svg>
+          <span class="visuellement-cache">Fermer</span>
+        </button>
+      </div>
+
+      <div class="boite__corps">
+        <input type="hidden" id="article-id">
+
+        <div class="champ">
+          <label class="champ__intitule" for="article-nom">Nom de l'article</label>
+          <input type="text" id="article-nom" class="champ__saisie" required maxlength="120"
+                 placeholder="ex. : Pommes Honeycrisp" autocomplete="off">
+        </div>
+
+        <div class="champ">
+          <label class="champ__intitule" for="article-rayon">Rayon</label>
+          <select id="article-rayon" class="champ__saisie"></select>
+        </div>
+
+        <div class="duo">
+          <div class="champ">
+            <label class="champ__intitule" for="article-magasin">Magasin</label>
+            <select id="article-magasin" class="champ__saisie"></select>
+          </div>
+          <div class="champ">
+            <label class="champ__intitule" for="article-qte">Quantité ou note</label>
+            <input type="text" id="article-qte" class="champ__saisie" maxlength="120"
+                   placeholder="ex. : 2 sacs" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <div class="boite__pied">
+        <button type="button" class="btn btn--fantome" data-fermer>Annuler</button>
+        <button type="submit" class="btn btn--primaire" id="article-valider">Ajouter</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Choix rapide de magasin -->
+  <dialog id="dlg-magasin" aria-labelledby="dlg-magasin-titre">
+    <div class="boite">
+      <div class="boite__entete">
+        <h2 class="boite__titre" id="dlg-magasin-titre">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true"><use href="#i-magasin"></use></svg>
+          <span id="magasin-article-nom">Choisir un magasin</span>
+        </h2>
+        <button type="button" class="btn btn--icone btn--fantome" data-fermer>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" aria-hidden="true"><use href="#i-croix"></use></svg>
+          <span class="visuellement-cache">Fermer</span>
+        </button>
+      </div>
+
+      <div class="boite__corps">
+        <div class="grille-magasins" id="grille-magasins"></div>
+      </div>
+
+      <div class="boite__pied boite__pied--reparti">
+        <button type="button" class="btn btn--danger" id="btn-retirer-magasin">Retirer le magasin</button>
+        <button type="button" class="btn btn--doux" data-fermer>Annuler</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Quantité rapide -->
+  <dialog id="dlg-qte" aria-labelledby="dlg-qte-titre">
+    <form class="boite" id="form-qte" method="dialog">
+      <div class="boite__entete">
+        <h2 class="boite__titre" id="dlg-qte-titre">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true"><use href="#i-quantite"></use></svg>
+          <span id="qte-article-nom">Quantité</span>
+        </h2>
+        <button type="button" class="btn btn--icone btn--fantome" data-fermer>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" aria-hidden="true"><use href="#i-croix"></use></svg>
+          <span class="visuellement-cache">Fermer</span>
+        </button>
+      </div>
+
+      <div class="boite__corps">
+        <div class="champ">
+          <span class="champ__intitule" id="qte-rapide-titre">Choix rapide</span>
+          <div class="grille-qte" role="group" aria-labelledby="qte-rapide-titre">
+            <button type="button" class="btn btn--doux" data-qte="1">1</button>
+            <button type="button" class="btn btn--doux" data-qte="2">2</button>
+            <button type="button" class="btn btn--doux" data-qte="3">3</button>
+            <button type="button" class="btn btn--doux" data-qte="4">4</button>
+            <button type="button" class="btn btn--doux" data-qte="6">6</button>
+            <button type="button" class="btn btn--doux" data-qte="12">12</button>
+            <button type="button" class="btn btn--doux" data-ajuster="-1" aria-label="Diminuer de 1">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><use href="#i-moins"></use></svg>
+            </button>
+            <button type="button" class="btn btn--doux" data-ajuster="1" aria-label="Augmenter de 1">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><use href="#i-plus"></use></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="champ">
+          <label class="champ__intitule" for="qte-saisie">Quantité ou note sur mesure</label>
+          <input type="text" id="qte-saisie" class="champ__saisie" maxlength="120"
+                 placeholder="ex. : 1 lb, 2 sacs, en promo…" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="boite__pied boite__pied--reparti">
+        <button type="button" class="btn btn--danger" id="btn-effacer-qte">Effacer</button>
+        <span style="display:flex;gap:.5rem">
+          <button type="button" class="btn btn--fantome" data-fermer>Annuler</button>
+          <button type="submit" class="btn btn--primaire">Enregistrer</button>
+        </span>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Confirmation générique (remplace confirm()) -->
+  <dialog id="dlg-confirmation" aria-labelledby="confirmation-titre">
+    <div class="boite">
+      <div class="boite__entete">
+        <h2 class="boite__titre" id="confirmation-titre">Confirmer</h2>
+      </div>
+      <div class="boite__corps">
+        <p class="boite__note" id="confirmation-texte"></p>
+      </div>
+      <div class="boite__pied">
+        <button type="button" class="btn btn--fantome" data-fermer>Annuler</button>
+        <button type="button" class="btn btn--primaire" id="confirmation-valider">Confirmer</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>
