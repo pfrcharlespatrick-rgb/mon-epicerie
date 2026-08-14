@@ -91,7 +91,7 @@ function articlesVisibles() {
 function construireFiltres() {
   const magasins = [
     { cle: 'tous', libelle: 'Tous' },
-    ...DETAILLANTS.map((d) => ({ cle: d.nom, libelle: d.nom, teinte: d.teinte })),
+    ...DETAILLANTS.map((d) => ({ cle: d.nom, libelle: d.nom })),
     { cle: SANS_MAGASIN, libelle: 'Sans magasin' },
   ];
 
@@ -103,6 +103,12 @@ function construireFiltres() {
   for (const rayon of RAYONS) {
     dom.filtresRayons.append(creerPuce(`${rayon.emoji} ${rayon.nom}`, rayon.id, 'rayonActif'));
   }
+
+  // Les puces ne changent plus : on garde les références plutôt que de
+  // réinterroger le document à chaque case cochée.
+  dom.pucesMagasins = [...dom.filtresMagasins.querySelectorAll('.puce')];
+  dom.pucesRayons = [...dom.filtresRayons.querySelectorAll('.puce')];
+  dom.pucesGroupement = [...document.querySelectorAll('[data-groupement]')];
 }
 
 function creerPuce(libelle, cle, champ) {
@@ -127,39 +133,39 @@ function creerPuce(libelle, cle, champ) {
   return bouton;
 }
 
+/** Applique l'état actif et les compteurs à une rangée de puces. */
+function majPuces(puces, valeurActive, compteurs) {
+  for (const bouton of puces) {
+    const valeur = bouton.dataset.valeur;
+    bouton.setAttribute('aria-pressed', String(valeurActive === valeur));
+
+    const compte = bouton.querySelector('[data-role="compte"]');
+    if (!compte) continue;
+
+    const n = compteurs.get(valeur) ?? 0;
+    compte.textContent = n;
+    compte.hidden = n === 0;
+  }
+}
+
 /** Met à jour l'état actif et les compteurs des puces. */
 function majFiltres() {
-  const base = articlesDeBase();
+  // Un seul parcours des articles alimente tous les compteurs. La version
+  // naïve filtrait la liste une fois par puce — trente fois — et cette
+  // fonction tourne à chaque case cochée.
+  const parMagasin = new Map();
+  const parRayon = new Map();
 
-  const compter = (predicat) => base.filter(predicat).length;
-
-  for (const bouton of dom.filtresMagasins.querySelectorAll('.puce')) {
-    const valeur = bouton.dataset.valeur;
-    bouton.setAttribute('aria-pressed', String(etat.magasinActif === valeur));
-
-    const compte = bouton.querySelector('[data-role="compte"]');
-    if (!compte) continue;
-
-    const n = compter((a) =>
-      valeur === SANS_MAGASIN ? !a.magasin : a.magasin === valeur,
-    );
-    compte.textContent = n;
-    compte.hidden = n === 0;
+  for (const article of articlesDeBase()) {
+    const magasin = article.magasin || SANS_MAGASIN;
+    parMagasin.set(magasin, (parMagasin.get(magasin) ?? 0) + 1);
+    parRayon.set(article.rayon, (parRayon.get(article.rayon) ?? 0) + 1);
   }
 
-  for (const bouton of dom.filtresRayons.querySelectorAll('.puce')) {
-    const valeur = bouton.dataset.valeur;
-    bouton.setAttribute('aria-pressed', String(etat.rayonActif === valeur));
+  majPuces(dom.pucesMagasins, etat.magasinActif, parMagasin);
+  majPuces(dom.pucesRayons, etat.rayonActif, parRayon);
 
-    const compte = bouton.querySelector('[data-role="compte"]');
-    if (!compte) continue;
-
-    const n = compter((a) => a.rayon === valeur);
-    compte.textContent = n;
-    compte.hidden = n === 0;
-  }
-
-  for (const bouton of document.querySelectorAll('[data-groupement]')) {
+  for (const bouton of dom.pucesGroupement) {
     bouton.setAttribute('aria-pressed', String(etat.groupement === bouton.dataset.groupement));
   }
 
