@@ -9,7 +9,7 @@
  * fichiers soient remplacés.
  */
 
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE = `mon-epicerie-${VERSION}`;
 
 /** Fichiers indispensables au premier affichage. */
@@ -32,7 +32,10 @@ self.addEventListener('install', (evenement) => {
   evenement.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll(COQUILLE))
+      // `cache: 'reload'` court-circuite le cache HTTP du navigateur. Sans lui,
+      // une nouvelle version se remplirait des anciens fichiers, encore frais
+      // selon leur `max-age` — le site resterait figé malgré le déploiement.
+      .then((cache) => cache.addAll(COQUILLE.map((url) => new Request(url, { cache: 'reload' }))))
       .then(() => self.skipWaiting()),
   );
 });
@@ -68,20 +71,17 @@ self.addEventListener('fetch', (evenement) => {
     return;
   }
 
-  // Ressources : réponse immédiate depuis le cache, rafraîchie en arrière-plan.
+  // Ressources : on lit le cache de CETTE version uniquement. `caches.match()`
+  // interrogerait toutes les versions présentes et pourrait servir un fichier
+  // d'une génération précédente, mélangé aux autres.
   evenement.respondWith(
-    caches.match(requete).then((enCache) => {
-      const reseau = fetch(requete)
-        .then((reponse) => {
-          if (reponse.ok) {
-            const copie = reponse.clone();
-            caches.open(CACHE).then((cache) => cache.put(requete, copie));
-          }
-          return reponse;
-        })
-        .catch(() => enCache);
+    caches.open(CACHE).then(async (cache) => {
+      const enCache = await cache.match(requete);
+      if (enCache) return enCache;
 
-      return enCache ?? reseau;
+      const reponse = await fetch(requete);
+      if (reponse.ok) cache.put(requete, reponse.clone());
+      return reponse;
     }),
   );
 });

@@ -164,9 +164,14 @@
           <span class="filtres__etiquette">Grouper</span>
           <button type="button" class="puce" data-groupement="rayon" aria-pressed="true">Par rayon</button>
           <button type="button" class="puce" data-groupement="magasin" aria-pressed="false">Par magasin</button>
-          <span class="filtres__etiquette" style="margin-left:.5rem">Ajouter</span>
-          <button type="button" class="puce" id="btn-taxonomie">✏️ Mes rayons et magasins</button>
         </div>
+
+        <!-- Sa propre rangée, sans défilement horizontal : dans la rangée
+             précédente, ce bouton finissait hors écran sur un téléphone. -->
+        <button type="button" class="btn btn--doux filtres__perso" id="btn-taxonomie">
+          <span aria-hidden="true">✏️</span>
+          Créer mes rayons et magasins
+        </button>
       </div>
     </div>
   </div>

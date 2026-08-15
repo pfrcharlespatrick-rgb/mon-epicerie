@@ -875,6 +875,19 @@ document.addEventListener('visibilitychange', () => {
 
 // Mise en cache pour l'usage hors ligne (à l'épicerie, le réseau est capricieux).
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  // Vrai seulement si une version précédente sert déjà cette page.
+  const versionPrecedente = Boolean(navigator.serviceWorker.controller);
+  let rechargement = false;
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    // Une nouvelle version vient de prendre la main, mais le HTML, le CSS et le
+    // JavaScript déjà chargés proviennent de l'ancienne. Un rechargement remet
+    // tout d'accord ; sans lui, la page mélange deux générations de fichiers.
+    if (!versionPrecedente || rechargement) return;
+    rechargement = true;
+    location.reload();
+  });
+
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {
       /* Le hors-ligne est un bonus : son échec ne doit rien casser. */

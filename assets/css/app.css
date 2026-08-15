@@ -568,6 +568,13 @@ svg {
   display: none;
 }
 
+/* Pleine largeur : c'est une action, pas un filtre, et elle doit rester
+   visible sans faire défiler quoi que ce soit. */
+.filtres__perso {
+  width: 100%;
+  border-style: dashed;
+}
+
 .filtres__etiquette {
   flex: none;
   font-size: 0.7rem;
