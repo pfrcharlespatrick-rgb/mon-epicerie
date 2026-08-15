@@ -5,7 +5,7 @@
  * service externe.
  */
 
-import { RAYONS, DETAILLANTS, normaliser } from './catalogue.js';
+import { normaliser } from './catalogue.js';
 import {
   etat,
   charger,
@@ -21,8 +21,18 @@ import {
   remplacerArticles,
   definirPreference,
   definirFiltre,
+  rayons,
+  magasins,
+  ajouterRayon,
+  modifierRayon,
+  supprimerRayon,
+  compterArticlesDuRayon,
+  ajouterMagasin,
+  modifierMagasin,
+  supprimerMagasin,
+  compterArticlesDuMagasin,
 } from './etat.js';
-import { initialiserRendu, rendreTout, rendreArticle, icone } from './rendu.js';
+import { initialiserRendu, rendreTout, rendreArticle, construireFiltres, icone } from './rendu.js';
 import {
   texteRecapitulatif,
   copierTexte,
@@ -157,14 +167,22 @@ const champArticleMagasin = document.getElementById('article-magasin');
 const champArticleQte = document.getElementById('article-qte');
 
 function remplirSelecteurs() {
+  // Les valeurs choisies doivent survivre à une reconstruction déclenchée
+  // pendant que la boîte est ouverte.
+  const rayonChoisi = champArticleRayon.value;
+  const magasinChoisi = champArticleMagasin.value;
+
   champArticleRayon.replaceChildren(
-    ...RAYONS.map((rayon) => new Option(`${rayon.emoji}  ${rayon.nom}`, rayon.id)),
+    ...rayons().map((rayon) => new Option(`${rayon.emoji}  ${rayon.nom}`, rayon.id)),
   );
 
   champArticleMagasin.replaceChildren(
     new Option('Aucun magasin', ''),
-    ...DETAILLANTS.map((detaillant) => new Option(detaillant.nom, detaillant.nom)),
+    ...magasins().map((detaillant) => new Option(detaillant.nom, detaillant.nom)),
   );
+
+  champArticleRayon.value = rayonChoisi;
+  champArticleMagasin.value = magasinChoisi;
 }
 
 function ouvrirFormulaireArticle(article = null) {
@@ -179,7 +197,7 @@ function ouvrirFormulaireArticle(article = null) {
 
   champArticleId.value = article?.id ?? '';
   champArticleNom.value = article?.nom ?? '';
-  champArticleRayon.value = article?.rayon ?? RAYONS[0].id;
+  champArticleRayon.value = article?.rayon ?? rayons()[0].id;
   champArticleMagasin.value = article?.magasin ?? '';
   champArticleQte.value = article?.qte ?? '';
 
@@ -215,7 +233,7 @@ let articleMagasinActif = null;
 
 function construireGrilleMagasins() {
   grilleMagasins.replaceChildren(
-    ...DETAILLANTS.map((detaillant) => {
+    ...magasins().map((detaillant) => {
       const bouton = document.createElement('button');
       bouton.type = 'button';
       bouton.className = 'choix-magasin';
@@ -515,28 +533,289 @@ champFichier.addEventListener('change', async () => {
   champFichier.value = '';
   if (!fichier) return;
 
-  let articles;
+  let contenu;
   try {
-    articles = await lireSauvegarde(fichier);
+    contenu = await lireSauvegarde(fichier);
   } catch (erreur) {
     notifier(erreur.message, { type: 'erreur' });
     return;
   }
 
+  const persos = (contenu.rayonsPerso?.length ?? 0) + (contenu.magasinsPerso?.length ?? 0);
   const accepte = await confirmer({
     titre: 'Restaurer la sauvegarde',
-    texte: `Le fichier contient ${articles.length} article(s). Votre liste actuelle sera entièrement remplacée.`,
+    texte:
+      `Le fichier contient ${contenu.articles.length} article(s)` +
+      (persos > 0 ? ` et ${persos} rayon(s) ou magasin(s) personnalisés` : '') +
+      '. Votre liste actuelle sera entièrement remplacée.',
     valider: 'Remplacer',
   });
 
   if (!accepte) return;
 
-  const nombre = remplacerArticles(articles);
+  const nombre = remplacerArticles(contenu);
   dlgExport.close();
   notifier(
     nombre > 0 ? `${nombre} article(s) restaurés.` : 'Aucun article exploitable dans ce fichier.',
     { type: nombre > 0 ? 'succes' : 'erreur' },
   );
+});
+
+// --- Mes rayons et magasins ------------------------------------------------
+
+const dlgTaxonomie = document.getElementById('dlg-taxonomie');
+
+const formRayon = document.getElementById('form-rayon');
+const champRayonId = document.getElementById('rayon-id');
+const champRayonNom = document.getElementById('rayon-nom');
+const champRayonEmoji = document.getElementById('rayon-emoji');
+const btnRayonAnnuler = document.getElementById('rayon-annuler');
+
+const formMagasin = document.getElementById('form-magasin');
+const champMagasinActuel = document.getElementById('magasin-nom-actuel');
+const champMagasinNom = document.getElementById('magasin-nom');
+const btnMagasinAnnuler = document.getElementById('magasin-annuler');
+const grilleTeintes = document.getElementById('teintes');
+
+/** Teintes proposées, réparties sur le cercle chromatique. */
+const TEINTES = [0, 20, 40, 60, 96, 132, 152, 172, 190, 210, 232, 258, 282, 310, 340];
+let teinteChoisie = 210;
+
+function construireTeintes() {
+  grilleTeintes.replaceChildren(
+    ...TEINTES.map((teinte) => {
+      const bouton = document.createElement('button');
+      bouton.type = 'button';
+      bouton.className = 'teinte';
+      bouton.style.setProperty('--h', teinte);
+      bouton.dataset.teinte = teinte;
+      bouton.setAttribute('role', 'radio');
+      bouton.setAttribute('aria-checked', String(teinte === teinteChoisie));
+      bouton.setAttribute('aria-label', `Couleur ${TEINTES.indexOf(teinte) + 1}`);
+      return bouton;
+    }),
+  );
+}
+
+function choisirTeinte(teinte) {
+  teinteChoisie = teinte;
+  for (const bouton of grilleTeintes.children) {
+    bouton.setAttribute('aria-checked', String(Number(bouton.dataset.teinte) === teinte));
+  }
+}
+
+grilleTeintes.addEventListener('click', (evenement) => {
+  const bouton = evenement.target.closest('[data-teinte]');
+  if (bouton) choisirTeinte(Number(bouton.dataset.teinte));
+});
+
+/** Fabrique une ligne « emblème — nom — usage — modifier — supprimer ». */
+function creerLigneReglage({ embleme, teinte, nom, usage, surModifier, surSupprimer }) {
+  const li = document.createElement('li');
+  li.className = 'reglage__element';
+
+  const marque = document.createElement('span');
+  marque.className = 'reglage__embleme';
+  marque.setAttribute('aria-hidden', 'true');
+  if (teinte === undefined) {
+    marque.textContent = embleme;
+  } else {
+    marque.classList.add('reglage__embleme--teinte');
+    marque.style.setProperty('--h', teinte);
+  }
+
+  const libelle = document.createElement('span');
+  libelle.className = 'reglage__nom';
+  libelle.textContent = nom;
+
+  const compte = document.createElement('span');
+  compte.className = 'reglage__usage';
+  compte.textContent = usage;
+
+  const editer = document.createElement('button');
+  editer.type = 'button';
+  editer.className = 'btn btn--icone';
+  editer.setAttribute('aria-label', `Modifier ${nom}`);
+  editer.append(icone('i-crayon', 14));
+  editer.addEventListener('click', surModifier);
+
+  const jeter = document.createElement('button');
+  jeter.type = 'button';
+  jeter.className = 'btn btn--icone btn--danger';
+  jeter.setAttribute('aria-label', `Supprimer ${nom}`);
+  jeter.append(icone('i-corbeille', 14));
+  jeter.addEventListener('click', surSupprimer);
+
+  li.append(marque, libelle, compte, editer, jeter);
+  return li;
+}
+
+/** Redessine les deux listes de la boîte de gestion. */
+function rendreTaxonomie() {
+  const listeRayons = document.getElementById('liste-rayons');
+  const listeMagasins = document.getElementById('liste-magasins');
+
+  listeRayons.replaceChildren(
+    ...etat.rayonsPerso.map((rayon) => {
+      const n = compterArticlesDuRayon(rayon.id);
+      return creerLigneReglage({
+        embleme: rayon.emoji,
+        nom: rayon.nom,
+        usage: n === 0 ? '' : `${n} article${n > 1 ? 's' : ''}`,
+        surModifier: () => commencerEditionRayon(rayon),
+        surSupprimer: () => demanderSuppressionRayon(rayon),
+      });
+    }),
+  );
+
+  listeMagasins.replaceChildren(
+    ...etat.magasinsPerso.map((magasin) => {
+      const n = compterArticlesDuMagasin(magasin.nom);
+      return creerLigneReglage({
+        teinte: magasin.teinte,
+        nom: magasin.nom,
+        usage: n === 0 ? '' : `${n} article${n > 1 ? 's' : ''}`,
+        surModifier: () => commencerEditionMagasin(magasin),
+        surSupprimer: () => demanderSuppressionMagasin(magasin),
+      });
+    }),
+  );
+}
+
+// --- Formulaire des rayons ---
+
+function reinitialiserFormulaireRayon() {
+  formRayon.reset();
+  champRayonId.value = '';
+  champRayonEmoji.value = '🏷️';
+  btnRayonAnnuler.hidden = true;
+  document.getElementById('rayon-valider').textContent = 'Ajouter le rayon';
+}
+
+function commencerEditionRayon(rayon) {
+  champRayonId.value = rayon.id;
+  champRayonNom.value = rayon.nom;
+  champRayonEmoji.value = rayon.emoji;
+  btnRayonAnnuler.hidden = false;
+  document.getElementById('rayon-valider').textContent = 'Enregistrer';
+  champRayonNom.focus();
+  champRayonNom.select();
+}
+
+async function demanderSuppressionRayon(rayon) {
+  const n = compterArticlesDuRayon(rayon.id);
+  const accepte = await confirmer({
+    titre: `Supprimer « ${rayon.nom} »`,
+    texte:
+      n === 0
+        ? 'Ce rayon est vide, rien d’autre ne sera touché.'
+        : `${n} article(s) s’y trouvent : ils seront déplacés dans « Divers & Animaux », pas supprimés.`,
+    valider: 'Supprimer',
+  });
+
+  if (!accepte) return;
+
+  const { deplaces } = supprimerRayon(rayon.id);
+  reinitialiserFormulaireRayon();
+  notifier(
+    deplaces === 0
+      ? `Rayon « ${rayon.nom} » supprimé.`
+      : `Rayon supprimé, ${deplaces} article(s) déplacés dans « Divers ».`,
+  );
+}
+
+formRayon.addEventListener('submit', (evenement) => {
+  evenement.preventDefault();
+
+  const champs = { nom: champRayonNom.value, emoji: champRayonEmoji.value };
+  const resultat = champRayonId.value
+    ? modifierRayon(champRayonId.value, champs)
+    : ajouterRayon(champs);
+
+  if (resultat.erreur) {
+    notifier(resultat.erreur, { type: 'erreur' });
+    return;
+  }
+
+  const creation = !champRayonId.value;
+  reinitialiserFormulaireRayon();
+  notifier(creation ? `Rayon « ${resultat.rayon.nom} » ajouté.` : 'Rayon mis à jour.');
+});
+
+btnRayonAnnuler.addEventListener('click', reinitialiserFormulaireRayon);
+
+formRayon.addEventListener('click', (evenement) => {
+  const bouton = evenement.target.closest('[data-emoji]');
+  if (bouton) champRayonEmoji.value = bouton.dataset.emoji;
+});
+
+// --- Formulaire des magasins ---
+
+function reinitialiserFormulaireMagasin() {
+  formMagasin.reset();
+  champMagasinActuel.value = '';
+  choisirTeinte(210);
+  btnMagasinAnnuler.hidden = true;
+  document.getElementById('magasin-valider').textContent = 'Ajouter le magasin';
+}
+
+function commencerEditionMagasin(magasin) {
+  champMagasinActuel.value = magasin.nom;
+  champMagasinNom.value = magasin.nom;
+  choisirTeinte(magasin.teinte);
+  btnMagasinAnnuler.hidden = false;
+  document.getElementById('magasin-valider').textContent = 'Enregistrer';
+  champMagasinNom.focus();
+  champMagasinNom.select();
+}
+
+async function demanderSuppressionMagasin(magasin) {
+  const n = compterArticlesDuMagasin(magasin.nom);
+  const accepte = await confirmer({
+    titre: `Supprimer « ${magasin.nom} »`,
+    texte:
+      n === 0
+        ? 'Aucun article n’y est rattaché.'
+        : `${n} article(s) y sont rattachés : ils resteront dans votre liste, simplement sans magasin.`,
+    valider: 'Supprimer',
+  });
+
+  if (!accepte) return;
+
+  const { liberes } = supprimerMagasin(magasin.nom);
+  reinitialiserFormulaireMagasin();
+  notifier(
+    liberes === 0
+      ? `Magasin « ${magasin.nom} » supprimé.`
+      : `Magasin supprimé, ${liberes} article(s) sont désormais sans magasin.`,
+  );
+}
+
+formMagasin.addEventListener('submit', (evenement) => {
+  evenement.preventDefault();
+
+  const champs = { nom: champMagasinNom.value, teinte: teinteChoisie };
+  const resultat = champMagasinActuel.value
+    ? modifierMagasin(champMagasinActuel.value, champs)
+    : ajouterMagasin(champs);
+
+  if (resultat.erreur) {
+    notifier(resultat.erreur, { type: 'erreur' });
+    return;
+  }
+
+  const creation = !champMagasinActuel.value;
+  reinitialiserFormulaireMagasin();
+  notifier(creation ? `Magasin « ${resultat.magasin.nom} » ajouté.` : 'Magasin mis à jour.');
+});
+
+btnMagasinAnnuler.addEventListener('click', reinitialiserFormulaireMagasin);
+
+document.getElementById('btn-taxonomie').addEventListener('click', () => {
+  reinitialiserFormulaireRayon();
+  reinitialiserFormulaireMagasin();
+  rendreTaxonomie();
+  ouvrir(dlgTaxonomie);
 });
 
 // --- Raccourcis clavier ----------------------------------------------------
@@ -563,15 +842,28 @@ charger();
 appliquerTheme();
 remplirSelecteurs();
 construireGrilleMagasins();
+construireTeintes();
 preparerDialogues();
 initialiserRendu();
 rendreTout();
 
 surChangement((portee) => {
+  // Un rayon ou un magasin qui change touche les filtres, les menus déroulants,
+  // la grille de choix rapide et la boîte de gestion elle-même.
+  if (portee.type === 'taxonomie') {
+    construireFiltres();
+    remplirSelecteurs();
+    construireGrilleMagasins();
+    if (dlgTaxonomie.open) rendreTaxonomie();
+    rendreTout();
+    return;
+  }
+
   if (portee.type === 'article') {
     const article = trouver(portee.id);
     if (article && rendreArticle(article)) return;
   }
+
   rendreTout();
 });
 

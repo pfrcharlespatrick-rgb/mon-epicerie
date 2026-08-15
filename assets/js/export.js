@@ -3,8 +3,7 @@
  * restauration de fichier.
  */
 
-import { DETAILLANTS, RAYON_PAR_ID } from './catalogue.js';
-import { etat, articlesPrepares } from './etat.js';
+import { etat, articlesPrepares, rayons, magasins, rayonParId, instantane } from './etat.js';
 
 const DATE_LONGUE = new Intl.DateTimeFormat('fr-CA', {
   year: 'numeric',
@@ -17,16 +16,16 @@ function grouperPourTexte(articles) {
   const groupes = new Map();
 
   if (etat.groupement === 'magasin') {
-    const ordre = [...DETAILLANTS.map((d) => d.nom), 'Magasin à déterminer'];
+    const ordre = [...magasins().map((d) => d.nom), 'Magasin à déterminer'];
     for (const nom of ordre) groupes.set(nom, []);
     for (const article of articles) {
       const cle = groupes.has(article.magasin) ? article.magasin : 'Magasin à déterminer';
       groupes.get(cle).push(article);
     }
   } else {
-    for (const rayon of RAYON_PAR_ID.values()) groupes.set(rayon.nom, []);
+    for (const rayon of rayons()) groupes.set(rayon.nom, []);
     for (const article of articles) {
-      const nom = RAYON_PAR_ID.get(article.rayon)?.nom ?? 'Divers & Animaux';
+      const nom = rayonParId(article.rayon)?.nom ?? 'Divers & Animaux';
       groupes.get(nom).push(article);
     }
   }
@@ -94,15 +93,14 @@ export async function copierTexte(texte) {
   return reussi;
 }
 
-/** Déclenche le téléchargement d'une sauvegarde complète. */
+/**
+ * Déclenche le téléchargement d'une sauvegarde complète : les articles, mais
+ * aussi les rayons et magasins créés par l'utilisateur — sans eux, restaurer
+ * le fichier renverrait tous les articles concernés dans « Divers ».
+ */
 export function telechargerSauvegarde() {
   const contenu = JSON.stringify(
-    {
-      application: 'mon-epicerie',
-      version: 1,
-      exporte: new Date().toISOString(),
-      articles: etat.articles,
-    },
+    { application: 'mon-epicerie', exporte: new Date().toISOString(), ...instantane() },
     null,
     2,
   );
@@ -120,9 +118,9 @@ export function telechargerSauvegarde() {
 }
 
 /**
- * Lit un fichier de sauvegarde et en extrait le tableau d'articles.
- * Accepte le format actuel comme celui, plus ancien, d'un simple tableau.
- * Lève une erreur au message lisible si le fichier ne convient pas.
+ * Lit un fichier de sauvegarde et en retourne le contenu.
+ * Accepte le format actuel comme celui, plus ancien, d'un simple tableau
+ * d'articles. Lève une erreur au message lisible si le fichier ne convient pas.
  */
 export async function lireSauvegarde(fichier) {
   if (fichier.size > 5 * 1024 * 1024) {
@@ -136,12 +134,12 @@ export async function lireSauvegarde(fichier) {
     throw new Error('Ce fichier n’est pas un JSON valide.');
   }
 
-  const articles = Array.isArray(donnees) ? donnees : donnees?.articles;
-  if (!Array.isArray(articles) || articles.length === 0) {
+  const contenu = Array.isArray(donnees) ? { articles: donnees } : donnees;
+  if (!Array.isArray(contenu?.articles) || contenu.articles.length === 0) {
     throw new Error('Aucun article trouvé dans ce fichier.');
   }
 
-  return articles;
+  return contenu;
 }
 
 /** Renseigne l'en-tête qui n'apparaît qu'à l'impression. */

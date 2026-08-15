@@ -48,9 +48,27 @@ L'application n'a pas de serveur, pas de compte, pas de traceur, et n'envoie
 aucune requête vers l'extérieur. Corollaire : vider les données du navigateur
 efface la liste — d'où l'intérêt de la sauvegarde `.json` avant un grand ménage.
 
-## Modifier le catalogue
+## Vos propres rayons et magasins
 
-Tout le contenu tient dans [`assets/js/catalogue.js`](assets/js/catalogue.js).
+Depuis l'application, sans toucher au code : **Filtres → ✏️ Mes rayons et
+magasins**.
+
+- **Rayons** — nom et icône libres (Électronique, Pêche, Plats cuisinés…). Ils
+  apparaissent aussitôt dans les filtres, dans la fiche des articles et dans le
+  regroupement de la liste.
+- **Magasins** — nom et couleur de pastille, pour une enseigne absente de la
+  liste fournie.
+
+Supprimer ne détruit jamais un article : les produits d'un rayon supprimé sont
+déplacés dans « Divers & Animaux », et ceux d'un magasin supprimé se retrouvent
+simplement sans magasin. Renommer un magasin met à jour tous les articles qui le
+portaient. Ces ajouts font partie de la sauvegarde `.json`.
+
+## Modifier le catalogue livré
+
+Pour changer ce que voient *tous* les utilisateurs — et non le seul appareil qui
+consulte le site —, tout le contenu tient dans
+[`assets/js/catalogue.js`](assets/js/catalogue.js).
 
 Ajouter un produit — une ligne dans le bon rayon :
 

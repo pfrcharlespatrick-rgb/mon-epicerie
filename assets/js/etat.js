@@ -6,18 +6,38 @@
  * l'état sauvegardé à chaque démarrage, de sorte qu'un produit ajouté au
  * catalogue apparaisse chez les utilisateurs existants — sans faire revenir
  * ceux qu'ils ont volontairement supprimés.
+ *
+ * Les rayons et les magasins se composent de deux sources : ceux livrés avec
+ * l'application, et ceux que l'utilisateur crée lui-même. Les listes fusionnées
+ * s'obtiennent par `rayons()` et `magasins()` — jamais en important
+ * directement les constantes du catalogue, qui sont incomplètes.
  */
 
-import { articlesDuCatalogue, RAYON_PAR_ID, RAYON_DEFAUT } from './catalogue.js';
+import {
+  RAYONS,
+  DETAILLANTS,
+  RAYON_DEFAUT,
+  articlesDuCatalogue,
+  identifiant,
+  normaliser,
+} from './catalogue.js';
 
 const CLE_STOCKAGE = 'mon-epicerie/v1';
-const VERSION = 1;
+const VERSION = 2;
+
+/** Garde-fou contre une liste devenue ingérable. */
+const MAX_PERSO = 60;
 
 /** État courant. Ne jamais réaffecter : muter les champs. */
 export const etat = {
   articles: [],
   /** Identifiants d'articles du catalogue que l'utilisateur a supprimés. */
   supprimes: new Set(),
+
+  /** Rayons créés par l'utilisateur : { id, nom, emoji }. */
+  rayonsPerso: [],
+  /** Magasins créés par l'utilisateur : { nom, teinte }. */
+  magasinsPerso: [],
 
   // Préférences d'affichage (persistées)
   vue: 'preparee',        // 'preparee' | 'catalogue'
@@ -29,6 +49,35 @@ export const etat = {
   magasinActif: 'tous',
   recherche: '',
 };
+
+// --- Rayons et magasins effectifs -----------------------------------------
+
+let indexRayons = new Map();
+let indexMagasins = new Map();
+
+/** Tous les rayons : ceux de l'application puis ceux de l'utilisateur. */
+export function rayons() {
+  return [...RAYONS, ...etat.rayonsPerso];
+}
+
+/** Tous les magasins : ceux de l'application puis ceux de l'utilisateur. */
+export function magasins() {
+  return [...DETAILLANTS, ...etat.magasinsPerso];
+}
+
+/** Recalcule les index de consultation rapide. */
+function reindexer() {
+  indexRayons = new Map(rayons().map((r) => [r.id, r]));
+  indexMagasins = new Map(magasins().map((m) => [m.nom, m]));
+}
+
+export function rayonParId(id) {
+  return indexRayons.get(id) ?? null;
+}
+
+export function magasinParNom(nom) {
+  return indexMagasins.get(nom) ?? null;
+}
 
 // --- Abonnements -----------------------------------------------------------
 
@@ -45,6 +94,8 @@ export function surChangement(fn) {
  * ciblée plutôt qu'un rendu complet :
  *   { type: 'article', id }  — un seul article a changé
  *   { type: 'liste' }        — la composition de la liste a changé
+ *   { type: 'taxonomie' }    — les rayons ou les magasins ont changé, ce qui
+ *                              oblige à reconstruire filtres, menus et grilles
  */
 function notifier(portee = { type: 'liste' }) {
   for (const fn of abonnes) fn(portee);
@@ -61,24 +112,28 @@ function sauvegarder() {
 
 function ecrire() {
   try {
-    localStorage.setItem(
-      CLE_STOCKAGE,
-      JSON.stringify({
-        version: VERSION,
-        articles: etat.articles,
-        supprimes: [...etat.supprimes],
-        preferences: {
-          vue: etat.vue,
-          groupement: etat.groupement,
-          theme: etat.theme,
-        },
-      }),
-    );
+    localStorage.setItem(CLE_STOCKAGE, JSON.stringify(instantane()));
   } catch (err) {
     // Quota dépassé ou stockage désactivé (navigation privée) : l'application
     // reste utilisable pour la session en cours.
     console.warn('Sauvegarde impossible :', err);
   }
+}
+
+/** Représentation complète de l'état, utilisée aussi pour les sauvegardes. */
+export function instantane() {
+  return {
+    version: VERSION,
+    articles: etat.articles,
+    supprimes: [...etat.supprimes],
+    rayonsPerso: etat.rayonsPerso,
+    magasinsPerso: etat.magasinsPerso,
+    preferences: {
+      vue: etat.vue,
+      groupement: etat.groupement,
+      theme: etat.theme,
+    },
+  };
 }
 
 /** Force l'écriture immédiate (avant une fermeture d'onglet, par exemple). */
@@ -91,6 +146,9 @@ export function sauvegarderMaintenant() {
  * Nettoie un article venant du stockage ou d'un fichier importé. Retourne
  * `null` si l'objet n'a rien d'un article — c'est la seule barrière entre un
  * fichier JSON douteux et l'état de l'application.
+ *
+ * À n'appeler qu'une fois les rayons de l'utilisateur chargés : un article
+ * rangé dans un rayon perso serait sinon renvoyé dans « Divers ».
  */
 function assainirArticle(brut) {
   if (!brut || typeof brut !== 'object') return null;
@@ -99,7 +157,7 @@ function assainirArticle(brut) {
   if (typeof nom !== 'string' || nom.trim() === '') return null;
 
   const rayonBrut = brut.rayon ?? brut.cat;
-  const rayon = RAYON_PAR_ID.has(rayonBrut) ? rayonBrut : RAYON_DEFAUT;
+  const rayon = indexRayons.has(rayonBrut) ? rayonBrut : RAYON_DEFAUT;
 
   const texte = (v) => (typeof v === 'string' ? v.trim().slice(0, 120) : '');
 
@@ -119,6 +177,33 @@ function nouvelIdentifiant() {
   return `perso-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+/** Nettoie un rayon personnalisé venant du stockage ou d'un import. */
+function assainirRayonPerso(brut, idsPris) {
+  if (!brut || typeof brut !== 'object') return null;
+  if (typeof brut.nom !== 'string' || brut.nom.trim() === '') return null;
+
+  const nom = brut.nom.trim().slice(0, 40);
+  let id = typeof brut.id === 'string' && brut.id ? brut.id : `perso-${identifiant(nom)}`;
+  while (idsPris.has(id)) id = `${id}-2`;
+  idsPris.add(id);
+
+  const emoji = typeof brut.emoji === 'string' && brut.emoji.trim() ? brut.emoji.trim().slice(0, 4) : '🏷️';
+  return { id, nom, emoji };
+}
+
+/** Nettoie un magasin personnalisé venant du stockage ou d'un import. */
+function assainirMagasinPerso(brut, nomsPris) {
+  if (!brut || typeof brut !== 'object') return null;
+  if (typeof brut.nom !== 'string' || brut.nom.trim() === '') return null;
+
+  const nom = brut.nom.trim().slice(0, 40);
+  if (nomsPris.has(normaliser(nom))) return null;
+  nomsPris.add(normaliser(nom));
+
+  const teinte = Number(brut.teinte);
+  return { nom, teinte: Number.isFinite(teinte) ? ((teinte % 360) + 360) % 360 : 220 };
+}
+
 /**
  * Fusionne le catalogue de référence avec les articles sauvegardés :
  * les articles connus gardent l'état de l'utilisateur, les nouveaux produits
@@ -136,6 +221,23 @@ function fusionnerCatalogue(sauvegardes, supprimes) {
   return resultat;
 }
 
+/** Reprend les rayons et magasins personnalisés d'un objet sauvegardé. */
+function chargerPerso(donnees) {
+  const idsPris = new Set(RAYONS.map((r) => r.id));
+  etat.rayonsPerso = (Array.isArray(donnees?.rayonsPerso) ? donnees.rayonsPerso : [])
+    .map((brut) => assainirRayonPerso(brut, idsPris))
+    .filter(Boolean)
+    .slice(0, MAX_PERSO);
+
+  const nomsPris = new Set(DETAILLANTS.map((d) => normaliser(d.nom)));
+  etat.magasinsPerso = (Array.isArray(donnees?.magasinsPerso) ? donnees.magasinsPerso : [])
+    .map((brut) => assainirMagasinPerso(brut, nomsPris))
+    .filter(Boolean)
+    .slice(0, MAX_PERSO);
+
+  reindexer();
+}
+
 /** Charge l'état depuis le stockage local, ou installe le catalogue par défaut. */
 export function charger() {
   let donnees = null;
@@ -144,6 +246,9 @@ export function charger() {
   } catch {
     donnees = null;
   }
+
+  // Les rayons personnalisés doivent exister avant d'assainir les articles.
+  chargerPerso(donnees);
 
   if (!donnees || !Array.isArray(donnees.articles)) {
     etat.articles = articlesDuCatalogue();
@@ -185,7 +290,7 @@ export function trouver(id) {
   return etat.articles.find((a) => a.id === id) ?? null;
 }
 
-// --- Écriture --------------------------------------------------------------
+// --- Écriture : articles ---------------------------------------------------
 
 /** Applique des changements à un article et prévient les abonnés. */
 export function modifier(id, champs) {
@@ -269,8 +374,15 @@ export function viderCoches() {
 }
 
 /** Remplace tout l'état par le contenu d'une sauvegarde importée. */
-export function remplacerArticles(articlesBruts) {
-  const assainis = articlesBruts.map(assainirArticle).filter(Boolean);
+export function remplacerArticles(donnees) {
+  // Une sauvegarde peut n'être qu'un tableau d'articles (ancien format).
+  const brut = Array.isArray(donnees) ? { articles: donnees } : donnees;
+
+  // Les rayons personnalisés du fichier d'abord : sans eux, les articles qui
+  // s'y rattachent seraient renvoyés dans « Divers ».
+  chargerPerso(brut);
+
+  const assainis = (brut.articles ?? []).map(assainirArticle).filter(Boolean);
   if (assainis.length === 0) return 0;
 
   etat.articles = assainis;
@@ -281,9 +393,171 @@ export function remplacerArticles(articlesBruts) {
   );
 
   sauvegarder();
-  notifier({ type: 'liste' });
+  notifier({ type: 'taxonomie' });
   return assainis.length;
 }
+
+// --- Écriture : rayons personnalisés ---------------------------------------
+
+/**
+ * Crée un rayon. Retourne `{ erreur }` si le nom est vide, déjà pris, ou si la
+ * liste est pleine — l'appelant affiche le message tel quel.
+ */
+export function ajouterRayon({ nom, emoji }) {
+  const propre = String(nom ?? '').trim();
+  if (!propre) return { erreur: 'Donnez un nom au rayon.' };
+  if (etat.rayonsPerso.length >= MAX_PERSO) {
+    return { erreur: `Pas plus de ${MAX_PERSO} rayons personnalisés.` };
+  }
+  if (rayons().some((r) => normaliser(r.nom) === normaliser(propre))) {
+    return { erreur: `« ${propre} » existe déjà.` };
+  }
+
+  const idsPris = new Set(rayons().map((r) => r.id));
+  const rayon = assainirRayonPerso({ nom: propre, emoji }, idsPris);
+  etat.rayonsPerso.push(rayon);
+
+  reindexer();
+  sauvegarder();
+  notifier({ type: 'taxonomie' });
+  return { rayon };
+}
+
+/** Renomme ou rehabille un rayon personnalisé. Les articles suivent seuls. */
+export function modifierRayon(id, { nom, emoji }) {
+  const rayon = etat.rayonsPerso.find((r) => r.id === id);
+  if (!rayon) return { erreur: 'Ce rayon n’existe plus.' };
+
+  const propre = String(nom ?? '').trim();
+  if (!propre) return { erreur: 'Donnez un nom au rayon.' };
+  if (rayons().some((r) => r.id !== id && normaliser(r.nom) === normaliser(propre))) {
+    return { erreur: `« ${propre} » existe déjà.` };
+  }
+
+  rayon.nom = propre.slice(0, 40);
+  if (typeof emoji === 'string' && emoji.trim()) rayon.emoji = emoji.trim().slice(0, 4);
+
+  reindexer();
+  sauvegarder();
+  notifier({ type: 'taxonomie' });
+  return { rayon };
+}
+
+/**
+ * Supprime un rayon personnalisé. Les articles qui s'y trouvaient rejoignent
+ * « Divers » plutôt que de disparaître avec lui.
+ */
+export function supprimerRayon(id) {
+  const index = etat.rayonsPerso.findIndex((r) => r.id === id);
+  if (index === -1) return { deplaces: 0 };
+
+  etat.rayonsPerso.splice(index, 1);
+
+  let deplaces = 0;
+  for (const article of etat.articles) {
+    if (article.rayon !== id) continue;
+    article.rayon = RAYON_DEFAUT;
+    deplaces++;
+  }
+
+  if (etat.rayonActif === id) etat.rayonActif = 'tous';
+
+  reindexer();
+  sauvegarder();
+  notifier({ type: 'taxonomie' });
+  return { deplaces };
+}
+
+/** Combien d'articles se trouvent dans un rayon donné. */
+export function compterArticlesDuRayon(id) {
+  return etat.articles.filter((a) => a.rayon === id).length;
+}
+
+// --- Écriture : magasins personnalisés -------------------------------------
+
+/** Crée un magasin. Même contrat d'erreur que `ajouterRayon`. */
+export function ajouterMagasin({ nom, teinte }) {
+  const propre = String(nom ?? '').trim();
+  if (!propre) return { erreur: 'Donnez un nom au magasin.' };
+  if (etat.magasinsPerso.length >= MAX_PERSO) {
+    return { erreur: `Pas plus de ${MAX_PERSO} magasins personnalisés.` };
+  }
+  if (magasins().some((m) => normaliser(m.nom) === normaliser(propre))) {
+    return { erreur: `« ${propre} » existe déjà.` };
+  }
+
+  const magasin = assainirMagasinPerso({ nom: propre, teinte }, new Set());
+  etat.magasinsPerso.push(magasin);
+
+  reindexer();
+  sauvegarder();
+  notifier({ type: 'taxonomie' });
+  return { magasin };
+}
+
+/**
+ * Renomme ou recolore un magasin personnalisé. Les articles référencent le
+ * magasin par son nom : le changement est propagé sur chacun d'eux.
+ */
+export function modifierMagasin(nomActuel, { nom, teinte }) {
+  const magasin = etat.magasinsPerso.find((m) => m.nom === nomActuel);
+  if (!magasin) return { erreur: 'Ce magasin n’existe plus.' };
+
+  const propre = String(nom ?? '').trim();
+  if (!propre) return { erreur: 'Donnez un nom au magasin.' };
+  if (magasins().some((m) => m.nom !== nomActuel && normaliser(m.nom) === normaliser(propre))) {
+    return { erreur: `« ${propre} » existe déjà.` };
+  }
+
+  const nouveau = propre.slice(0, 40);
+  if (nouveau !== nomActuel) {
+    for (const article of etat.articles) {
+      if (article.magasin === nomActuel) article.magasin = nouveau;
+    }
+    if (etat.magasinActif === nomActuel) etat.magasinActif = nouveau;
+  }
+
+  magasin.nom = nouveau;
+  const valeur = Number(teinte);
+  if (Number.isFinite(valeur)) magasin.teinte = ((valeur % 360) + 360) % 360;
+
+  reindexer();
+  sauvegarder();
+  notifier({ type: 'taxonomie' });
+  return { magasin };
+}
+
+/**
+ * Supprime un magasin personnalisé. Les articles qui le portaient se
+ * retrouvent sans magasin, mais gardent leur quantité.
+ */
+export function supprimerMagasin(nom) {
+  const index = etat.magasinsPerso.findIndex((m) => m.nom === nom);
+  if (index === -1) return { liberes: 0 };
+
+  etat.magasinsPerso.splice(index, 1);
+
+  let liberes = 0;
+  for (const article of etat.articles) {
+    if (article.magasin !== nom) continue;
+    article.magasin = '';
+    liberes++;
+  }
+
+  if (etat.magasinActif === nom) etat.magasinActif = 'tous';
+
+  reindexer();
+  sauvegarder();
+  notifier({ type: 'taxonomie' });
+  return { liberes };
+}
+
+/** Combien d'articles portent ce magasin. */
+export function compterArticlesDuMagasin(nom) {
+  return etat.articles.filter((a) => a.magasin === nom).length;
+}
+
+// --- Préférences et filtres ------------------------------------------------
 
 /** Change une préférence d'affichage et la persiste. */
 export function definirPreference(cle, valeur) {

@@ -5,8 +5,15 @@
  * article saisi par l'utilisateur ne peut jamais être interprété comme du HTML.
  */
 
-import { RAYONS, DETAILLANTS, RAYON_PAR_ID, DETAILLANT_PAR_NOM, normaliser } from './catalogue.js';
-import { etat, estPrepare, articlesPrepares } from './etat.js';
+import { normaliser } from './catalogue.js';
+import {
+  etat,
+  estPrepare,
+  articlesPrepares,
+  rayons,
+  magasins,
+  magasinParNom,
+} from './etat.js';
 
 const SANS_MAGASIN = '__sans_magasin__';
 
@@ -43,6 +50,10 @@ export function initialiserRendu() {
     filtresMagasins: document.getElementById('filtres-magasins'),
     filtresRayons: document.getElementById('filtres-rayons'),
     compteFiltres: document.getElementById('compte-filtres'),
+
+    // Conservées à part : les puces sont remplacées, pas ces intitulés.
+    etiquetteMagasins: document.querySelector('#filtres-magasins .filtres__etiquette'),
+    etiquetteRayons: document.querySelector('#filtres-rayons .filtres__etiquette'),
 
     barre: document.getElementById('progression-barre'),
     texteProgression: document.getElementById('progression-texte'),
@@ -87,25 +98,30 @@ function articlesVisibles() {
 
 // --- Filtres ---------------------------------------------------------------
 
-/** Construit les puces de filtre une seule fois ; seuls les compteurs bougent. */
-function construireFiltres() {
-  const magasins = [
+/**
+ * (Re)construit les puces de filtre. Appelée au démarrage puis chaque fois que
+ * l'utilisateur ajoute, renomme ou supprime un rayon ou un magasin.
+ */
+export function construireFiltres() {
+  const choixMagasins = [
     { cle: 'tous', libelle: 'Tous' },
-    ...DETAILLANTS.map((d) => ({ cle: d.nom, libelle: d.nom })),
+    ...magasins().map((m) => ({ cle: m.nom, libelle: m.nom })),
     { cle: SANS_MAGASIN, libelle: 'Sans magasin' },
   ];
 
-  for (const { cle, libelle } of magasins) {
+  dom.filtresMagasins.replaceChildren(dom.etiquetteMagasins);
+  for (const { cle, libelle } of choixMagasins) {
     dom.filtresMagasins.append(creerPuce(libelle, cle, 'magasinActif'));
   }
 
+  dom.filtresRayons.replaceChildren(dom.etiquetteRayons);
   dom.filtresRayons.append(creerPuce('Tous', 'tous', 'rayonActif'));
-  for (const rayon of RAYONS) {
+  for (const rayon of rayons()) {
     dom.filtresRayons.append(creerPuce(`${rayon.emoji} ${rayon.nom}`, rayon.id, 'rayonActif'));
   }
 
-  // Les puces ne changent plus : on garde les références plutôt que de
-  // réinterroger le document à chaque case cochée.
+  // Entre deux reconstructions les puces ne bougent pas : on garde les
+  // références plutôt que de réinterroger le document à chaque case cochée.
   dom.pucesMagasins = [...dom.filtresMagasins.querySelectorAll('.puce')];
   dom.pucesRayons = [...dom.filtresRayons.querySelectorAll('.puce')];
   dom.pucesGroupement = [...document.querySelectorAll('[data-groupement]')];
@@ -281,7 +297,7 @@ function majLigne(li, article) {
   bascule.querySelector('.article__nom').textContent = article.nom;
 
   const magasin = li.querySelector('.etiquette--magasin');
-  const teinte = DETAILLANT_PAR_NOM.get(article.magasin)?.teinte;
+  const teinte = magasinParNom(article.magasin)?.teinte;
   magasin.dataset.rempli = String(Boolean(article.magasin));
   magasin.classList.toggle('etiquette--vide', !article.magasin);
   magasin.style.setProperty('--h', teinte ?? 220);
@@ -315,7 +331,7 @@ function grouper(articles) {
   const groupes = new Map();
 
   if (etat.groupement === 'magasin') {
-    for (const detaillant of DETAILLANTS) {
+    for (const detaillant of magasins()) {
       groupes.set(detaillant.nom, { titre: detaillant.nom, emoji: '🏪', articles: [] });
     }
     groupes.set(SANS_MAGASIN, { titre: 'Magasin à déterminer', emoji: '❓', articles: [] });
@@ -325,7 +341,7 @@ function grouper(articles) {
       groupes.get(cle).articles.push(article);
     }
   } else {
-    for (const rayon of RAYONS) {
+    for (const rayon of rayons()) {
       groupes.set(rayon.id, { titre: rayon.nom, emoji: rayon.emoji, articles: [] });
     }
 

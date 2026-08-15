@@ -164,6 +164,8 @@
           <span class="filtres__etiquette">Grouper</span>
           <button type="button" class="puce" data-groupement="rayon" aria-pressed="true">Par rayon</button>
           <button type="button" class="puce" data-groupement="magasin" aria-pressed="false">Par magasin</button>
+          <span class="filtres__etiquette" style="margin-left:.5rem">Ajouter</span>
+          <button type="button" class="puce" id="btn-taxonomie">✏️ Mes rayons et magasins</button>
         </div>
       </div>
     </div>
@@ -416,6 +418,109 @@
         </span>
       </div>
     </form>
+  </dialog>
+
+  <!-- Rayons et magasins personnalisés -->
+  <dialog id="dlg-taxonomie" aria-labelledby="dlg-taxonomie-titre">
+    <div class="boite">
+      <div class="boite__entete">
+        <h2 class="boite__titre" id="dlg-taxonomie-titre">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true"><use href="#i-crayon"></use></svg>
+          Mes rayons et magasins
+        </h2>
+        <button type="button" class="btn btn--icone btn--fantome" data-fermer>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" aria-hidden="true"><use href="#i-croix"></use></svg>
+          <span class="visuellement-cache">Fermer</span>
+        </button>
+      </div>
+
+      <div class="boite__corps">
+        <!-- ---------- Rayons ---------- -->
+        <section class="reglage">
+          <h3 class="reglage__titre">Rayons</h3>
+          <p class="boite__note">
+            Ajoutez vos propres rayons — Électronique, Pêche, Plats cuisinés… Ils
+            apparaissent aussitôt dans les filtres et dans la fiche des articles.
+          </p>
+
+          <ul class="reglage__liste" id="liste-rayons"></ul>
+
+          <form class="reglage__form" id="form-rayon">
+            <input type="hidden" id="rayon-id">
+            <div class="reglage__ligne">
+              <div class="champ champ--etroit">
+                <label class="champ__intitule" for="rayon-emoji">Icône</label>
+                <input type="text" id="rayon-emoji" class="champ__saisie champ__saisie--emoji"
+                       maxlength="4" value="🏷️" autocomplete="off"
+                       aria-describedby="rayon-emoji-aide">
+              </div>
+              <div class="champ" style="flex:1">
+                <label class="champ__intitule" for="rayon-nom">Nom du rayon</label>
+                <input type="text" id="rayon-nom" class="champ__saisie" maxlength="40" required
+                       placeholder="ex. : Plats cuisinés" autocomplete="off">
+              </div>
+            </div>
+
+            <div class="suggestions" id="rayon-emoji-aide" role="group" aria-label="Icônes suggérées">
+              <button type="button" class="suggestion" data-emoji="💻">💻</button>
+              <button type="button" class="suggestion" data-emoji="🎣">🎣</button>
+              <button type="button" class="suggestion" data-emoji="🍲">🍲</button>
+              <button type="button" class="suggestion" data-emoji="🧰">🧰</button>
+              <button type="button" class="suggestion" data-emoji="💊">💊</button>
+              <button type="button" class="suggestion" data-emoji="🌱">🌱</button>
+              <button type="button" class="suggestion" data-emoji="👕">👕</button>
+              <button type="button" class="suggestion" data-emoji="🎁">🎁</button>
+              <button type="button" class="suggestion" data-emoji="🚗">🚗</button>
+              <button type="button" class="suggestion" data-emoji="📚">📚</button>
+              <button type="button" class="suggestion" data-emoji="🧸">🧸</button>
+              <button type="button" class="suggestion" data-emoji="🏷️">🏷️</button>
+            </div>
+
+            <div class="reglage__actions">
+              <button type="button" class="btn btn--fantome" id="rayon-annuler" hidden>Annuler</button>
+              <button type="submit" class="btn btn--primaire" id="rayon-valider">Ajouter le rayon</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- ---------- Magasins ---------- -->
+        <section class="reglage">
+          <h3 class="reglage__titre">Magasins</h3>
+          <p class="boite__note">
+            Ajoutez une enseigne absente de la liste, et choisissez sa couleur de
+            pastille.
+          </p>
+
+          <ul class="reglage__liste" id="liste-magasins"></ul>
+
+          <form class="reglage__form" id="form-magasin">
+            <input type="hidden" id="magasin-nom-actuel">
+            <div class="champ">
+              <label class="champ__intitule" for="magasin-nom">Nom du magasin</label>
+              <input type="text" id="magasin-nom" class="champ__saisie" maxlength="40" required
+                     placeholder="ex. : Rachelle-Béry" autocomplete="off">
+            </div>
+
+            <div class="champ">
+              <span class="champ__intitule" id="magasin-couleur-titre">Couleur</span>
+              <div class="teintes" id="teintes" role="radiogroup" aria-labelledby="magasin-couleur-titre"></div>
+            </div>
+
+            <div class="reglage__actions">
+              <button type="button" class="btn btn--fantome" id="magasin-annuler" hidden>Annuler</button>
+              <button type="submit" class="btn btn--primaire" id="magasin-valider">Ajouter le magasin</button>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <div class="boite__pied">
+        <button type="button" class="btn btn--doux" data-fermer>Fermer</button>
+      </div>
+    </div>
   </dialog>
 
   <!-- Confirmation générique (remplace confirm()) -->

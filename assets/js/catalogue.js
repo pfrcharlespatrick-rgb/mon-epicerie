@@ -297,8 +297,8 @@ export function articlesDuCatalogue() {
   return articles;
 }
 
-/** Index rayon → métadonnées, pour les recherches ponctuelles. */
-export const RAYON_PAR_ID = new Map(RAYONS.map((r) => [r.id, r]));
-
-/** Index détaillant → métadonnées. */
-export const DETAILLANT_PAR_NOM = new Map(DETAILLANTS.map((d) => [d.nom, d]));
+/*
+ * Les index rayon → métadonnées vivent dans `etat.js` (`rayonParId`,
+ * `magasinParNom`) : ils doivent tenir compte des rayons et magasins créés par
+ * l'utilisateur, que ce fichier ignore.
+ */
