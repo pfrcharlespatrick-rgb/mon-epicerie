@@ -6,6 +6,9 @@ sauvegarde — le tout dans une page qui fonctionne hors ligne et sans compte.
 
 **→ [Ouvrir l'application](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/)**
 
+Le site héberge aussi **[Ma Cuisine](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/cuisine/)**,
+le conseiller culinaire — voir [sa section](#ma-cuisine--le-conseiller-culinaire) plus bas.
+
 ---
 
 ## Comment ça marche
@@ -106,6 +109,59 @@ Les identifiants techniques sont dérivés du nom des produits, il n'y a donc
 aucun numéro à gérer à la main. Un produit ajouté au catalogue apparaît chez les
 utilisateurs existants au prochain chargement, sans effacer leur liste en cours
 — et sans faire revenir ceux qu'ils ont volontairement supprimés.
+
+## Ma Cuisine — le conseiller culinaire
+
+Dans le dossier [`cuisine/`](cuisine/), une seconde application, bâtie dans le
+même esprit — sans dépendance, sans serveur, hors ligne — mais pour l'autre
+bout de la chaîne : une fois la pièce rapportée de l'épicerie, elle compose la
+recette complète qui la mènera à la table.
+
+**→ [Ouvrir Ma Cuisine](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/cuisine/)**
+
+On choisit la pièce (une vingtaine, de la côte de bœuf à la dinde des Fêtes,
+du saumon au chou-fleur entier), on donne le poids inscrit sur l'étiquette, la
+cuisson désirée et, si l'on veut, l'heure du service. L'application produit
+alors des étapes numérotées, titrées et minutées, selon des règles constantes :
+
+- **La température à cœur décide, jamais l'horloge seule** — chiffre exact au
+  retrait du feu et après repos, avec la fenêtre de temps en ordre de grandeur.
+- **Salage à sec la veille** chaque fois que la pièce s'y prête, avec la dose
+  calculée d'après le poids, et l'explication du pourquoi.
+- **Repos après cuisson**, toujours ; **sucs et fonds jamais jetés** — chaque
+  recette se termine par la sauce qui les récupère.
+- Les étapes où tout peut se gâcher sont marquées, avec les signes de réussite
+  au toucher, à l'œil et à l'odeur.
+- Système métrique, degrés Celsius, vocabulaire d'ici ; les méthodes populaires
+  inférieures sont signalées avec leur compromis, sans sermon.
+- Une note de conservation et de réchauffage, une suggestion d'accompagnement,
+  et le **calendrier à rebours** : depuis l'heure du service, l'application
+  date chaque départ, jusqu'au dégel de la dinde plusieurs jours avant.
+
+Le bouton **🍳 Ma cuisine** consigne l'équipement possédé (thermomètre à
+sonde, fonte, cocotte…) : les recettes s'y adaptent et proposent des
+substitutions plutôt que de renvoyer au magasin. Une date « meilleur avant »
+dépassée déclenche un avertissement franc, plus sévère pour la volaille et le
+poisson. Le **📖 Carnet** garde les recettes composées (localStorage, comme la
+liste d'épicerie), et l'impression sort une feuille de cuisine épurée.
+
+### Organisation de `cuisine/`
+
+```
+cuisine/index.html              structure de la page
+cuisine/assets/css/app.css      mise en forme (thèmes clair/sombre, impression)
+cuisine/assets/js/pieces.js     la base de connaissances : pièces, températures, étapes
+cuisine/assets/js/moteur.js     composition de la recette et calendrier à rebours
+cuisine/assets/js/app.js        branchement de l'interface, carnet, équipement
+cuisine/sw.js                   cache hors-ligne (VERSION à incrémenter au déploiement)
+outils/generer-icones-cuisine.mjs  régénère les icônes PNG
+```
+
+Pour ajouter une pièce, tout tient dans
+[`cuisine/assets/js/pieces.js`](cuisine/assets/js/pieces.js) : une entrée dans
+`PIECES` avec ses cuissons (température de retrait et cible), ses étapes et
+ses textes. Contrairement à l'épicerie, ces fichiers n'utilisent pas de
+modules : la page s'ouvre aussi par un double-clic sur `index.html`.
 
 ## Développement
 
