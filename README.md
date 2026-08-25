@@ -2,7 +2,9 @@
 
 Liste de courses hebdomadaire pour la région de Québec : un catalogue de
 163 produits habituels, des quantités, des enseignes, l'impression et la
-sauvegarde — le tout dans une page qui fonctionne hors ligne et sans compte.
+sauvegarde. Et, depuis peu, **Ma Cuisine** : les fiches de cuisson de ce qu'on
+rapporte du marché, pilotées à la température à cœur. Le tout dans deux pages
+qui fonctionnent hors ligne et sans compte.
 
 **→ [Ouvrir l'application](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/)**
 
@@ -41,9 +43,61 @@ Le bouton **Exporter** propose quatre choses :
 | Sauvegarde `.json` | Fichier réutilisable, à conserver |
 | Restaurer | Recharge un fichier de sauvegarde |
 
+## Ma Cuisine
+
+Une seconde page, accessible par l'icône de marmite en haut de la liste :
+[`cuisine.html`](cuisine.html). Elle sert à cuisiner ce qu'on vient d'acheter.
+
+Chaque recette y est écrite pour **14 convives** et pilotée par la **température
+à cœur**, en **degrés Fahrenheit** — l'équivalent Celsius est donné à côté — parce
+qu'un four au gaz ne suit pas son thermostat et qu'une horloge ne dit rien de ce
+qui se passe dans la viande.
+
+| Onglet | Ce qu'on y trouve |
+|---|---|
+| La recette | Chapeau, avertissements de salubrité, chiffres à viser, ingrédients, étapes numérotées avec durée, pièges et signes de réussite |
+| Calendrier à rebours | Chaque geste daté et daté à l'heure, calculé depuis le jour et l'heure du service |
+| Garde-manger & frigo | Photos des tablettes, du frigo, du congélateur et des étiquettes de viande, avec une note par photo |
+| Mes notes | Le carnet de bord d'une fois à l'autre |
+
+Trois détails valent la peine d'être connus :
+
+- **Le nombre de convives met tout à l'échelle.** Les quantités se recalculent et
+  s'arrondissent à quelque chose de mesurable — personne ne pèse 43,7 g de paprika.
+- **Chaque étape courte porte un minuteur.** Il sonne, même si l'on a changé
+  d'onglet entretemps.
+- **L'impression sort la fiche entière**, y compris les onglets qu'on n'a pas
+  ouverts, photos comprises. C'est la feuille qu'on colle sur la porte de l'armoire.
+
+### Ajouter ou corriger une recette
+
+Tout le contenu tient dans [`assets/js/recettes.js`](assets/js/recettes.js), en
+clair. Le modèle est documenté en tête de fichier ; l'essentiel :
+
+```js
+etapes: [
+  {
+    titre: 'Le salage à sec',
+    duree: '12 à 24 h au frigo',   // un minuteur apparaît si c'est ≤ 6 h
+    temperature: 275,              // en °F ; le °C est calculé
+    texte: 'Ce qu’on fait, et pourquoi.',
+    piege: 'L’endroit précis où l’on peut tout gâcher.',
+    reussite: 'À quoi se reconnaît le succès, au toucher ou à l’œil.',
+  },
+],
+rebours: [
+  { avant: 1200, texte: 'Saler à sec.' },  // minutes avant le service
+],
+```
+
+Les quantités s'écrivent pour le nombre indiqué dans `portions` ; l'application
+se charge du reste. Corriger une recette n'efface jamais les cases cochées, les
+notes ni les photos de l'utilisateur.
+
 ## Vos données
 
-Tout est stocké dans le navigateur (`localStorage`), sur votre appareil.
+Tout est stocké dans le navigateur — `localStorage` pour les listes et les
+réglages, IndexedDB pour les photos de la cuisine —, sur votre appareil.
 L'application n'a pas de serveur, pas de compte, pas de traceur, et n'envoie
 aucune requête vers l'extérieur. Corollaire : vider les données du navigateur
 efface la liste — d'où l'intérêt de la sauvegarde `.json` avant un grand ménage.
@@ -131,7 +185,17 @@ assets/js/export.js     impression, presse-papiers, sauvegarde/restauration
 assets/js/app.js        branchement de l'interface
 sw.js                   mise en cache pour le hors-ligne
 outils/generer-icones.mjs  régénère les icônes PNG (node outils/generer-icones.mjs)
+
+cuisine.html            la page des recettes
+assets/css/cuisine.css  sa mise en forme, thèmes et impression compris
+assets/js/recettes.js   données : les recettes livrées
+assets/js/cuisine.js    échelle, calendrier à rebours, minuteries, photos
 ```
+
+Les photos du garde-manger vivent dans IndexedDB (`mon-epicerie-cuisine`) plutôt
+que dans `localStorage` : une image dépasse largement ce que ce dernier tolère.
+Elles sont réduites à 1400 px et compressées en JPEG à l'ajout — une photo de
+téléphone de 3,5 Mo tombe autour de 250 ko.
 
 ### Après un déploiement
 

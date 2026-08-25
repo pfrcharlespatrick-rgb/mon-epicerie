@@ -9,7 +9,15 @@
   "display": "standalone",
   "background_color": "#f1f5f9",
   "theme_color": "#059669",
-  "categories": ["shopping", "lifestyle", "productivity"],
+  "categories": ["shopping", "lifestyle", "food", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Ma Cuisine — recettes",
+      "short_name": "Ma Cuisine",
+      "description": "Fiches de cuisson à cœur, calendrier à rebours et photos du garde-manger.",
+      "url": "./cuisine.html"
+    }
+  ],
   "icons": [
     {
       "src": "assets/icones/icone-192.png",
