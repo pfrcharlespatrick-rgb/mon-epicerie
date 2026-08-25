@@ -55,24 +55,43 @@ qui se passe dans la viande.
 
 | Onglet | Ce qu'on y trouve |
 |---|---|
+| Le menu | Le plat principal, ses entrées et ses accompagnements proposés, avec la raison de chaque accord. On retient ce qu'on veut ; le reste de l'application suit |
 | La recette | Chapeau, avertissements de salubrité, chiffres à viser, ingrédients, étapes numérotées avec durée, pièges et signes de réussite |
-| Calendrier à rebours | Chaque geste daté et daté à l'heure, calculé depuis le jour et l'heure du service |
+| Calendrier à rebours | Tous les plats du menu sur **une seule** ligne du temps, chaque geste ramené à son heure réelle |
 | Garde-manger & frigo | Photos des tablettes, du frigo, du congélateur et des étiquettes de viande, avec une note par photo |
 | Mes notes | Le carnet de bord d'une fois à l'autre |
 
-Trois détails valent la peine d'être connus :
+Quatre détails valent la peine d'être connus :
 
+- **Un menu, pas une recette.** Pris un par un, six plats sont six recettes
+  faciles ; pris ensemble, ce sont six plats qui se disputent un four et une paire
+  de mains. Mettre un plat au menu le fait entrer dans la ligne du temps et dans la
+  liste d'épicerie, à sa place.
 - **Le nombre de convives met tout à l'échelle.** Les quantités se recalculent et
   s'arrondissent à quelque chose de mesurable — personne ne pèse 43,7 g de paprika.
 - **Chaque étape courte porte un minuteur.** Il sonne, même si l'on a changé
   d'onglet entretemps.
-- **L'impression sort la fiche entière**, y compris les onglets qu'on n'a pas
-  ouverts, photos comprises. C'est la feuille qu'on colle sur la porte de l'armoire.
+- **Deux impressions.** *Imprimer le menu* sort toutes les recettes retenues, une
+  par page, plus le calendrier commun et les photos ; le bouton des réglages
+  n'imprime que la recette ouverte. C'est la feuille qu'on colle sur la porte de
+  l'armoire.
 
 ### Ajouter ou corriger une recette
 
 Tout le contenu tient dans [`assets/js/recettes.js`](assets/js/recettes.js), en
 clair. Le modèle est documenté en tête de fichier ; l'essentiel :
+
+Une recette porte un `type` — `'principal'`, `'entree'` ou `'accompagnement'` —
+et un plat principal porte ses accords, avec la raison de chacun :
+
+```js
+suggestions: [
+  { id: 'salade-chou-cremeuse', pourquoi: 'Pourquoi ça va ensemble.' },
+],
+```
+
+Le champ `pourquoi` appartient au couple, pas à l'un des deux plats : le même
+accompagnement peut se justifier autrement à côté d'un autre plat principal.
 
 ```js
 etapes: [
@@ -86,9 +105,16 @@ etapes: [
   },
 ],
 rebours: [
-  { avant: 1200, texte: 'Saler à sec.' },  // minutes avant le service
+  { avant: 1200, texte: 'Saler à sec.' },        // minutes avant le service
+  { avant: 240, texte: 'Enfourner.', four: 275 }, // `four` s'affiche dans la ligne du temps
 ],
 ```
+
+C'est `avant` qui fait tout le travail du calendrier commun : les gestes de tous
+les plats retenus sont versés dans la même liste et triés. Écrire une recette,
+c'est donc surtout décider à quel moment chacun de ses gestes tombe par rapport
+au service — et vérifier, ce faisant, qu'on ne demande pas deux températures de
+four différentes au même moment.
 
 Les quantités s'écrivent pour le nombre indiqué dans `portions` ; l'application
 se charge du reste. Corriger une recette n'efface jamais les cases cochées, les

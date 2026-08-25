@@ -1,11 +1,16 @@
 /**
  * Ma Cuisine — branchement de l'interface.
  *
- * Trois choses vivent côte à côte, et il vaut la peine de les distinguer :
+ * Quatre choses vivent côte à côte, et il vaut la peine de les distinguer :
  *
  *   les recettes    livrées avec l'application, dans `recettes.js`. On ne les
  *                   modifie pas depuis le navigateur : elles sont corrigées
  *                   dans le code et arrivent au prochain chargement.
+ *   le menu         un plat principal, et ceux de ses entrées et de ses
+ *                   accompagnements que l'on a retenus. C'est le menu qui
+ *                   porte le calendrier à rebours et la liste d'épicerie :
+ *                   quatorze convives, ce n'est pas quatorze fois une recette,
+ *                   c'est six plats qui se disputent un seul four.
  *   les réglages    portions, jour et heure du service, étapes cochées, notes.
  *                   localStorage, quelques kilo-octets, jamais de photo.
  *   les photos      garde-manger, frigo, étiquettes. IndexedDB, parce qu'une
@@ -28,16 +33,24 @@ const LIBELLE_THEME = {
   sombre: 'Thème sombre',
 };
 
+const PRINCIPAUX = RECETTES.filter((r) => r.type === 'principal');
+const parId = (id) => RECETTES.find((r) => r.id === id);
+
 /** L'état par défaut. Quatorze convives : c'est la tablée habituelle ici. */
 const etat = {
   theme: 'auto',
-  recetteId: RECETTES[0].id,
+  /** Le plat autour duquel le menu se construit. */
+  principalId: PRINCIPAUX[0].id,
+  /** La recette actuellement ouverte dans l'onglet « La recette ». */
+  recetteId: PRINCIPAUX[0].id,
   portions: 14,
   serviceDate: '',
   serviceHeure: '18:00',
-  vue: 'recette',
+  vue: 'menu',
   categoriePhoto: 'garde-manger',
   filtrePhoto: '',
+  /** { [principalId]: string[] } — entrées et accompagnements retenus. */
+  menus: {},
   /** { [recetteId]: number[] } — index des étapes cochées. */
   etapesFaites: {},
   /** { [recetteId]: string } */
@@ -54,11 +67,13 @@ function charger() {
   if (!brut || typeof brut !== 'object') return;
 
   if (THEMES.includes(brut.theme)) etat.theme = brut.theme;
-  if (RECETTES.some((r) => r.id === brut.recetteId)) etat.recetteId = brut.recetteId;
+  if (PRINCIPAUX.some((r) => r.id === brut.principalId)) etat.principalId = brut.principalId;
+  if (parId(brut.recetteId)) etat.recetteId = brut.recetteId;
   if (Number.isFinite(brut.portions)) etat.portions = Math.min(80, Math.max(1, brut.portions));
   if (typeof brut.serviceDate === 'string') etat.serviceDate = brut.serviceDate;
   if (typeof brut.serviceHeure === 'string') etat.serviceHeure = brut.serviceHeure;
   if (typeof brut.categoriePhoto === 'string') etat.categoriePhoto = brut.categoriePhoto;
+  if (brut.menus && typeof brut.menus === 'object') etat.menus = brut.menus;
   if (brut.etapesFaites && typeof brut.etapesFaites === 'object') etat.etapesFaites = brut.etapesFaites;
   if (brut.notes && typeof brut.notes === 'object') etat.notes = brut.notes;
 }
@@ -69,11 +84,13 @@ function enregistrer() {
       CLE_ETAT,
       JSON.stringify({
         theme: etat.theme,
+        principalId: etat.principalId,
         recetteId: etat.recetteId,
         portions: etat.portions,
         serviceDate: etat.serviceDate,
         serviceHeure: etat.serviceHeure,
         categoriePhoto: etat.categoriePhoto,
+        menus: etat.menus,
         etapesFaites: etat.etapesFaites,
         notes: etat.notes,
       }),
@@ -181,12 +198,21 @@ const NOMS_CATEGORIES = {
   resultat: 'Résultat en assiette',
 };
 
-const recetteCourante = () => RECETTES.find((r) => r.id === etat.recetteId) ?? RECETTES[0];
+const principal = () => parId(etat.principalId) ?? PRINCIPAUX[0];
+const recetteCourante = () => parId(etat.recetteId) ?? principal();
 
-/** Le facteur d'échelle entre la recette écrite et la tablée du jour. */
-const facteurEchelle = () => etat.portions / recetteCourante().portions;
+/** Les identifiants retenus au menu pour le plat principal courant. */
+const auMenu = () => etat.menus[etat.principalId] ?? [];
 
-/** Met un nombre en forme à la française : virgule décimale, espace fine. */
+/** Le plat principal et tout ce qu'on a retenu autour, dans l'ordre du service. */
+function menuComplet() {
+  const ordre = { entree: 0, principal: 1, accompagnement: 2 };
+  return [principal(), ...auMenu().map(parId).filter(Boolean)].sort(
+    (a, b) => ordre[a.type] - ordre[b.type],
+  );
+}
+
+/** Met un nombre en forme à la française : virgule décimale. */
 function nombreFr(valeur, decimales = 0) {
   return valeur.toLocaleString('fr-CA', {
     minimumFractionDigits: decimales,
@@ -201,9 +227,9 @@ function nombreFr(valeur, decimales = 0) {
  * grossièrement que la quantité est grande, et on bascule en kilos ou en
  * litres au-delà de mille.
  */
-function formaterQuantite(q, u) {
+function formaterQuantite(q, u, recette) {
   if (q === null || q === undefined) return '';
-  const v = q * facteurEchelle();
+  const v = q * (etat.portions / recette.portions);
 
   if (u === 'g' && v >= 1000) return `${nombreFr(v / 1000, 2)} kg`;
   if (u === 'ml' && v >= 1000) return `${nombreFr(v / 1000, 2)} L`;
@@ -243,172 +269,291 @@ function formaterDelai(minutes) {
 }
 
 /* =========================================================================
-   Rendu de la recette
+   Construction d'une fiche de recette
+
+   Le même code sert à l'écran et au papier. `interactif` n'ajoute que les
+   boutons — cocher une étape, lancer un minuteur — qui n'ont aucun sens
+   une fois imprimés.
    ========================================================================= */
 
-function rendreChapeau() {
-  const r = recetteCourante();
-  $('chapeau').innerHTML = `
-    <h2 class="chapeau__titre">${txt(r.titre)}</h2>
-    <p class="chapeau__sous-titre">${txt(r.sousTitre)}</p>
-    <div class="jetons">
-      <span class="jeton">${txt(etat.portions)} convives</span>
-      <span class="jeton">${txt(r.piece)}</span>
-      <span class="jeton">${txt(r.duree)}</span>
-      <span class="jeton">${txt(r.difficulte)}</span>
-    </div>
-    <p style="margin-top:0.9rem">${txt(r.resume)}</p>
-  `;
+function htmlChapeau(r) {
+  return `
+    <div class="chapeau">
+      <h2 class="chapeau__titre">${txt(r.titre)}</h2>
+      <p class="chapeau__sous-titre">${txt(r.sousTitre)}</p>
+      <div class="jetons">
+        <span class="jeton">${txt(etat.portions)} convives</span>
+        ${r.role ? `<span class="jeton">${txt(r.role)}</span>` : ''}
+        <span class="jeton">${txt(r.duree)}</span>
+        <span class="jeton">${txt(r.difficulte)}</span>
+      </div>
+      <p style="margin-top:0.9rem">${txt(r.resume)}</p>
+    </div>`;
 }
 
-function rendreAvertissements() {
-  const r = recetteCourante();
-  const carte = $('carte-avertissements');
-  carte.hidden = !r.avertissements?.length;
-  $('avertissements').innerHTML = (r.avertissements ?? [])
-    .map(
-      (a) => `
-        <div class="alerte">
-          <h3 class="alerte__titre">${txt(a.titre)}</h3>
-          <p>${txt(a.texte)}</p>
-        </div>`,
-    )
-    .join('');
+function htmlAvertissements(r) {
+  if (!r.avertissements?.length) return '';
+  return `
+    <section class="carte">
+      <h2 class="carte__titre">À lire avant de commencer</h2>
+      ${r.avertissements
+        .map(
+          (a) => `
+            <div class="alerte">
+              <h3 class="alerte__titre">${txt(a.titre)}</h3>
+              <p>${txt(a.texte)}</p>
+            </div>`,
+        )
+        .join('')}
+    </section>`;
 }
 
-function rendreTemperatures() {
-  const r = recetteCourante();
-  $('temperatures').innerHTML = r.temperatures
-    .map(
-      (t) => `
-        <div class="temperature">
-          <div class="temperature__valeur">${txt(t.f)} °F<small>· ${txt(enCelsius(t.f))} °C</small></div>
-          <div class="temperature__quoi">${txt(t.quoi)}</div>
-          ${t.note ? `<div class="temperature__note">${txt(t.note)}</div>` : ''}
-        </div>`,
-    )
-    .join('');
+function htmlTemperatures(r) {
+  if (!r.temperatures?.length) return '';
+  return `
+    <section class="carte">
+      <h2 class="carte__titre">Les chiffres à viser <small>°F, avec l’équivalent en °C</small></h2>
+      <div class="temperatures">
+        ${r.temperatures
+          .map(
+            (t) => `
+              <div class="temperature">
+                <div class="temperature__valeur">${txt(t.f)} °F<small>· ${txt(enCelsius(t.f))} °C</small></div>
+                <div class="temperature__quoi">${txt(t.quoi)}</div>
+                ${t.note ? `<div class="temperature__note">${txt(t.note)}</div>` : ''}
+              </div>`,
+          )
+          .join('')}
+      </div>
+    </section>`;
 }
 
-function rendreIngredients() {
-  const r = recetteCourante();
-  const facteur = facteurEchelle();
-
-  $('ingredients-echelle').textContent =
-    facteur === 1
+function htmlIngredients(r, interactif) {
+  const echelle =
+    etat.portions === r.portions
       ? `pour ${etat.portions} convives`
       : `recette écrite pour ${r.portions}, mise à l’échelle pour ${etat.portions}`;
 
-  $('ingredients').innerHTML = r.ingredients
-    .map(
-      (groupe) => `
-        <div class="groupe-ingredients">
-          <h3 class="groupe-ingredients__titre">${txt(groupe.groupe)}</h3>
-          ${groupe.items
-            .map(
-              (i) => `
-                <div class="ingredient">
-                  <span class="ingredient__quantite">${txt(formaterQuantite(i.q, i.u))}</span>
-                  <span class="ingredient__corps">
-                    <span class="ingredient__nom">${txt(i.nom)}</span>
-                    ${i.note ? `<span class="ingredient__note">${txt(i.note)}</span>` : ''}
-                    ${i.substitution ? `<span class="ingredient__substitution">${txt(i.substitution)}</span>` : ''}
-                  </span>
-                </div>`,
-            )
-            .join('')}
-        </div>`,
-    )
-    .join('');
+  return `
+    <section class="carte">
+      <h2 class="carte__titre">
+        Ingrédients <small>${txt(echelle)}</small>
+        ${
+          interactif
+            ? `<button type="button" class="btn btn--petit sans-impression" id="btn-copier-ingredients"
+                       style="margin-left:auto">Copier la liste du menu</button>`
+            : ''
+        }
+      </h2>
+      ${r.ingredients
+        .map(
+          (groupe) => `
+            <div class="groupe-ingredients">
+              <h3 class="groupe-ingredients__titre">${txt(groupe.groupe)}</h3>
+              ${groupe.items
+                .map(
+                  (i) => `
+                    <div class="ingredient">
+                      <span class="ingredient__quantite">${txt(formaterQuantite(i.q, i.u, r))}</span>
+                      <span class="ingredient__corps">
+                        <span class="ingredient__nom">${txt(i.nom)}</span>
+                        ${i.note ? `<span class="ingredient__note">${txt(i.note)}</span>` : ''}
+                        ${i.substitution ? `<span class="ingredient__substitution">${txt(i.substitution)}</span>` : ''}
+                      </span>
+                    </div>`,
+                )
+                .join('')}
+            </div>`,
+        )
+        .join('')}
+    </section>`;
 }
 
-function rendreMateriel() {
-  const r = recetteCourante();
-  $('carte-materiel').hidden = !r.materiel?.length;
-  $('materiel').innerHTML = (r.materiel ?? [])
-    .map((m) => `<div class="ingredient"><span class="ingredient__corps">${txt(m)}</span></div>`)
-    .join('');
+function htmlMateriel(r) {
+  if (!r.materiel?.length) return '';
+  return `
+    <section class="carte">
+      <h2 class="carte__titre">Le matériel</h2>
+      ${r.materiel
+        .map((m) => `<div class="ingredient"><span class="ingredient__corps">${txt(m)}</span></div>`)
+        .join('')}
+    </section>`;
 }
 
-function rendreEtapes() {
-  const r = recetteCourante();
+function htmlEtapes(r, interactif) {
   const faites = etat.etapesFaites[r.id] ?? [];
-
-  $('etapes').innerHTML = r.etapes
-    .map((e, index) => {
-      const minutes = minutesDeDuree(e.duree);
-      const minutable = minutes !== null && minutes <= 360;
-      return `
-        <div class="etape ${faites.includes(index) ? 'etape--faite' : ''}">
-          <div class="etape__numero">${index + 1}</div>
-          <div class="etape__corps">
-            <div class="etape__entete">
-              <h3 class="etape__titre">${txt(e.titre)}</h3>
-              ${e.duree ? `<span class="etape__duree">${txt(e.duree)}</span>` : ''}
-              ${
-                e.temperature
-                  ? `<span class="etape__temperature">${txt(e.temperature)} °F · ${txt(enCelsius(e.temperature))} °C</span>`
-                  : ''
-              }
-            </div>
-            <p>${txt(e.texte)}</p>
-            ${
-              e.piege
-                ? `<div class="remarque remarque--piege">
-                     <span class="remarque__cle">Là où l’on gâche tout</span>${txt(e.piege)}
-                   </div>`
-                : ''
-            }
-            ${
-              e.reussite
-                ? `<div class="remarque remarque--reussite">
-                     <span class="remarque__cle">À quoi se reconnaît la réussite</span>${txt(e.reussite)}
-                   </div>`
-                : ''
-            }
-            <div class="etape__actions sans-impression">
-              <button type="button" class="btn btn--petit" data-cocher="${index}">
-                ${faites.includes(index) ? '↩︎ Rouvrir cette étape' : '✓ Étape faite'}
-              </button>
-              ${
-                minutable
-                  ? `<button type="button" class="btn btn--petit" data-minuteur="${minutes}"
-                             data-nom="${txt(e.titre)}">⏱ Minuteur ${formaterDelai(minutes)}</button>`
-                  : ''
-              }
-            </div>
-          </div>
-        </div>`;
-    })
-    .join('');
+  return `
+    <section class="carte">
+      <h2 class="carte__titre">
+        Les étapes
+        ${
+          interactif
+            ? `<button type="button" class="btn btn--petit sans-impression" id="btn-decocher"
+                       style="margin-left:auto">Tout décocher</button>`
+            : ''
+        }
+      </h2>
+      ${r.etapes
+        .map((e, index) => {
+          const minutes = minutesDeDuree(e.duree);
+          const minutable = interactif && minutes !== null && minutes <= 360;
+          return `
+            <div class="etape ${faites.includes(index) ? 'etape--faite' : ''}">
+              <div class="etape__numero">${index + 1}</div>
+              <div class="etape__corps">
+                <div class="etape__entete">
+                  <h3 class="etape__titre">${txt(e.titre)}</h3>
+                  ${e.duree ? `<span class="etape__duree">${txt(e.duree)}</span>` : ''}
+                  ${
+                    e.temperature
+                      ? `<span class="etape__temperature">${txt(e.temperature)} °F · ${txt(enCelsius(e.temperature))} °C</span>`
+                      : ''
+                  }
+                </div>
+                <p>${txt(e.texte)}</p>
+                ${
+                  e.piege
+                    ? `<div class="remarque remarque--piege">
+                         <span class="remarque__cle">Là où l’on gâche tout</span>${txt(e.piege)}
+                       </div>`
+                    : ''
+                }
+                ${
+                  e.reussite
+                    ? `<div class="remarque remarque--reussite">
+                         <span class="remarque__cle">À quoi se reconnaît la réussite</span>${txt(e.reussite)}
+                       </div>`
+                    : ''
+                }
+                ${
+                  interactif
+                    ? `<div class="etape__actions sans-impression">
+                         <button type="button" class="btn btn--petit" data-cocher="${index}">
+                           ${faites.includes(index) ? '↩︎ Rouvrir cette étape' : '✓ Étape faite'}
+                         </button>
+                         ${
+                           minutable
+                             ? `<button type="button" class="btn btn--petit" data-minuteur="${minutes}"
+                                        data-nom="${txt(e.titre)}">⏱ Minuteur ${formaterDelai(minutes)}</button>`
+                             : ''
+                         }
+                       </div>`
+                    : ''
+                }
+              </div>
+            </div>`;
+        })
+        .join('')}
+    </section>`;
 }
 
-function rendreMethodes() {
-  const r = recetteCourante();
-  $('carte-methodes').hidden = !r.methodesInferieures?.length;
-  $('methodes').innerHTML = (r.methodesInferieures ?? [])
-    .map(
-      (m) => `
-        <div class="remarque">
-          <span class="remarque__cle">${txt(m.titre)}</span>
-          <p style="margin-top:0.25rem">${txt(m.texte)}</p>
-        </div>`,
-    )
-    .join('');
+function htmlMethodes(r) {
+  if (!r.methodesInferieures?.length) return '';
+  return `
+    <section class="carte">
+      <h2 class="carte__titre">Ce qu’on entend souvent, et ce que ça coûte</h2>
+      ${r.methodesInferieures
+        .map(
+          (m) => `
+            <div class="remarque">
+              <span class="remarque__cle">${txt(m.titre)}</span>
+              <p style="margin-top:0.25rem">${txt(m.texte)}</p>
+            </div>`,
+        )
+        .join('')}
+    </section>`;
 }
 
-function rendreFinition() {
-  const r = recetteCourante();
-  $('finition').innerHTML = `
-    <h3 class="groupe-ingredients__titre">Conservation et réchauffage</h3>
-    <p>${txt(r.conservation)}</p>
-    <h3 class="groupe-ingredients__titre" style="margin-top:1rem">Accompagnement</h3>
-    <p>${txt(r.accompagnement)}</p>
-  `;
+function htmlFinition(r) {
+  if (!r.conservation && !r.accompagnement) return '';
+  return `
+    <section class="carte">
+      <h2 class="carte__titre">Conservation, réchauffage${r.accompagnement ? ' et accompagnement' : ''}</h2>
+      ${
+        r.conservation
+          ? `<h3 class="groupe-ingredients__titre">Conservation et réchauffage</h3><p>${txt(r.conservation)}</p>`
+          : ''
+      }
+      ${
+        r.accompagnement
+          ? `<h3 class="groupe-ingredients__titre" style="margin-top:1rem">Accompagnement</h3><p>${txt(r.accompagnement)}</p>`
+          : ''
+      }
+    </section>`;
+}
+
+/** La fiche entière d'une recette. */
+function htmlRecette(r, interactif = false) {
+  return [
+    htmlChapeau(r),
+    htmlAvertissements(r),
+    htmlTemperatures(r),
+    htmlIngredients(r, interactif),
+    htmlMateriel(r),
+    htmlEtapes(r, interactif),
+    htmlMethodes(r),
+    htmlFinition(r),
+  ].join('');
 }
 
 /* =========================================================================
-   Calendrier à rebours
+   L'onglet « Le menu »
+   ========================================================================= */
+
+function carteSuggestion(suggestion) {
+  const r = parId(suggestion.id);
+  if (!r) return '';
+  const retenu = auMenu().includes(r.id);
+  return `
+    <article class="plat ${retenu ? 'plat--retenu' : ''}">
+      <div class="plat__entete">
+        <h3 class="plat__titre">${txt(r.titre)}</h3>
+        <span class="jeton">${txt(r.duree)}</span>
+      </div>
+      <p class="plat__role">${txt(r.role ?? '')}</p>
+      <p class="plat__pourquoi">${txt(suggestion.pourquoi)}</p>
+      <div class="plat__actions sans-impression">
+        <button type="button" class="btn btn--petit ${retenu ? '' : 'btn--principal'}" data-menu="${txt(r.id)}">
+          ${retenu ? '✓ Au menu — retirer' : '+ Mettre au menu'}
+        </button>
+        <button type="button" class="btn btn--petit" data-ouvrir="${txt(r.id)}">Voir la recette</button>
+      </div>
+    </article>`;
+}
+
+function rendreMenu() {
+  const p = principal();
+  const suggestions = p.suggestions ?? [];
+  const retenus = auMenu();
+
+  $('menu-principal').innerHTML = `
+    <div class="plat plat--principal">
+      <div class="plat__entete">
+        <h3 class="plat__titre">${txt(p.titre)}</h3>
+        <span class="jeton">${txt(p.duree)}</span>
+      </div>
+      <p class="plat__role">${txt(p.role ?? '')}</p>
+      <p class="plat__pourquoi">${txt(p.sousTitre)}</p>
+      <div class="plat__actions sans-impression">
+        <button type="button" class="btn btn--petit" data-ouvrir="${txt(p.id)}">Voir la recette</button>
+      </div>
+    </div>`;
+
+  const parType = (type) =>
+    suggestions.filter((s) => parId(s.id)?.type === type).map(carteSuggestion).join('');
+
+  $('menu-entrees').innerHTML =
+    parType('entree') || '<p class="vide">Aucune entrée proposée pour ce plat.</p>';
+  $('menu-accompagnements').innerHTML =
+    parType('accompagnement') || '<p class="vide">Aucun accompagnement proposé pour ce plat.</p>';
+
+  $('menu-compte').textContent = retenus.length
+    ? `${retenus.length} plat${retenus.length > 1 ? 's' : ''} retenu${retenus.length > 1 ? 's' : ''} autour du principal`
+    : 'Rien de retenu pour l’instant : le calendrier ne montre que le plat principal';
+}
+
+/* =========================================================================
+   Calendrier à rebours — tout le menu sur une seule ligne du temps
    ========================================================================= */
 
 /** L'heure du service, ou `null` si le jour n'a pas encore été choisi. */
@@ -428,15 +573,31 @@ function libelleJour(moment, service) {
   return `${ecart} jours avant`;
 }
 
+/**
+ * Fusionne les calendriers de tous les plats du menu.
+ *
+ * C'est ici que se joue le vrai service rendu : pris un par un, six plats
+ * sont six recettes faciles ; pris ensemble, ce sont six plats qui se
+ * disputent un four et une paire de mains. Une seule ligne du temps, du
+ * geste le plus lointain au service, règle la question.
+ */
+function calendrierFusionne() {
+  return menuComplet()
+    .flatMap((r) => (r.rebours ?? []).map((e) => ({ ...e, plat: r.titre, platId: r.id })))
+    .sort((a, b) => b.avant - a.avant);
+}
+
 function rendreRebours() {
-  const r = recetteCourante();
   const service = momentDuService();
+  const lignes = calendrierFusionne();
 
   $('rebours-service').textContent = service
     ? `service le ${service.toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long' })} à ${service.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' })}`
     : 'choisissez un jour et une heure de service';
 
-  $('rebours').innerHTML = r.rebours
+  $('rebours-resume').textContent = `${menuComplet().length} plat${menuComplet().length > 1 ? 's' : ''} · ${lignes.length} gestes`;
+
+  $('rebours').innerHTML = lignes
     .map((etape) => {
       let heure = '—';
       let jour = '';
@@ -448,8 +609,11 @@ function rendreRebours() {
       return `
         <tr>
           <td class="rebours__heure">${txt(heure)}<span class="rebours__jour">${txt(jour)}</span></td>
-          <td>${txt(formaterDelai(etape.avant))}</td>
-          <td>${txt(etape.texte)}</td>
+          <td><span class="rebours__plat">${txt(etape.plat)}</span></td>
+          <td>
+            ${txt(etape.texte)}
+            ${etape.four ? `<span class="etape__temperature">four ${txt(etape.four)} °F</span>` : ''}
+          </td>
         </tr>`;
     })
     .join('');
@@ -589,13 +753,15 @@ async function ajouterFichiers(fichiers) {
 function sauvegarder() {
   const contenu = {
     format: 'mon-epicerie/cuisine',
-    version: 1,
+    version: 2,
     exporteLe: new Date().toISOString(),
     reglages: {
+      principalId: etat.principalId,
       recetteId: etat.recetteId,
       portions: etat.portions,
       serviceDate: etat.serviceDate,
       serviceHeure: etat.serviceHeure,
+      menus: etat.menus,
       etapesFaites: etat.etapesFaites,
       notes: etat.notes,
     },
@@ -625,10 +791,12 @@ async function restaurer(fichier) {
   if (!confirm('Remplacer vos réglages et vos photos par ceux de la sauvegarde ?')) return;
 
   const r = contenu.reglages ?? {};
-  if (RECETTES.some((x) => x.id === r.recetteId)) etat.recetteId = r.recetteId;
+  if (PRINCIPAUX.some((x) => x.id === r.principalId)) etat.principalId = r.principalId;
+  if (parId(r.recetteId)) etat.recetteId = r.recetteId;
   if (Number.isFinite(r.portions)) etat.portions = r.portions;
   if (typeof r.serviceDate === 'string') etat.serviceDate = r.serviceDate;
   if (typeof r.serviceHeure === 'string') etat.serviceHeure = r.serviceHeure;
+  etat.menus = r.menus ?? {};
   etat.etapesFaites = r.etapesFaites ?? {};
   etat.notes = r.notes ?? {};
 
@@ -664,12 +832,36 @@ function afficherVue(nom) {
   }
 }
 
+/**
+ * Imprime, soit la recette ouverte, soit le menu entier.
+ *
+ * Le menu entier passe par un conteneur à part, rempli à la demande : c'est
+ * le seul moyen de sortir sur papier des recettes que l'écran n'affiche pas.
+ */
+function imprimer(mode) {
+  if (mode === 'menu') {
+    $('impression-menu').innerHTML = menuComplet()
+      .map((r, rang) => `<div class="fiche ${rang ? 'fiche--suivante' : ''}">${htmlRecette(r, false)}</div>`)
+      .join('');
+  }
+  document.body.classList.toggle('mode-menu', mode === 'menu');
+  // On prépare l'en-tête ici plutôt que de compter sur `beforeprint` : selon
+  // le navigateur, cet événement arrive après que la feuille est composée, et
+  // l'en-tête resterait celui de l'impression précédente.
+  preparerImpression();
+  window.print();
+}
+
+window.addEventListener('afterprint', () => document.body.classList.remove('mode-menu'));
+
 /** L'en-tête de la feuille imprimée : titre, tablée, heure du service. */
 function preparerImpression() {
-  const r = recetteCourante();
   const service = momentDuService();
+  const menu = document.body.classList.contains('mode-menu');
+  const titre = menu ? `Menu — ${principal().titre}` : recetteCourante().titre;
+
   $('entete-impression').innerHTML = `
-    <strong style="font-size:1.15rem">${txt(r.titre)}</strong> —
+    <strong style="font-size:1.15rem">${txt(titre)}</strong> —
     ${txt(etat.portions)} convives${
       service
         ? ` — service le ${txt(service.toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long' }))} à ${txt(service.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' }))}`
@@ -690,8 +882,13 @@ function preparerImpression() {
 }
 
 /* =========================================================================
-   Rendu global et branchements
+   Rendu global
    ========================================================================= */
+
+function rendreRecette() {
+  $('recette-corps').innerHTML = htmlRecette(recetteCourante(), true);
+  $('choix-recette').value = etat.recetteId;
+}
 
 function toutRendre() {
   $('choix-recette').value = etat.recetteId;
@@ -702,17 +899,15 @@ function toutRendre() {
   $('photo-filtre').value = etat.filtrePhoto;
   $('notes').value = etat.notes[etat.recetteId] ?? '';
 
-  rendreChapeau();
-  rendreAvertissements();
-  rendreTemperatures();
-  rendreIngredients();
-  rendreMateriel();
-  rendreEtapes();
-  rendreMethodes();
-  rendreFinition();
+  rendreMenu();
+  rendreRecette();
   rendreRebours();
   rendreGalerie();
 }
+
+/* =========================================================================
+   Branchements
+   ========================================================================= */
 
 /* --- Onglets --- */
 for (const onglet of document.querySelectorAll('.onglet')) {
@@ -726,19 +921,47 @@ $('btn-theme').addEventListener('click', () => {
   enregistrer();
 });
 
+/* --- Le menu : retenir un plat, ou l'ouvrir --- */
+$('vue-menu').addEventListener('click', (evenement) => {
+  const bascule = evenement.target.closest('[data-menu]');
+  if (bascule) {
+    const id = bascule.dataset.menu;
+    const retenus = new Set(auMenu());
+    retenus.has(id) ? retenus.delete(id) : retenus.add(id);
+    etat.menus[etat.principalId] = [...retenus];
+    enregistrer();
+    rendreMenu();
+    rendreRebours();
+    signaler(retenus.has(id) ? `${parId(id).titre} entre au menu.` : `${parId(id).titre} quitte le menu.`);
+    return;
+  }
+
+  const ouvrir = evenement.target.closest('[data-ouvrir]');
+  if (ouvrir) {
+    etat.recetteId = ouvrir.dataset.ouvrir;
+    enregistrer();
+    $('notes').value = etat.notes[etat.recetteId] ?? '';
+    rendreRecette();
+    afficherVue('recette');
+    window.scrollTo({ top: 0 });
+  }
+});
+
 /* --- Réglages --- */
 $('choix-recette').addEventListener('change', (e) => {
   etat.recetteId = e.target.value;
-  etat.portions = recetteCourante().portions;
+  // Choisir un plat principal déplace le menu ; choisir un à-côté ne fait
+  // qu'ouvrir sa fiche, sans défaire le menu en cours.
+  if (parId(etat.recetteId)?.type === 'principal') etat.principalId = etat.recetteId;
   enregistrer();
+  $('notes').value = etat.notes[etat.recetteId] ?? '';
   toutRendre();
 });
 
 function changerPortions(valeur) {
   etat.portions = Math.min(80, Math.max(1, Math.round(valeur) || 1));
   enregistrer();
-  rendreChapeau();
-  rendreIngredients();
+  rendreRecette();
   $('portions').value = etat.portions;
 }
 
@@ -758,47 +981,50 @@ $('service-heure').addEventListener('change', (e) => {
   rendreRebours();
 });
 
-/* --- Étapes : cases et minuteurs --- */
-$('etapes').addEventListener('click', (evenement) => {
+/* --- La recette : cases, minuteurs, copie de la liste --- */
+$('recette-corps').addEventListener('click', async (evenement) => {
   const cocher = evenement.target.closest('[data-cocher]');
   if (cocher) {
     const index = Number(cocher.dataset.cocher);
-    const id = etat.recetteId;
-    const faites = new Set(etat.etapesFaites[id] ?? []);
+    const faites = new Set(etat.etapesFaites[etat.recetteId] ?? []);
     faites.has(index) ? faites.delete(index) : faites.add(index);
-    etat.etapesFaites[id] = [...faites];
+    etat.etapesFaites[etat.recetteId] = [...faites];
     enregistrer();
-    rendreEtapes();
+    rendreRecette();
     return;
   }
 
   const minuteur = evenement.target.closest('[data-minuteur]');
-  if (minuteur) lancerMinuteur(Number(minuteur.dataset.minuteur), minuteur.dataset.nom);
-});
-
-$('btn-decocher').addEventListener('click', () => {
-  etat.etapesFaites[etat.recetteId] = [];
-  enregistrer();
-  rendreEtapes();
-  signaler('Étapes remises à zéro.');
-});
-
-/* --- Copie de la liste d'ingrédients --- */
-$('btn-copier-ingredients').addEventListener('click', async () => {
-  const r = recetteCourante();
-  const lignes = [`${r.titre} — ${etat.portions} convives`, ''];
-  for (const groupe of r.ingredients) {
-    lignes.push(groupe.groupe.toUpperCase());
-    for (const i of groupe.items) {
-      lignes.push(`  ${formaterQuantite(i.q, i.u)} ${i.nom}`.trimEnd());
-    }
-    lignes.push('');
+  if (minuteur) {
+    lancerMinuteur(Number(minuteur.dataset.minuteur), minuteur.dataset.nom);
+    return;
   }
-  try {
-    await navigator.clipboard.writeText(lignes.join('\n'));
-    signaler('Liste copiée — collez-la dans votre liste d’épicerie.');
-  } catch {
-    signaler('Le navigateur a refusé l’accès au presse-papiers.');
+
+  if (evenement.target.closest('#btn-decocher')) {
+    etat.etapesFaites[etat.recetteId] = [];
+    enregistrer();
+    rendreRecette();
+    signaler('Étapes remises à zéro.');
+    return;
+  }
+
+  if (evenement.target.closest('#btn-copier-ingredients')) {
+    const lignes = [`Menu — ${principal().titre} · ${etat.portions} convives`, ''];
+    for (const r of menuComplet()) {
+      lignes.push(`### ${r.titre.toUpperCase()}`);
+      for (const groupe of r.ingredients) {
+        for (const i of groupe.items) {
+          lignes.push(`  ${formaterQuantite(i.q, i.u, r)} ${i.nom}`.trimEnd());
+        }
+      }
+      lignes.push('');
+    }
+    try {
+      await navigator.clipboard.writeText(lignes.join('\n'));
+      signaler(`Liste des ${menuComplet().length} plats copiée.`);
+    } catch {
+      signaler('Le navigateur a refusé l’accès au presse-papiers.');
+    }
   }
 });
 
@@ -875,7 +1101,8 @@ $('galerie').addEventListener('input', (evenement) => {
 $('visionneuse-fermer').addEventListener('click', () => $('visionneuse').close());
 
 /* --- Impression, sauvegarde, restauration --- */
-$('btn-imprimer').addEventListener('click', () => window.print());
+$('btn-imprimer').addEventListener('click', () => imprimer('menu'));
+$('btn-imprimer-recette').addEventListener('click', () => imprimer('recette'));
 window.addEventListener('beforeprint', preparerImpression);
 
 $('btn-sauvegarde').addEventListener('click', sauvegarder);
@@ -892,16 +1119,26 @@ $('fichier-restauration').addEventListener('change', (e) => {
 charger();
 appliquerTheme();
 
-$('choix-recette').innerHTML = RECETTES.map(
-  (r) => `<option value="${txt(r.id)}">${txt(r.titre)}</option>`,
-).join('');
+// Le sélecteur groupe les recettes par rôle : on ne cherche pas une entrée
+// dans la même liste qu'un plat principal.
+const GROUPES = [
+  ['principal', 'Plats principaux'],
+  ['entree', 'Entrées'],
+  ['accompagnement', 'Accompagnements'],
+];
+$('choix-recette').innerHTML = GROUPES.map(([type, nom]) => {
+  const options = RECETTES.filter((r) => r.type === type)
+    .map((r) => `<option value="${txt(r.id)}">${txt(r.titre)}</option>`)
+    .join('');
+  return options ? `<optgroup label="${txt(nom)}">${options}</optgroup>` : '';
+}).join('');
 
 // Sans jour choisi, on propose celui d'aujourd'hui : le calendrier à rebours
 // est utile tout de suite, quitte à ce que les premières lignes soient déjà
 // passées.
 if (!etat.serviceDate) etat.serviceDate = new Date().toISOString().slice(0, 10);
 
-afficherVue('recette');
+afficherVue(etat.vue === 'recette' ? 'recette' : 'menu');
 toutRendre();
 
 listerPhotos()

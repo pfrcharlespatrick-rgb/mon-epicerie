@@ -654,6 +654,70 @@ textarea {
   color: var(--vert);
 }
 
+/* --- Les plats du menu --------------------------------------------------- */
+
+.plats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: 0.8rem;
+}
+
+.plat {
+  border: 1px solid var(--bord);
+  border-left: 4px solid var(--bord-fort);
+  border-radius: var(--rayon);
+  background: var(--surface-2);
+  padding: 0.8rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  break-inside: avoid;
+}
+
+/* Un plat retenu se voit d'un coup d'œil : c'est la seule information que
+   l'on cherche en revenant sur cet onglet. */
+.plat--retenu {
+  border-left-color: var(--vert);
+  background: var(--vert-doux);
+}
+
+.plat--principal {
+  border-left-color: var(--accent);
+  background: var(--accent-doux);
+}
+
+.plat__entete {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.plat__titre {
+  font-size: 1.02rem;
+}
+
+.plat__role {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--texte-doux);
+}
+
+.plat__pourquoi {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.plat__actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 0.3rem;
+}
+
 /* --- Calendrier à rebours ------------------------------------------------ */
 
 .rebours {
@@ -694,6 +758,14 @@ textarea {
 
 .rebours tr:last-child td {
   border-bottom: none;
+}
+
+.rebours__plat {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--texte-doux);
+  line-height: 1.3;
 }
 
 /* --- Minuterie ----------------------------------------------------------- */
@@ -911,10 +983,30 @@ dialog img {
     padding: 0;
   }
 
-  /* À l'impression, on ne veut pas la vue affichée à l'écran : on veut la
-     recette entière, y compris les onglets que l'utilisateur n'a pas ouverts. */
+  /* À l'impression, on ne veut pas la seule vue affichée à l'écran : on veut
+     la fiche entière, y compris les onglets restés fermés. */
   .vue[hidden] {
     display: block !important;
+  }
+
+  /* Deux feuilles possibles. Par défaut, la recette ouverte ; en mode menu,
+     toutes les recettes du menu, et l'onglet de la recette s'efface pour ne
+     pas sortir deux fois la même. */
+  #impression-menu {
+    display: none;
+  }
+
+  body.mode-menu #impression-menu {
+    display: block;
+  }
+
+  body.mode-menu #vue-recette,
+  body.mode-menu #vue-menu .plat__actions {
+    display: none !important;
+  }
+
+  .fiche--suivante {
+    break-before: page;
   }
 
   .vue {
