@@ -1,0 +1,373 @@
+/* Ma Cuisine — mise en forme. Palette chaleureuse, thèmes clair/sombre,
+   impression en feuille épurée. Aucune dépendance. */
+
+:root {
+  --fond: #faf6f0;
+  --carte: #ffffff;
+  --encre: #292524;
+  --encre-douce: #6b6560;
+  --accent: #b45309;
+  --accent-sombre: #92400e;
+  --accent-fond: #fdf3e7;
+  --bord: #e7ddd2;
+  --alerte-fond: #fdeaea;
+  --alerte-bord: #dc2626;
+  --reussite: #047857;
+  --ombre: 0 1px 3px rgba(41, 37, 36, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fond: #1c1917;
+    --carte: #272220;
+    --encre: #e9e5e1;
+    --encre-douce: #a8a29e;
+    --accent: #e08a2e;
+    --accent-sombre: #f0a04b;
+    --accent-fond: #332a1e;
+    --bord: #3d3733;
+    --alerte-fond: #391f1f;
+    --alerte-bord: #ef4444;
+    --reussite: #34d399;
+    --ombre: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fond);
+  color: var(--encre);
+  font-family: Georgia, 'Times New Roman', serif;
+  line-height: 1.65;
+  font-size: 1.02rem;
+}
+
+/* --- En-tête ---------------------------------------------------------- */
+
+.entete {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  max-width: 52rem;
+  margin: 0 auto;
+}
+
+.entete-titre { display: flex; align-items: center; gap: 0.85rem; }
+
+.logo { width: 3rem; height: 3rem; flex: none; }
+
+h1 { margin: 0; font-size: 1.5rem; letter-spacing: 0.01em; }
+
+.sous-titre { margin: 0.1rem 0 0; color: var(--encre-douce); font-style: italic; font-size: 0.92rem; }
+
+.entete-boutons { display: flex; gap: 0.5rem; }
+
+/* --- Cartes et sections ------------------------------------------------ */
+
+main { max-width: 52rem; margin: 0 auto; padding: 0 1.25rem 2rem; }
+
+.carte {
+  background: var(--carte);
+  border: 1px solid var(--bord);
+  border-radius: 14px;
+  box-shadow: var(--ombre);
+  padding: 1.25rem 1.4rem;
+  margin-bottom: 1.25rem;
+}
+
+h2 { margin: 0 0 0.5rem; font-size: 1.25rem; color: var(--accent-sombre); }
+
+.explication { color: var(--encre-douce); margin-top: 0; }
+
+/* --- Boutons et chips --------------------------------------------------- */
+
+.bouton {
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--bord);
+  background: var(--carte);
+  color: var(--encre);
+  cursor: pointer;
+}
+
+.bouton:hover { border-color: var(--accent); }
+
+.bouton.principal {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: bold;
+  padding: 0.65rem 1.4rem;
+}
+
+.bouton.principal:hover { background: var(--accent-sombre); }
+
+.bouton.discret { background: transparent; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0; }
+
+.chip {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--bord);
+  background: var(--carte);
+  color: var(--encre);
+  cursor: pointer;
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* --- Grille des pièces -------------------------------------------------- */
+
+.grille-pieces {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: 0.75rem;
+}
+
+.piece {
+  font: inherit;
+  text-align: left;
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--bord);
+  border-radius: 12px;
+  background: var(--carte);
+  color: var(--encre);
+  cursor: pointer;
+}
+
+.piece:hover, .piece[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-fond); }
+
+.piece .emoji { font-size: 1.6rem; line-height: 1.2; }
+
+.piece b { display: block; }
+
+.piece small { color: var(--encre-douce); line-height: 1.35; display: block; }
+
+/* --- Formulaire --------------------------------------------------------- */
+
+.champ { margin: 1.1rem 0; border: 0; padding: 0; }
+
+.champ label, .champ legend { font-weight: bold; display: block; margin-bottom: 0.35rem; }
+
+.facultatif { font-weight: normal; color: var(--encre-douce); font-size: 0.88rem; }
+
+.champ input {
+  font: inherit;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--bord);
+  border-radius: 10px;
+  background: var(--fond);
+  color: var(--encre);
+  max-width: 16rem;
+  width: 100%;
+}
+
+.champ-poids { display: flex; align-items: center; gap: 0.5rem; }
+
+.champ-poids input { max-width: 8rem; }
+
+.unite { color: var(--encre-douce); }
+
+.indice { color: var(--encre-douce); font-size: 0.9rem; margin: 0.35rem 0 0; }
+
+/* --- Recette composée ---------------------------------------------------- */
+
+.recette-entete h3 { font-size: 1.45rem; margin: 0 0 0.25rem; }
+
+.recette-sous-titre { color: var(--encre-douce); font-style: italic; margin: 0 0 1rem; }
+
+.vitrine-temperatures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.vitrine {
+  flex: 1 1 10rem;
+  background: var(--accent-fond);
+  border: 1px solid var(--bord);
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  text-align: center;
+}
+
+.vitrine .gros { font-size: 1.6rem; font-weight: bold; color: var(--accent-sombre); display: block; }
+
+.vitrine small { color: var(--encre-douce); }
+
+.recette h4 { color: var(--accent-sombre); margin: 1.5rem 0 0.4rem; font-size: 1.1rem; }
+
+/* Étapes numérotées, avec titre court et durée. */
+
+.etapes { list-style: none; counter-reset: etape; margin: 0.5rem 0 0; padding: 0; }
+
+.etapes li {
+  counter-increment: etape;
+  position: relative;
+  padding: 0.6rem 0 0.6rem 3rem;
+  border-bottom: 1px dotted var(--bord);
+}
+
+.etapes li:last-child { border-bottom: 0; }
+
+.etapes li::before {
+  content: counter(etape);
+  position: absolute;
+  left: 0;
+  top: 0.75rem;
+  width: 2.1rem;
+  height: 2.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.etape-en-tete { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
+
+.etape-titre { font-weight: bold; font-size: 1.05rem; }
+
+.etape-quand { color: var(--encre-douce); font-size: 0.85rem; font-style: italic; }
+
+.duree {
+  font-size: 0.82rem;
+  background: var(--accent-fond);
+  border: 1px solid var(--bord);
+  color: var(--accent-sombre);
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+  white-space: nowrap;
+}
+
+.etapes p { margin: 0.3rem 0 0; }
+
+/* L'étape où l'on peut tout gâcher. */
+.etapes li.critique::before { background: var(--alerte-bord); }
+
+.critique-note { color: var(--alerte-bord); font-size: 0.88rem; font-weight: bold; }
+
+/* --- Encarts -------------------------------------------------------------- */
+
+.encart {
+  border: 1px solid var(--bord);
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  background: var(--accent-fond);
+}
+
+.encart.alerte { border-left-color: var(--alerte-bord); background: var(--alerte-fond); }
+
+.encart p { margin: 0.35rem 0; }
+
+.encart p:first-child { margin-top: 0; }
+
+.encart p:last-child { margin-bottom: 0; }
+
+/* --- Calendrier à rebours -------------------------------------------------- */
+
+.calendrier { margin: 0.5rem 0 0; padding: 0; list-style: none; }
+
+.calendrier li {
+  display: grid;
+  grid-template-columns: 11rem 1fr;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px dotted var(--bord);
+}
+
+.calendrier li:last-child { border-bottom: 0; }
+
+.calendrier .moment { font-weight: bold; color: var(--accent-sombre); }
+
+@media (max-width: 480px) {
+  .calendrier li { grid-template-columns: 1fr; gap: 0.1rem; }
+}
+
+/* --- Dialogues -------------------------------------------------------------- */
+
+dialog {
+  border: 1px solid var(--bord);
+  border-radius: 14px;
+  background: var(--carte);
+  color: var(--encre);
+  max-width: 30rem;
+  width: calc(100% - 2rem);
+  padding: 1.25rem 1.4rem;
+}
+
+dialog::backdrop { background: rgba(28, 25, 23, 0.5); }
+
+.liste-equipement { display: grid; gap: 0.4rem; margin: 0.75rem 0; }
+
+.liste-equipement label {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  cursor: pointer;
+}
+
+.actions-dialogue { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem; }
+
+.entree-carnet {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px dotted var(--bord);
+}
+
+.entree-carnet small { color: var(--encre-douce); display: block; }
+
+.entree-carnet .boutons { display: flex; gap: 0.4rem; flex: none; }
+
+.carnet-vide { color: var(--encre-douce); font-style: italic; }
+
+.actions-recette { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.25rem; }
+
+/* --- Pied ----------------------------------------------------------------- */
+
+.pied {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 0 1.25rem 2rem;
+  color: var(--encre-douce);
+  font-size: 0.88rem;
+}
+
+.pied a { color: var(--accent-sombre); }
+
+/* --- Impression : la feuille de cuisine, rien d'autre ---------------------- */
+
+@media print {
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .entete, .pied, #section-choix, #section-details, .actions-recette, dialog { display: none !important; }
+  .carte { border: 0; box-shadow: none; padding: 0; }
+  .etapes li::before { background: #000; }
+  .vitrine, .encart, .duree { background: #fff; border-color: #999; }
+  .etapes li { break-inside: avoid; }
+}
