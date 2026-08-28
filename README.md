@@ -151,7 +151,10 @@ sort une feuille de cuisine épurée.
 ### Le conseiller à l'œil : la photo
 
 En tête de page, une seconde manière d'entrer : **photographier la pièce**,
-étiquette visible, et dire ce qu'on en attend. La photo est analysée par
+étiquette visible, et dire ce qu'on en attend — ou écrire sa demande **sans
+photo** (« un souper pour quatre avec ce que j'ai au congélateur ») : le
+conseiller compose alors depuis l'inventaire et la liste. La photo, quand il
+y en a une, est analysée par
 Claude (Anthropic) — identification de la coupe et du poids — puis la recette
 est composée selon les mêmes règles que le reste de l'application, calendrier
 à rebours compris si l'on a donné l'heure du service. Le poids suit trois

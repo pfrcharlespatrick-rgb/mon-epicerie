@@ -168,8 +168,10 @@ const Conseiller = (() => {
     'Tu es le conseiller culinaire de la maison : tu écris exclusivement en français, dans une prose littéraire et soignée,',
     'avec le vocabulaire culinaire du Québec, le système métrique et les degrés Celsius.',
     '',
-    'On te soumet la photo d’une pièce de viande, de poisson, de fruits de mer ou de légumes — souvent avec son étiquette.',
-    'Commence par lire la photo avec rigueur : la pièce exacte et, si l’étiquette le donne, son poids.',
+    'On te soumet la photo d’une pièce de viande, de poisson, de fruits de mer ou de légumes — souvent avec son étiquette —,',
+    'ou bien une demande écrite sans photo. Avec une photo, commence par la lire avec rigueur : la pièce exacte et, si',
+    'l’étiquette le donne, son poids. Sans photo, compose à partir de la demande, de l’inventaire et de la liste d’épicerie,',
+    'et remplis alors "identification" avec ce que tu retiens de la demande et du stock.',
     'Ne t’occupe jamais des dates de péremption : n’en parle pas, ne les lis pas, sauf question explicite de l’utilisateur.',
     'Le poids suit trois voies : s’il t’est fourni dans la demande, il fait foi ; sinon lis-le sur l’étiquette ; sinon',
     'estime-le à l’œil d’après la pièce, en disant clairement que c’est une estimation et que l’utilisateur peut la corriger',
@@ -280,13 +282,18 @@ const Conseiller = (() => {
     return texte;
   }
 
-  /** Le premier tour : la photo, la demande, et tout le contexte de la maison. */
+  /** Le premier tour : la photo (facultative), la demande, et tout le contexte de la maison. */
   function premierTour(photo, demande, contexte) {
     const morceaux = [];
-    morceaux.push('Voici la pièce photographiée. Ma demande : ' + (demande || 'compose la recette qui lui rend justice.'));
+    morceaux.push(photo
+      ? 'Voici la pièce photographiée. Ma demande : ' + (demande || 'compose la recette qui lui rend justice.')
+      : 'Pas de photo cette fois — compose depuis ma demande et mon stock. Ma demande : '
+        + (demande || 'propose la recette qui tire le meilleur parti de mon inventaire.'));
     morceaux.push(contexte.poids
-      ? 'Poids réel de la pièce : ' + contexte.poids + ' g — il fait foi, quoi que dise l’étiquette.'
-      : 'Le poids n’est pas fourni : lis-le sur l’étiquette, ou estime-le à l’œil en le disant.');
+      ? 'Poids réel de la pièce : ' + contexte.poids + ' g — il fait foi' + (photo ? ', quoi que dise l’étiquette' : '') + '.'
+      : (photo
+        ? 'Le poids n’est pas fourni : lis-le sur l’étiquette, ou estime-le à l’œil en le disant.'
+        : 'Aucun poids fourni : retiens des quantités raisonnables et dis lesquelles.'));
     if (contexte.service) {
       morceaux.push('Heure du service visée : ' + contexte.service + '. Donne le calendrier à rebours avec les heures réelles.');
     }
@@ -310,13 +317,12 @@ const Conseiller = (() => {
     }
     morceaux.push('Date d’aujourd’hui : ' + new Intl.DateTimeFormat('fr-CA', { dateStyle: 'long' }).format(new Date()) + '.');
 
-    return {
-      role: 'user',
-      content: [
-        { type: 'image', source: { type: 'base64', media_type: photo.media_type, data: photo.data } },
-        { type: 'text', text: morceaux.join('\n') },
-      ],
-    };
+    const contenu = [];
+    if (photo) {
+      contenu.push({ type: 'image', source: { type: 'base64', media_type: photo.media_type, data: photo.data } });
+    }
+    contenu.push({ type: 'text', text: morceaux.join('\n') });
+    return { role: 'user', content: contenu };
   }
 
   /** Extrait l'objet JSON d'une réponse, même enrobée d'une phrase ou d'une clôture. */

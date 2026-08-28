@@ -376,9 +376,13 @@
     evenement.preventDefault();
     montrerErreur('');
     if (!Conseiller.cle()) { $('#dialogue-cle').showModal(); return; }
-    if (!photoCourante) { montrerErreur('Commencez par une photo — la pièce, étiquette bien visible.'); return; }
+    const demande = $('#champ-demande').value.trim();
+    if (!photoCourante && !demande) {
+      montrerErreur('Donnez-moi au moins quelques mots — ce que vous voulez cuisiner — ou une photo de la pièce.');
+      return;
+    }
 
-    conversation = [Conseiller.premierTour(photoCourante, $('#champ-demande').value.trim(), contexteConseiller())];
+    conversation = [Conseiller.premierTour(photoCourante, demande, contexteConseiller())];
     montrerAttente(true);
     resultatConseiller.hidden = true;
 
