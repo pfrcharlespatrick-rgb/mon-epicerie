@@ -144,21 +144,22 @@ alors des étapes numérotées, titrées et minutées, selon des règles constan
 
 Le bouton **🍳 Ma cuisine** consigne l'équipement possédé (thermomètre à
 sonde, fonte, cocotte…) : les recettes s'y adaptent et proposent des
-substitutions plutôt que de renvoyer au magasin. Une date « meilleur avant »
-dépassée déclenche un avertissement franc, plus sévère pour la volaille et le
-poisson. Le **📖 Carnet** garde les recettes composées (localStorage, comme la
-liste d'épicerie), et l'impression sort une feuille de cuisine épurée.
+substitutions plutôt que de renvoyer au magasin. Le **📖 Carnet** garde les
+recettes composées (localStorage, comme la liste d'épicerie), et l'impression
+sort une feuille de cuisine épurée.
 
 ### Le conseiller à l'œil : la photo
 
 En tête de page, une seconde manière d'entrer : **photographier la pièce**,
 étiquette visible, et dire ce qu'on en attend. La photo est analysée par
-Claude (Anthropic) — identification de la coupe, lecture du poids et de la
-date, avertissement franc si la fraîcheur inquiète — puis la recette est
-composée selon les mêmes règles que le reste de l'application, calendrier à
-rebours compris si l'on a donné l'heure du service. On peut ensuite
-**répliquer** sur la même photo (« et sans four ? », « pour huit plutôt que
-quatre ? »).
+Claude (Anthropic) — identification de la coupe et du poids — puis la recette
+est composée selon les mêmes règles que le reste de l'application, calendrier
+à rebours compris si l'on a donné l'heure du service. Le poids suit trois
+voies : inscrit dans le champ prévu s'il est connu, lu sur l'étiquette sinon,
+estimé à l'œil en dernier recours — en le disant, pour qu'on puisse le
+corriger d'une réplique. Les dates de péremption ne sont ni lues ni
+commentées. On peut ensuite **répliquer** sur la même photo (« et sans
+four ? », « pour huit plutôt que quatre ? »).
 
 Deux ponts avec la liste d'épicerie, permise par le domaine commun
 (même `localStorage`) :

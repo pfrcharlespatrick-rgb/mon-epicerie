@@ -49,32 +49,6 @@ const Moteur = {
     return String(texte).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   },
 
-  /* ---------- L'avertissement de fraîcheur ---------- */
-
-  /**
-   * Jauge la date « meilleur avant » contre la catégorie de la pièce.
-   * Retourne du HTML d'encart, ou une chaîne vide si tout va bien.
-   */
-  fraicheur(piece, ctx) {
-    if (!ctx.peremption) return '';
-    const limite = new Date(ctx.peremption + 'T23:59:59');
-    const cuisson = ctx.service || new Date();
-    const joursMarge = Math.floor((limite - cuisson) / 86400000);
-
-    if (joursMarge < 0) {
-      const fragile = piece.perissable === 'volaille' || piece.perissable === 'poisson';
-      return '<div class="encart alerte"><p><b>Un mot franc sur la fraîcheur.</b> '
-        + (fragile
-          ? 'La date « meilleur avant » sera dépassée au moment de cuisiner, et sur la volaille comme sur le poisson, je ne transige pas : ne prenez pas ce risque. Si la pièce dégage la moindre odeur aigre ou soufrée, si elle poisse au toucher, elle va aux ordures, pas dans l’assiette — aucune cuisson ne rattrape une pièce tournée.'
-          : 'La date « meilleur avant » sera dépassée au moment de cuisiner. Sur une pièce entière de viande, ce n’est pas une condamnation automatique — cette date parle de qualité, non de sécurité — mais fiez-vous à vos sens avant tout : une odeur franche et saine, une surface qui ne poisse pas, une couleur vivante. Au moindre doute, on jette ; un rôti se remplace, pas une intoxication.')
-        + '</p></div>';
-    }
-    if (joursMarge === 0 && (piece.perissable === 'volaille' || piece.perissable === 'poisson')) {
-      return '<div class="encart alerte"><p><b>À cuisiner sans tarder.</b> La date « meilleur avant » tombe le jour même : c’est aujourd’hui que cette pièce veut être cuite, pas demain. Vérifiez l’odeur à l’ouverture — nette et marine pour le poisson, neutre pour la volaille — et lancez-vous.</p></div>';
-    }
-    return '';
-  },
-
   /* ---------- Le calendrier à rebours ---------- */
 
   /**
@@ -167,7 +141,6 @@ const Moteur = {
       + '<p class="recette-sous-titre">' + (cuisson && cuisson.nom ? 'Cuisson ' + this.echapper(cuisson.nom.toLowerCase()) + '. ' : '') + this.echapper(piece.description) + '.</p>'
       + '</div>'
       + '<div class="vitrine-temperatures">' + vitrines.join('') + '</div>'
-      + this.fraicheur(piece, ctx)
       + piece.intro(ctx)
       + '<h4>Ce qu’il vous faut</h4>'
       + piece.besoins(ctx)

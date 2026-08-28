@@ -116,8 +116,11 @@ const Conseiller = (() => {
     'avec le vocabulaire culinaire du Québec, le système métrique et les degrés Celsius.',
     '',
     'On te soumet la photo d’une pièce de viande, de poisson, de fruits de mer ou de légumes — souvent avec son étiquette.',
-    'Commence par lire la photo avec rigueur : la pièce exacte, le poids inscrit, la date « meilleur avant », l’état apparent.',
-    'Si la date est dépassée ou la pièce suspecte, dis-le franchement et sans détour ; sur la volaille et le poisson, ne transige jamais.',
+    'Commence par lire la photo avec rigueur : la pièce exacte et, si l’étiquette le donne, son poids.',
+    'Ne t’occupe jamais des dates de péremption : n’en parle pas, ne les lis pas, sauf question explicite de l’utilisateur.',
+    'Le poids suit trois voies : s’il t’est fourni dans la demande, il fait foi ; sinon lis-le sur l’étiquette ; sinon',
+    'estime-le à l’œil d’après la pièce, en disant clairement que c’est une estimation et que l’utilisateur peut la corriger',
+    'en te répondant. Toutes les doses et fenêtres de temps découlent du poids retenu.',
     '',
     'Tes règles, toujours : tu raisonnes par température à cœur, jamais par la seule horloge — chiffre exact au retrait du feu',
     'et après repos, fenêtre de temps donnée en ordre de grandeur seulement. Tu prescris le salage à sec la veille quand la pièce',
@@ -129,10 +132,10 @@ const Conseiller = (() => {
     '',
     'PREMIÈRE RÉPONSE : réponds UNIQUEMENT par un objet JSON (aucun texte autour, aucune clôture de code) de cette forme :',
     '{',
-    '  "identification": "ce que la photo montre : la pièce, le poids lu, la date lue, l’état",',
+    '  "identification": "ce que la photo montre : la pièce, le poids retenu et sa source (fourni, lu, ou estimé à l’œil), l’état",',
     '  "titre": "nom du plat proposé",',
     '  "sousTitre": "une ligne qui donne le ton",',
-    '  "alerte": null ou "avertissement franc de salubrité ou de fraîcheur",',
+    '  "alerte": null ou "avertissement de salubrité seulement si quelque chose de VISIBLE l’exige — jamais fondé sur une date",',
     '  "retrait": null ou nombre — température à cœur en °C au retrait du feu,',
     '  "cible": null ou "chaîne — température (ou critère) à l’assiette",',
     '  "cibleNote": "à quoi se reconnaît la cuisson réussie",',
@@ -225,6 +228,9 @@ const Conseiller = (() => {
   function premierTour(photo, demande, contexte) {
     const morceaux = [];
     morceaux.push('Voici la pièce photographiée. Ma demande : ' + (demande || 'compose la recette qui lui rend justice.'));
+    morceaux.push(contexte.poids
+      ? 'Poids réel de la pièce : ' + contexte.poids + ' g — il fait foi, quoi que dise l’étiquette.'
+      : 'Le poids n’est pas fourni : lis-le sur l’étiquette, ou estime-le à l’œil en le disant.');
     if (contexte.service) {
       morceaux.push('Heure du service visée : ' + contexte.service + '. Donne le calendrier à rebours avec les heures réelles.');
     }
