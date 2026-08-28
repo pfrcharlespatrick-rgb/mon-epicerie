@@ -182,4 +182,64 @@ const Moteur = {
       + this.calendrier(etapes, ctx)
       + '</div>';
   },
+
+  /* ---------- La recette venue du conseiller (photo) ---------- */
+
+  /**
+   * Rend une recette composée par le conseiller à partir d'une photo — même
+   * habillage que les recettes de la maison. `r` est l'objet JSON retourné
+   * par le modèle : tout y est échappé, rien n'y est interprété.
+   */
+  composerConseil(r) {
+    const e = (t) => this.echapper(t ?? '');
+    const par = (t) => (t ? '<p>' + e(t) + '</p>' : '');
+
+    const vitrines = [];
+    if (r.retrait) {
+      vitrines.push('<div class="vitrine"><small>Retrait du feu à</small><span class="gros">' + e(String(r.retrait)) + ' °C</span><small>à cœur</small></div>');
+    }
+    if (r.cible) {
+      vitrines.push('<div class="vitrine"><small>' + (r.retrait ? 'Après repos, à table à' : 'La cible') + '</small><span class="gros">' + e(String(r.cible)) + '</span><small>' + e(r.cibleNote ?? '') + '</small></div>');
+    }
+    if (r.dureeJour) {
+      vitrines.push('<div class="vitrine"><small>Le jour même, comptez</small><span class="gros">' + e(String(r.dureeJour)) + '</span><small>d’après la photo</small></div>');
+    }
+
+    const quandLibelle = (quand) => (quand === 'veille' ? 'La veille' : quand === 'avant' ? 'Les jours d’avant' : 'Le jour même');
+
+    const etapes = Array.isArray(r.etapes) ? r.etapes : [];
+    const listeEtapes = etapes.map((et) =>
+      '<li' + (et.critique ? ' class="critique"' : '') + '>'
+      + '<div class="etape-en-tete">'
+      + '<span class="etape-titre">' + e(et.titre) + '</span>'
+      + (et.duree ? '<span class="duree">' + e(et.duree) + '</span>' : '')
+      + '<span class="etape-quand">' + quandLibelle(et.quand) + '</span>'
+      + (et.critique ? '<span class="critique-note">⚠ là où tout peut se gâcher</span>' : '')
+      + '</div>'
+      + '<p>' + e(et.texte) + '</p>'
+      + '</li>'
+    ).join('');
+
+    const calendrier = Array.isArray(r.calendrier) && r.calendrier.length
+      ? '<h4>Le calendrier à rebours</h4><ul class="calendrier">'
+        + r.calendrier.map((l) => '<li><span class="moment">' + e(l.moment) + '</span><span>' + e(l.titre) + '</span></li>').join('')
+        + '</ul>'
+      : '';
+
+    return '<div class="recette">'
+      + '<div class="recette-entete">'
+      + '<h3>' + e(r.titre ?? 'La recette') + '</h3>'
+      + (r.sousTitre ? '<p class="recette-sous-titre">' + e(r.sousTitre) + '</p>' : '')
+      + '</div>'
+      + (r.identification ? '<div class="encart"><p><b>Ce que la photo montre.</b> ' + e(r.identification) + '</p></div>' : '')
+      + (r.alerte ? '<div class="encart alerte"><p><b>Un mot franc.</b> ' + e(r.alerte) + '</p></div>' : '')
+      + (vitrines.length ? '<div class="vitrine-temperatures">' + vitrines.join('') + '</div>' : '')
+      + (r.besoins ? '<h4>Ce qu’il vous faut</h4>' + par(r.besoins) : '')
+      + (listeEtapes ? '<h4>Les étapes</h4><ol class="etapes">' + listeEtapes + '</ol>' : '')
+      + (r.sauce ? '<h4>La sauce, jamais perdue</h4>' + par(r.sauce) : '')
+      + (r.conservation ? '<h4>Conservation et réchauffage</h4>' + par(r.conservation) : '')
+      + (r.accompagnement ? '<h4>Pour l’accompagner</h4>' + par(r.accompagnement) : '')
+      + calendrier
+      + '</div>';
+  },
 };

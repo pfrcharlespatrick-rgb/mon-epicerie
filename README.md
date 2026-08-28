@@ -2,14 +2,14 @@
 
 Liste de courses hebdomadaire pour la région de Québec : un catalogue de
 163 produits habituels, des quantités, des enseignes, l'impression et la
-sauvegarde. Et, depuis peu, **Ma Cuisine** : les fiches de cuisson de ce qu'on
-rapporte du marché, pilotées à la température à cœur. Le tout dans deux pages
-qui fonctionnent hors ligne et sans compte.
+sauvegarde. Et, par la marmite en haut de la liste, **Ma Cuisine** : le
+conseiller culinaire qui mène ce qu'on rapporte du marché jusqu'à la table,
+piloté à la température à cœur. Le tout fonctionne hors ligne et sans compte.
 
 **→ [Ouvrir l'application](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/)**
 
-Le site héberge aussi **[Ma Cuisine](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/cuisine/)**,
-le conseiller culinaire — voir [sa section](#ma-cuisine--le-conseiller-culinaire) plus bas.
+**→ [Ouvrir Ma Cuisine](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/cuisine/)** —
+voir [sa section](#ma-cuisine--le-conseiller-culinaire) plus bas.
 
 ---
 
@@ -46,89 +46,13 @@ Le bouton **Exporter** propose quatre choses :
 | Sauvegarde `.json` | Fichier réutilisable, à conserver |
 | Restaurer | Recharge un fichier de sauvegarde |
 
-## Ma Cuisine
-
-Une seconde page, accessible par l'icône de marmite en haut de la liste :
-[`cuisine.html`](cuisine.html). Elle sert à cuisiner ce qu'on vient d'acheter.
-
-Chaque recette y est écrite pour **14 convives** et pilotée par la **température
-à cœur**, en **degrés Fahrenheit** — l'équivalent Celsius est donné à côté — parce
-qu'un four au gaz ne suit pas son thermostat et qu'une horloge ne dit rien de ce
-qui se passe dans la viande.
-
-| Onglet | Ce qu'on y trouve |
-|---|---|
-| Le menu | Le plat principal, ses entrées et ses accompagnements proposés, avec la raison de chaque accord. On retient ce qu'on veut ; le reste de l'application suit |
-| La recette | Chapeau, avertissements de salubrité, chiffres à viser, ingrédients, étapes numérotées avec durée, pièges et signes de réussite |
-| Calendrier à rebours | Tous les plats du menu sur **une seule** ligne du temps, chaque geste ramené à son heure réelle |
-| Garde-manger & frigo | Photos des tablettes, du frigo, du congélateur et des étiquettes de viande, avec une note par photo |
-| Mes notes | Le carnet de bord d'une fois à l'autre |
-
-Quatre détails valent la peine d'être connus :
-
-- **Un menu, pas une recette.** Pris un par un, six plats sont six recettes
-  faciles ; pris ensemble, ce sont six plats qui se disputent un four et une paire
-  de mains. Mettre un plat au menu le fait entrer dans la ligne du temps et dans la
-  liste d'épicerie, à sa place.
-- **Le nombre de convives met tout à l'échelle.** Les quantités se recalculent et
-  s'arrondissent à quelque chose de mesurable — personne ne pèse 43,7 g de paprika.
-- **Chaque étape courte porte un minuteur.** Il sonne, même si l'on a changé
-  d'onglet entretemps.
-- **Deux impressions.** *Imprimer le menu* sort toutes les recettes retenues, une
-  par page, plus le calendrier commun et les photos ; le bouton des réglages
-  n'imprime que la recette ouverte. C'est la feuille qu'on colle sur la porte de
-  l'armoire.
-
-### Ajouter ou corriger une recette
-
-Tout le contenu tient dans [`assets/js/recettes.js`](assets/js/recettes.js), en
-clair. Le modèle est documenté en tête de fichier ; l'essentiel :
-
-Une recette porte un `type` — `'principal'`, `'entree'` ou `'accompagnement'` —
-et un plat principal porte ses accords, avec la raison de chacun :
-
-```js
-suggestions: [
-  { id: 'salade-chou-cremeuse', pourquoi: 'Pourquoi ça va ensemble.' },
-],
-```
-
-Le champ `pourquoi` appartient au couple, pas à l'un des deux plats : le même
-accompagnement peut se justifier autrement à côté d'un autre plat principal.
-
-```js
-etapes: [
-  {
-    titre: 'Le salage à sec',
-    duree: '12 à 24 h au frigo',   // un minuteur apparaît si c'est ≤ 6 h
-    temperature: 275,              // en °F ; le °C est calculé
-    texte: 'Ce qu’on fait, et pourquoi.',
-    piege: 'L’endroit précis où l’on peut tout gâcher.',
-    reussite: 'À quoi se reconnaît le succès, au toucher ou à l’œil.',
-  },
-],
-rebours: [
-  { avant: 1200, texte: 'Saler à sec.' },        // minutes avant le service
-  { avant: 240, texte: 'Enfourner.', four: 275 }, // `four` s'affiche dans la ligne du temps
-],
-```
-
-C'est `avant` qui fait tout le travail du calendrier commun : les gestes de tous
-les plats retenus sont versés dans la même liste et triés. Écrire une recette,
-c'est donc surtout décider à quel moment chacun de ses gestes tombe par rapport
-au service — et vérifier, ce faisant, qu'on ne demande pas deux températures de
-four différentes au même moment.
-
-Les quantités s'écrivent pour le nombre indiqué dans `portions` ; l'application
-se charge du reste. Corriger une recette n'efface jamais les cases cochées, les
-notes ni les photos de l'utilisateur.
-
 ## Vos données
 
-Tout est stocké dans le navigateur — `localStorage` pour les listes et les
-réglages, IndexedDB pour les photos de la cuisine —, sur votre appareil.
+Tout est stocké dans le navigateur (`localStorage`), sur votre appareil.
 L'application n'a pas de serveur, pas de compte, pas de traceur, et n'envoie
-aucune requête vers l'extérieur. Corollaire : vider les données du navigateur
+aucune requête vers l'extérieur — à une exception près, choisie et expliquée :
+l'analyse de photo de Ma Cuisine, qui parle directement à l'API d'Anthropic
+avec votre propre clé. Corollaire : vider les données du navigateur
 efface la liste — d'où l'intérêt de la sauvegarde `.json` avant un grand ménage.
 
 ## Vos propres rayons et magasins
@@ -225,6 +149,33 @@ dépassée déclenche un avertissement franc, plus sévère pour la volaille et 
 poisson. Le **📖 Carnet** garde les recettes composées (localStorage, comme la
 liste d'épicerie), et l'impression sort une feuille de cuisine épurée.
 
+### Le conseiller à l'œil : la photo
+
+En tête de page, une seconde manière d'entrer : **photographier la pièce**,
+étiquette visible, et dire ce qu'on en attend. La photo est analysée par
+Claude (Anthropic) — identification de la coupe, lecture du poids et de la
+date, avertissement franc si la fraîcheur inquiète — puis la recette est
+composée selon les mêmes règles que le reste de l'application, calendrier à
+rebours compris si l'on a donné l'heure du service. On peut ensuite
+**répliquer** sur la même photo (« et sans four ? », « pour huit plutôt que
+quatre ? »).
+
+Deux ponts avec la liste d'épicerie, permise par le domaine commun
+(même `localStorage`) :
+
+- le conseiller **reçoit la liste de la semaine** et l'équipement coché, et en
+  tient compte dans ses substitutions ;
+- le bouton **🛒 Manquants vers Mon Épicerie** verse les ingrédients absents
+  directement dans la liste, où l'application d'à côté les assainit et les
+  range à son prochain chargement.
+
+Cette analyse exige une **clé API personnelle** (bouton **🔑 Conseiller**, qui
+explique comment l'obtenir sur console.anthropic.com). La clé reste dans le
+navigateur ; le navigateur parle directement à `api.anthropic.com`, sans aucun
+serveur intermédiaire, et chaque consultation coûte quelques sous, débités
+chez Anthropic. Sans clé, tout le reste — le choix à la main, les vingt
+pièces, le carnet — fonctionne hors ligne et gratuitement, comme avant.
+
 ### Organisation de `cuisine/`
 
 ```
@@ -232,6 +183,7 @@ cuisine/index.html              structure de la page
 cuisine/assets/css/app.css      mise en forme (thèmes clair/sombre, impression)
 cuisine/assets/js/pieces.js     la base de connaissances : pièces, températures, étapes
 cuisine/assets/js/moteur.js     composition de la recette et calendrier à rebours
+cuisine/assets/js/conseiller.js analyse de photo (API Claude), pont vers l'épicerie
 cuisine/assets/js/app.js        branchement de l'interface, carnet, équipement
 cuisine/sw.js                   cache hors-ligne (VERSION à incrémenter au déploiement)
 outils/generer-icones-cuisine.mjs  régénère les icônes PNG
@@ -267,17 +219,7 @@ assets/js/export.js     impression, presse-papiers, sauvegarde/restauration
 assets/js/app.js        branchement de l'interface
 sw.js                   mise en cache pour le hors-ligne
 outils/generer-icones.mjs  régénère les icônes PNG (node outils/generer-icones.mjs)
-
-cuisine.html            la page des recettes
-assets/css/cuisine.css  sa mise en forme, thèmes et impression compris
-assets/js/recettes.js   données : les recettes livrées
-assets/js/cuisine.js    échelle, calendrier à rebours, minuteries, photos
 ```
-
-Les photos du garde-manger vivent dans IndexedDB (`mon-epicerie-cuisine`) plutôt
-que dans `localStorage` : une image dépasse largement ce que ce dernier tolère.
-Elles sont réduites à 1400 px et compressées en JPEG à l'ajout — une photo de
-téléphone de 3,5 Mo tombe autour de 250 ko.
 
 ### Après un déploiement
 

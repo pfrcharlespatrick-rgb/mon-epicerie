@@ -213,7 +213,20 @@
       ouvrir.textContent = 'Rouvrir';
       ouvrir.addEventListener('click', () => {
         $('#dialogue-carnet').close();
-        composer(entree);
+        if (entree.type === 'conseil') {
+          // Une recette du conseiller : on la recompose depuis son JSON gardé.
+          // La conversation, elle, ne reprend pas — la photo n'est pas conservée.
+          dernierConseil = entree.json;
+          conversation = [];
+          contenuConseil.innerHTML = Moteur.composerConseil(entree.json);
+          boutonEpicerie.hidden = !(entree.json?.epicerie?.length);
+          boutonEpicerie.textContent = '🛒 Manquants vers Mon Épicerie';
+          filConseil.innerHTML = '';
+          resultatConseiller.hidden = false;
+          resultatConseiller.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          composer(entree);
+        }
       });
       const oublier = document.createElement('button');
       oublier.type = 'button';
@@ -269,9 +282,207 @@
     $('#dialogue-equipement').showModal();
   });
 
+  /* ---------- Le conseiller à l'œil (photo) ---------- */
+
+  let photoCourante = null;
+  let conversation = [];
+  let dernierConseil = null;
+
+  const sectionConseiller = $('#section-conseiller');
+  const resultatConseiller = $('#resultat-conseiller');
+  const contenuConseil = $('#contenu-conseil');
+  const filConseil = $('#fil-conseil');
+  const attente = $('#attente-conseiller');
+  const erreurConseiller = $('#erreur-conseiller');
+  const boutonConsulter = $('#bouton-consulter');
+  const boutonEpicerie = $('#bouton-epicerie');
+
+  const PHRASES_ATTENTE = [
+    'Le conseiller examine la pièce…',
+    'Il lit l’étiquette à la loupe…',
+    'Il consulte votre liste d’épicerie…',
+    'Il pèse la méthode et son contraire…',
+    'Il compose les étapes, une à une…',
+    'Il règle le calendrier à rebours…',
+  ];
+  let minuterieAttente = null;
+
+  function montrerAttente(oui) {
+    attente.hidden = !oui;
+    boutonConsulter.disabled = oui;
+    clearInterval(minuterieAttente);
+    if (oui) {
+      let i = 0;
+      $('#attente-texte').textContent = PHRASES_ATTENTE[0];
+      minuterieAttente = setInterval(() => {
+        i = (i + 1) % PHRASES_ATTENTE.length;
+        $('#attente-texte').textContent = PHRASES_ATTENTE[i];
+      }, 4000);
+    }
+  }
+
+  function montrerErreur(message) {
+    erreurConseiller.hidden = !message;
+    if (message) {
+      erreurConseiller.innerHTML = '';
+      const p = document.createElement('p');
+      p.textContent = message;
+      erreurConseiller.append(p);
+    }
+  }
+
+  function majEtatCle() {
+    $('#conseiller-hors-ligne').hidden = Boolean(Conseiller.cle());
+  }
+
+  $('#champ-photo').addEventListener('change', async (evenement) => {
+    const fichier = evenement.target.files?.[0];
+    if (!fichier) return;
+    montrerErreur('');
+    try {
+      photoCourante = await Conseiller.preparerPhoto(fichier);
+      const apercu = $('#apercu-photo');
+      apercu.src = photoCourante.apercu;
+      apercu.hidden = false;
+      $('#invite-photo').textContent = '📷 Changer de photo';
+    } catch (err) {
+      photoCourante = null;
+      montrerErreur(err.message);
+    }
+  });
+
+  /** Rend une réponse en prose : un paragraphe par bloc de texte. */
+  function enParagraphes(texte, conteneur) {
+    for (const morceau of String(texte).split(/\n{2,}/)) {
+      if (!morceau.trim()) continue;
+      const p = document.createElement('p');
+      p.textContent = morceau.trim();
+      conteneur.append(p);
+    }
+  }
+
+  function contexteConseiller() {
+    const service = $('#champ-service-photo').value;
+    return {
+      service: service
+        ? Moteur.jour(new Date(service)) + ' à ' + Moteur.heure(new Date(service))
+        : null,
+      equipement: EQUIPEMENT.filter((o) => equip[o.id]).map((o) => o.nom.toLowerCase()),
+      epicerie: Conseiller.listeDeLaSemaine(),
+    };
+  }
+
+  $('#formulaire-conseiller').addEventListener('submit', async (evenement) => {
+    evenement.preventDefault();
+    montrerErreur('');
+    if (!Conseiller.cle()) { $('#dialogue-cle').showModal(); return; }
+    if (!photoCourante) { montrerErreur('Commencez par une photo — la pièce, étiquette bien visible.'); return; }
+
+    conversation = [Conseiller.premierTour(photoCourante, $('#champ-demande').value.trim(), contexteConseiller())];
+    montrerAttente(true);
+    resultatConseiller.hidden = true;
+
+    try {
+      const texte = await Conseiller.consulter(conversation);
+      conversation.push({ role: 'assistant', content: [{ type: 'text', text: texte }] });
+
+      dernierConseil = Conseiller.extraireJSON(texte);
+      contenuConseil.innerHTML = '';
+      if (dernierConseil) {
+        contenuConseil.innerHTML = Moteur.composerConseil(dernierConseil);
+      } else {
+        // Le conseiller a répondu en prose (photo illisible, question, refus poli).
+        enParagraphes(texte, contenuConseil);
+      }
+      boutonEpicerie.hidden = !(dernierConseil?.epicerie?.length);
+      boutonEpicerie.textContent = '🛒 Manquants vers Mon Épicerie';
+      filConseil.innerHTML = '';
+      resultatConseiller.hidden = false;
+      resultatConseiller.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) {
+      montrerErreur(err.message);
+    } finally {
+      montrerAttente(false);
+    }
+  });
+
+  $('#formulaire-replique').addEventListener('submit', async (evenement) => {
+    evenement.preventDefault();
+    const champ = $('#champ-replique');
+    const question = champ.value.trim();
+    if (!question || !conversation.length) return;
+
+    const blocQuestion = document.createElement('p');
+    blocQuestion.className = 'vous';
+    blocQuestion.textContent = question;
+    filConseil.append(blocQuestion);
+    champ.value = '';
+
+    conversation.push({ role: 'user', content: question });
+    montrerAttente(true);
+    try {
+      const texte = await Conseiller.consulter(conversation);
+      conversation.push({ role: 'assistant', content: [{ type: 'text', text: texte }] });
+      const bloc = document.createElement('div');
+      bloc.className = 'conseiller-dit';
+      enParagraphes(texte, bloc);
+      filConseil.append(bloc);
+      bloc.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (err) {
+      conversation.pop();
+      montrerErreur(err.message);
+    } finally {
+      montrerAttente(false);
+    }
+  });
+
+  boutonEpicerie.addEventListener('click', () => {
+    const n = Conseiller.verserALEpicerie(dernierConseil?.epicerie ?? []);
+    boutonEpicerie.textContent = n
+      ? '✓ ' + n + ' article' + (n > 1 ? 's' : '') + ' sur la liste'
+      : '✓ Tout y était déjà';
+  });
+
+  $('#bouton-imprimer-conseil').addEventListener('click', () => window.print());
+
+  $('#bouton-garder-conseil').addEventListener('click', () => {
+    if (!dernierConseil) return;
+    const carnet = lire(CLE_CARNET, []);
+    carnet.unshift({
+      type: 'conseil',
+      json: dernierConseil,
+      titre: (dernierConseil.titre ?? 'Recette du conseiller') + ' 📷',
+      gardeLe: new Date().toISOString(),
+    });
+    ecrire(CLE_CARNET, carnet.slice(0, 100));
+    const bouton = $('#bouton-garder-conseil');
+    bouton.textContent = '✓ Gardée au carnet';
+    setTimeout(() => { bouton.textContent = '💾 Garder au carnet'; }, 2000);
+  });
+
+  /* ---------- La clé ---------- */
+
+  $('#bouton-cle').addEventListener('click', () => {
+    $('#champ-cle').value = Conseiller.cle();
+    $('#dialogue-cle').showModal();
+  });
+
+  $('#bouton-garder-cle').addEventListener('click', () => {
+    Conseiller.definirCle($('#champ-cle').value);
+    majEtatCle();
+  });
+
+  $('#bouton-oublier-cle').addEventListener('click', () => {
+    Conseiller.definirCle('');
+    $('#champ-cle').value = '';
+    majEtatCle();
+    $('#dialogue-cle').close();
+  });
+
   /* ---------- Départ ---------- */
 
   rendreFiltres();
   rendreGrille();
+  majEtatCle();
 
 })();

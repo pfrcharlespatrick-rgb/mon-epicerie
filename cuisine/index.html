@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="assets/css/app.css" />
   <script defer src="assets/js/pieces.js"></script>
   <script defer src="assets/js/moteur.js"></script>
+  <script defer src="assets/js/conseiller.js"></script>
   <script defer src="assets/js/app.js"></script>
 </head>
 <body>
@@ -32,6 +33,7 @@
     </div>
   </div>
   <div class="entete-boutons">
+    <button type="button" id="bouton-cle" class="bouton discret">🔑 Conseiller</button>
     <button type="button" id="bouton-equipement" class="bouton discret">🍳 Ma cuisine</button>
     <button type="button" id="bouton-carnet" class="bouton discret">📖 Carnet</button>
   </div>
@@ -39,9 +41,69 @@
 
 <main>
 
+  <!-- Le conseiller à l'œil : la photo d'abord -->
+  <section id="section-conseiller" class="carte">
+    <h2>La photo</h2>
+    <p class="explication">
+      Photographiez la pièce — l'étiquette bien visible, si elle en a une — et
+      dites ce que vous en attendez. Le conseiller l'identifie, lit le poids et
+      la date, consulte votre liste d'épicerie et votre équipement, puis compose
+      la recette. Vous pourrez ensuite lui répliquer, sur la même photo.
+    </p>
+
+    <div id="conseiller-hors-ligne" class="encart" hidden>
+      <p><b>Le conseiller a besoin d'une clé.</b> L'analyse de photo passe par
+      Claude, avec votre propre clé — le bouton <b>🔑 Conseiller</b> en haut
+      explique comment l'obtenir en cinq minutes. Sans elle, le choix à la main
+      ci-dessous fonctionne toujours, gratuitement et hors ligne.</p>
+    </div>
+
+    <form id="formulaire-conseiller">
+      <label id="zone-photo" class="zone-photo" for="champ-photo">
+        <input type="file" id="champ-photo" accept="image/*" capture="environment" hidden />
+        <img id="apercu-photo" alt="" hidden />
+        <span id="invite-photo">📷 Prendre ou choisir une photo</span>
+      </label>
+
+      <div class="champ">
+        <label for="champ-demande">Votre demande</label>
+        <textarea id="champ-demande" rows="2"
+          placeholder="p. ex. : Nous serons quatre dimanche soir ; je veux une peau qui croustille."></textarea>
+      </div>
+
+      <div class="champ">
+        <label for="champ-service-photo">L'heure du service <span class="facultatif">(facultatif — pour le calendrier à rebours)</span></label>
+        <input type="datetime-local" id="champ-service-photo" />
+      </div>
+
+      <button type="submit" id="bouton-consulter" class="bouton principal">Consulter le conseiller</button>
+    </form>
+
+    <div id="attente-conseiller" class="attente" hidden>
+      <span class="mijote" aria-hidden="true"></span>
+      <span id="attente-texte">Le conseiller examine la pièce…</span>
+    </div>
+
+    <div id="erreur-conseiller" class="encart alerte" hidden></div>
+
+    <div id="resultat-conseiller" hidden>
+      <div id="contenu-conseil"></div>
+      <div class="actions-recette">
+        <button type="button" id="bouton-epicerie" class="bouton" hidden>🛒 Manquants vers Mon Épicerie</button>
+        <button type="button" id="bouton-garder-conseil" class="bouton">💾 Garder au carnet</button>
+        <button type="button" id="bouton-imprimer-conseil" class="bouton">🖨️ Imprimer</button>
+      </div>
+      <div id="fil-conseil" class="fil-conseil"></div>
+      <form id="formulaire-replique" class="replique">
+        <input type="text" id="champ-replique" placeholder="Répliquez au conseiller — même photo, autre question…" />
+        <button type="submit" class="bouton">Envoyer</button>
+      </form>
+    </div>
+  </section>
+
   <!-- Choix de la pièce -->
   <section id="section-choix" class="carte">
-    <h2>La pièce</h2>
+    <h2>Ou à la main, sans connexion</h2>
     <p class="explication">
       Nommez ce que vous rapportez de l'épicerie ou de chez le boucher — la pièce
       telle que l'étiquette la désigne. Choisissez-la ci-dessous, puis donnez son
@@ -108,6 +170,33 @@
     <div id="liste-equipement" class="liste-equipement"></div>
     <div class="actions-dialogue">
       <button type="submit" class="bouton principal">C'est noté</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- La clé du conseiller -->
+<dialog id="dialogue-cle">
+  <form method="dialog">
+    <h2>Connexion au conseiller</h2>
+    <p class="explication">
+      L'analyse de photo est confiée à Claude, d'Anthropic, avec une clé qui
+      vous appartient. Elle reste dans ce navigateur — aucun serveur à nous ne
+      la voit passer — et chaque recette coûte quelques sous, débités chez
+      Anthropic, jamais ici.
+    </p>
+    <p class="explication">
+      Pour l'obtenir : rendez-vous sur <b>console.anthropic.com</b>, créez un
+      compte, déposez un petit montant sous « Billing », puis sous
+      « API&nbsp;Keys » cliquez « Create Key » et copiez la clé (elle commence
+      par <code>sk-ant-</code>). Collez-la ci-dessous, une seule fois.
+    </p>
+    <div class="champ">
+      <label for="champ-cle">Votre clé</label>
+      <input type="password" id="champ-cle" placeholder="sk-ant-…" autocomplete="off" />
+    </div>
+    <div class="actions-dialogue">
+      <button type="button" id="bouton-oublier-cle" class="bouton discret">Oublier la clé</button>
+      <button type="submit" id="bouton-garder-cle" class="bouton principal">Garder</button>
     </div>
   </form>
 </dialog>

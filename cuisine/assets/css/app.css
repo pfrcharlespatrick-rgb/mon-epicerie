@@ -35,6 +35,9 @@
 
 * { box-sizing: border-box; }
 
+/* L'attribut hidden doit l'emporter sur tout display posé par une classe. */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   background: var(--fond);
@@ -349,6 +352,92 @@ dialog::backdrop { background: rgba(28, 25, 23, 0.5); }
 
 .actions-recette { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.25rem; }
 
+/* --- Le conseiller à l'œil -------------------------------------------------- */
+
+.zone-photo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  border: 2px dashed var(--bord);
+  border-radius: 14px;
+  padding: 1.2rem;
+  cursor: pointer;
+  text-align: center;
+  color: var(--accent-sombre);
+  font-weight: bold;
+  margin: 0.75rem 0;
+}
+
+.zone-photo:hover { border-color: var(--accent); background: var(--accent-fond); }
+
+.zone-photo img {
+  max-width: 100%;
+  max-height: 18rem;
+  border-radius: 10px;
+}
+
+#champ-demande {
+  font: inherit;
+  width: 100%;
+  max-width: none;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--bord);
+  border-radius: 10px;
+  background: var(--fond);
+  color: var(--encre);
+  resize: vertical;
+}
+
+.attente {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 1rem 0;
+  color: var(--encre-douce);
+  font-style: italic;
+}
+
+/* Le couvercle qui mijote : un rond qui bascule doucement. */
+.mijote {
+  width: 1.2rem;
+  height: 1.2rem;
+  flex: none;
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  border-top-color: transparent;
+  animation: mijoter 1s linear infinite;
+}
+
+@keyframes mijoter { to { transform: rotate(360deg); } }
+
+.fil-conseil { margin-top: 1rem; }
+
+.fil-conseil .vous {
+  background: var(--accent-fond);
+  border: 1px solid var(--bord);
+  border-radius: 12px 12px 2px 12px;
+  padding: 0.5rem 0.9rem;
+  margin: 0.75rem 0 0.5rem auto;
+  max-width: 85%;
+  width: fit-content;
+  font-style: italic;
+}
+
+.conseiller-dit { border-left: 3px solid var(--accent); padding-left: 0.9rem; margin: 0.5rem 0; }
+
+.replique { display: flex; gap: 0.5rem; margin-top: 1rem; }
+
+.replique input {
+  font: inherit;
+  flex: 1;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--bord);
+  border-radius: 10px;
+  background: var(--fond);
+  color: var(--encre);
+}
+
 /* --- Pied ----------------------------------------------------------------- */
 
 .pied {
@@ -365,7 +454,11 @@ dialog::backdrop { background: rgba(28, 25, 23, 0.5); }
 
 @media print {
   body { background: #fff; color: #000; font-size: 11pt; }
-  .entete, .pied, #section-choix, #section-details, .actions-recette, dialog { display: none !important; }
+  .entete, .pied, #section-choix, #section-details, .actions-recette, dialog,
+  #formulaire-conseiller, .attente, .fil-conseil, .replique,
+  #conseiller-hors-ligne, #erreur-conseiller, #section-conseiller > h2,
+  #section-conseiller > .explication { display: none !important; }
+  #section-conseiller:has(#resultat-conseiller[hidden]) { display: none !important; }
   .carte { border: 0; box-shadow: none; padding: 0; }
   .etapes li::before { background: #000; }
   .vitrine, .encart, .duree { background: #fff; border-color: #999; }

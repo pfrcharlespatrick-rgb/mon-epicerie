@@ -14,8 +14,8 @@
     {
       "name": "Ma Cuisine — recettes",
       "short_name": "Ma Cuisine",
-      "description": "Fiches de cuisson à cœur, calendrier à rebours et photos du garde-manger.",
-      "url": "./cuisine.html"
+      "description": "Le conseiller culinaire : température à cœur, calendrier à rebours, photo de la pièce.",
+      "url": "./cuisine/"
     }
   ],
   "icons": [
