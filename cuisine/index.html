@@ -44,12 +44,12 @@
 
   <!-- Le conseiller à l'œil : la photo d'abord -->
   <section id="section-conseiller" class="carte">
-    <h2>La photo</h2>
+    <h2>Le conseiller</h2>
     <p class="explication">
-      Photographiez la pièce — l'étiquette bien visible, si elle en a une — et
-      dites ce que vous en attendez. Le conseiller l'identifie, lit le poids et
-      la date, consulte votre liste d'épicerie et votre équipement, puis compose
-      la recette. Vous pourrez ensuite lui répliquer, sur la même photo.
+      Photographiez la pièce — l'étiquette bien visible — ou dites simplement ce
+      que vous voulez cuisiner : la photo n'est pas obligatoire. Le conseiller
+      consulte votre inventaire, votre liste d'épicerie et votre équipement,
+      puis compose la recette. Vous pourrez ensuite lui répliquer.
     </p>
 
     <div id="conseiller-hors-ligne" class="encart" hidden>
@@ -63,7 +63,7 @@
       <label id="zone-photo" class="zone-photo" for="champ-photo">
         <input type="file" id="champ-photo" accept="image/*" capture="environment" hidden />
         <img id="apercu-photo" alt="" hidden />
-        <span id="invite-photo">📷 Prendre ou choisir une photo</span>
+        <span id="invite-photo">📷 Prendre ou choisir une photo (facultatif)</span>
       </label>
 
       <div class="champ">
@@ -77,7 +77,7 @@
       <div class="champ">
         <label for="champ-demande">Votre demande</label>
         <textarea id="champ-demande" rows="2"
-          placeholder="p. ex. : Nous serons quatre dimanche soir ; je veux une peau qui croustille."></textarea>
+          placeholder="p. ex. : Un souper pour quatre avec ce que j'ai au congélateur — ou photographiez une pièce ci-dessus."></textarea>
       </div>
 
       <div class="champ">
