@@ -39,7 +39,7 @@
   let categorieActive = null;
   let pieceActive = null;
   let cuissonActive = null;
-  let derniereRecette = null; // { pieceId, poids, cuissonId, service, peremption }
+  let derniereRecette = null; // { pieceId, poids, cuissonId, service }
 
   /* ---------- Raccourcis DOM ---------- */
 
@@ -51,7 +51,6 @@
   const contenuRecette = $('#contenu-recette');
   const champPoids = $('#champ-poids');
   const champService = $('#champ-service');
-  const champPeremption = $('#champ-peremption');
   const choixCuissons = $('#choix-cuissons');
 
   /* ---------- Catégories et pièces ---------- */
@@ -139,7 +138,6 @@
       cuisson,
       equip,
       service: donnees.service ? new Date(donnees.service) : null,
-      peremption: donnees.peremption || null,
     };
     contenuRecette.innerHTML = Moteur.composer(piece, ctx);
     derniereRecette = donnees;
@@ -157,7 +155,6 @@
       poids,
       cuissonId: cuissonActive?.id,
       service: champService.value || null,
-      peremption: champPeremption.value || null,
     });
   });
 
@@ -363,10 +360,12 @@
 
   function contexteConseiller() {
     const service = $('#champ-service-photo').value;
+    const poids = Math.round(Number($('#champ-poids-photo').value));
     return {
       service: service
         ? Moteur.jour(new Date(service)) + ' à ' + Moteur.heure(new Date(service))
         : null,
+      poids: Number.isFinite(poids) && poids > 0 ? poids : null,
       equipement: EQUIPEMENT.filter((o) => equip[o.id]).map((o) => o.nom.toLowerCase()),
       epicerie: Conseiller.listeDeLaSemaine(),
     };

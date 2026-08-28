@@ -66,6 +66,14 @@
       </label>
 
       <div class="champ">
+        <label for="champ-poids-photo">Le poids, si vous le connaissez <span class="facultatif">(facultatif — sinon le conseiller le lira sur l'étiquette, ou l'estimera à l'œil en vous le disant)</span></label>
+        <div class="champ-poids">
+          <input type="number" id="champ-poids-photo" inputmode="numeric" min="20" max="20000" step="5" />
+          <span class="unite">grammes</span>
+        </div>
+      </div>
+
+      <div class="champ">
         <label for="champ-demande">Votre demande</label>
         <textarea id="champ-demande" rows="2"
           placeholder="p. ex. : Nous serons quatre dimanche soir ; je veux une peau qui croustille."></textarea>
@@ -136,11 +144,6 @@
       <div class="champ">
         <label for="champ-service">L'heure du service <span class="facultatif">(facultatif — pour le calendrier à rebours)</span></label>
         <input type="datetime-local" id="champ-service" />
-      </div>
-
-      <div class="champ">
-        <label for="champ-peremption">La date « meilleur avant » de l'étiquette <span class="facultatif">(facultatif)</span></label>
-        <input type="date" id="champ-peremption" />
       </div>
 
       <button type="submit" class="bouton principal">Composer la recette</button>
