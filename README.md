@@ -225,6 +225,33 @@ dépassée déclenche un avertissement franc, plus sévère pour la volaille et 
 poisson. Le **📖 Carnet** garde les recettes composées (localStorage, comme la
 liste d'épicerie), et l'impression sort une feuille de cuisine épurée.
 
+### Le conseiller à l'œil : la photo
+
+En tête de page, une seconde manière d'entrer : **photographier la pièce**,
+étiquette visible, et dire ce qu'on en attend. La photo est analysée par
+Claude (Anthropic) — identification de la coupe, lecture du poids et de la
+date, avertissement franc si la fraîcheur inquiète — puis la recette est
+composée selon les mêmes règles que le reste de l'application, calendrier à
+rebours compris si l'on a donné l'heure du service. On peut ensuite
+**répliquer** sur la même photo (« et sans four ? », « pour huit plutôt que
+quatre ? »).
+
+Deux ponts avec la liste d'épicerie, permise par le domaine commun
+(même `localStorage`) :
+
+- le conseiller **reçoit la liste de la semaine** et l'équipement coché, et en
+  tient compte dans ses substitutions ;
+- le bouton **🛒 Manquants vers Mon Épicerie** verse les ingrédients absents
+  directement dans la liste, où l'application d'à côté les assainit et les
+  range à son prochain chargement.
+
+Cette analyse exige une **clé API personnelle** (bouton **🔑 Conseiller**, qui
+explique comment l'obtenir sur console.anthropic.com). La clé reste dans le
+navigateur ; le navigateur parle directement à `api.anthropic.com`, sans aucun
+serveur intermédiaire, et chaque consultation coûte quelques sous, débités
+chez Anthropic. Sans clé, tout le reste — le choix à la main, les vingt
+pièces, le carnet — fonctionne hors ligne et gratuitement, comme avant.
+
 ### Organisation de `cuisine/`
 
 ```
@@ -232,6 +259,7 @@ cuisine/index.html              structure de la page
 cuisine/assets/css/app.css      mise en forme (thèmes clair/sombre, impression)
 cuisine/assets/js/pieces.js     la base de connaissances : pièces, températures, étapes
 cuisine/assets/js/moteur.js     composition de la recette et calendrier à rebours
+cuisine/assets/js/conseiller.js analyse de photo (API Claude), pont vers l'épicerie
 cuisine/assets/js/app.js        branchement de l'interface, carnet, équipement
 cuisine/sw.js                   cache hors-ligne (VERSION à incrémenter au déploiement)
 outils/generer-icones-cuisine.mjs  régénère les icônes PNG
