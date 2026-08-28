@@ -368,6 +368,7 @@
       poids: Number.isFinite(poids) && poids > 0 ? poids : null,
       equipement: EQUIPEMENT.filter((o) => equip[o.id]).map((o) => o.nom.toLowerCase()),
       epicerie: Conseiller.listeDeLaSemaine(),
+      inventaire: Conseiller.inventaire(),
     };
   }
 
@@ -458,6 +459,102 @@
     bouton.textContent = '✓ Gardée au carnet';
     setTimeout(() => { bouton.textContent = '💾 Garder au carnet'; }, 2000);
   });
+
+  /* ---------- L'inventaire ---------- */
+
+  const ZONES_INVENTAIRE = [
+    { id: 'gardeManger', nom: 'Garde-manger', article: 'du garde-manger', emoji: '🥫' },
+    { id: 'frigo', nom: 'Frigidaire', article: 'du frigidaire', emoji: '🧀' },
+    { id: 'congelateur', nom: 'Congélateur', article: 'du congélateur', emoji: '❄️' },
+  ];
+
+  const normaliserNom = (t) => String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+  function rendreInventaire() {
+    const stock = Conseiller.inventaire();
+    const conteneur = $('#zones-inventaire');
+    conteneur.innerHTML = '';
+
+    for (const zone of ZONES_INVENTAIRE) {
+      const bloc = document.createElement('div');
+      bloc.className = 'zone-inventaire';
+
+      const entete = document.createElement('div');
+      entete.className = 'zone-entete';
+      const titre = document.createElement('b');
+      titre.textContent = zone.emoji + ' ' + zone.nom;
+      const quand = document.createElement('small');
+      quand.textContent = stock[zone.id].quand
+        ? 'mis à jour le ' + new Intl.DateTimeFormat('fr-CA', { dateStyle: 'long' }).format(new Date(stock[zone.id].quand))
+        : 'jamais inventorié';
+      entete.append(titre, quand);
+
+      const champ = document.createElement('textarea');
+      champ.rows = 5;
+      champ.dataset.zone = zone.id;
+      champ.placeholder = 'Un aliment par ligne — ou analysez une photo ci-dessous.';
+      champ.value = stock[zone.id].items.join('\n');
+
+      const boutonPhoto = document.createElement('button');
+      boutonPhoto.type = 'button';
+      boutonPhoto.className = 'bouton';
+      boutonPhoto.textContent = '📷 Analyser une photo ' + zone.article;
+      const entree = document.createElement('input');
+      entree.type = 'file';
+      entree.accept = 'image/*';
+      entree.hidden = true;
+      boutonPhoto.addEventListener('click', () => {
+        if (!Conseiller.cle()) { $('#dialogue-inventaire').close(); $('#dialogue-cle').showModal(); return; }
+        entree.click();
+      });
+      entree.addEventListener('change', async () => {
+        const fichier = entree.files?.[0];
+        if (!fichier) return;
+        boutonPhoto.disabled = true;
+        boutonPhoto.textContent = '⏳ Le conseiller dresse la liste…';
+        try {
+          const photo = await Conseiller.preparerPhoto(fichier);
+          const trouves = await Conseiller.analyserInventaire(photo, zone.nom.toLowerCase());
+          const existants = champ.value.split('\n').map((l) => l.trim()).filter(Boolean);
+          const connus = new Set(existants.map(normaliserNom));
+          const nouveaux = trouves.filter((i) => !connus.has(normaliserNom(i)));
+          champ.value = [...existants, ...nouveaux].join('\n');
+          boutonPhoto.textContent = nouveaux.length
+            ? '✓ ' + nouveaux.length + ' aliment' + (nouveaux.length > 1 ? 's' : '') + ' ajouté' + (nouveaux.length > 1 ? 's' : '') + ' — corrigez au besoin'
+            : '✓ Rien de neuf reconnu — une autre photo ?';
+        } catch (err) {
+          boutonPhoto.textContent = '⚠ ' + err.message;
+        } finally {
+          boutonPhoto.disabled = false;
+          entree.value = '';
+        }
+      });
+
+      bloc.append(entete, champ, boutonPhoto, entree);
+      conteneur.append(bloc);
+    }
+  }
+
+  function sauverInventaire() {
+    const stock = Conseiller.inventaire();
+    for (const champ of document.querySelectorAll('#zones-inventaire textarea')) {
+      const items = champ.value.split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 120);
+      const avant = stock[champ.dataset.zone].items.join('\n');
+      stock[champ.dataset.zone] = {
+        items,
+        quand: items.join('\n') === avant ? stock[champ.dataset.zone].quand : new Date().toISOString(),
+      };
+    }
+    Conseiller.definirInventaire(stock);
+  }
+
+  $('#bouton-inventaire').addEventListener('click', () => {
+    rendreInventaire();
+    $('#dialogue-inventaire').showModal();
+  });
+
+  $('#formulaire-inventaire').addEventListener('submit', sauverInventaire);
+  $('#dialogue-inventaire').addEventListener('close', sauverInventaire);
 
   /* ---------- La clé ---------- */
 

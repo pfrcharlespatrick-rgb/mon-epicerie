@@ -170,6 +170,19 @@ Deux ponts avec la liste d'épicerie, permise par le domaine commun
   directement dans la liste, où l'application d'à côté les assainit et les
   range à son prochain chargement.
 
+### L'inventaire : cuisiner avec ce qu'on a
+
+Le bouton **🧺 Inventaire** tient le registre du garde-manger, du frigidaire
+et du congélateur. Chaque zone se nourrit d'une **photo d'ensemble** —
+tablettes éclairées, étiquettes vers l'objectif — que le conseiller dépouille
+en liste d'aliments ; la liste reste éditable à la main, un aliment par
+ligne, et c'est elle (jamais la photo) qui accompagne ensuite chaque
+consultation. Le conseiller compose d'abord avec ce stock, nomme ce qu'il y
+puise, et ne verse dans les « manquants » que ce qui n'est ni en stock ni
+déjà sur la liste d'épicerie. L'inventaire vit dans le navigateur
+(localStorage) et ne se met pas à jour tout seul : on refait les photos après
+une grosse épicerie, ou l'on retouche les lignes.
+
 Cette analyse exige une **clé API personnelle** (bouton **🔑 Conseiller**, qui
 explique comment l'obtenir sur console.anthropic.com). La clé reste dans le
 navigateur ; le navigateur parle directement à `api.anthropic.com`, sans aucun

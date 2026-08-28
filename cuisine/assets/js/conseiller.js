@@ -17,6 +17,7 @@ const Conseiller = (() => {
 
   const CLE_API = 'ma-cuisine.cle-api';
   const CLE_EPICERIE = 'mon-epicerie/v1';
+  const CLE_INVENTAIRE = 'ma-cuisine.inventaire';
   const MODELE = 'claude-opus-5';
 
   /* ---------- La clé ---------- */
@@ -109,6 +110,58 @@ const Conseiller = (() => {
     return ajoutes;
   }
 
+  /* ---------- L'inventaire : garde-manger, frigidaire, congélateur ---------- */
+
+  /**
+   * L'inventaire vit dans localStorage, par zone :
+   *   { gardeManger: { items: ['farine', …], quand: iso }, frigo: …, congelateur: … }
+   */
+  function inventaire() {
+    try {
+      const brut = JSON.parse(localStorage.getItem(CLE_INVENTAIRE) ?? 'null') ?? {};
+      const zone = (z) => ({
+        items: Array.isArray(brut?.[z]?.items) ? brut[z].items.filter((i) => typeof i === 'string' && i.trim()).slice(0, 120) : [],
+        quand: typeof brut?.[z]?.quand === 'string' ? brut[z].quand : null,
+      });
+      return { gardeManger: zone('gardeManger'), frigo: zone('frigo'), congelateur: zone('congelateur') };
+    } catch {
+      return { gardeManger: { items: [], quand: null }, frigo: { items: [], quand: null }, congelateur: { items: [], quand: null } };
+    }
+  }
+
+  function definirInventaire(valeur) {
+    try { localStorage.setItem(CLE_INVENTAIRE, JSON.stringify(valeur)); } catch { /* stockage plein ou privé */ }
+  }
+
+  const PROMPT_INVENTAIRE =
+    'Tu inventories le contenu VISIBLE d’une photo d’ensemble de garde-manger, de réfrigérateur ou de congélateur. '
+    + 'Réponds UNIQUEMENT par un tableau JSON de chaînes — les aliments et produits que tu identifies avec assez de '
+    + 'confiance, en français du Québec, en noms courts et usuels (« farine tout usage », « lait 2 % », « poitrines de '
+    + 'poulet congelées », « sauce soya »). Ignore la vaisselle, les contenants illisibles et ce dont tu doutes. '
+    + 'Au plus 40 entrées, les plus utiles en cuisine d’abord. Aucun texte hors du tableau.';
+
+  /** Dépouille une photo d'ensemble en liste d'aliments (tableau de chaînes). */
+  async function analyserInventaire(photo, nomZone) {
+    const texte = await consulter(
+      [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: photo.media_type, data: photo.data } },
+          { type: 'text', text: 'Inventorie cette photo de mon ' + nomZone + '.' },
+        ],
+      }],
+      null,
+      PROMPT_INVENTAIRE,
+    );
+    const debut = texte.indexOf('[');
+    const fin = texte.lastIndexOf(']');
+    if (debut === -1 || fin <= debut) return [];
+    try {
+      const liste = JSON.parse(texte.slice(debut, fin + 1));
+      return Array.isArray(liste) ? liste.filter((i) => typeof i === 'string' && i.trim()).map((i) => i.trim().slice(0, 80)) : [];
+    } catch { return []; }
+  }
+
   /* ---------- La charte, telle que le conseiller doit la servir ---------- */
 
   const CHARTE = [
@@ -129,6 +182,9 @@ const Conseiller = (() => {
     'où l’on peut tout gâcher, avec les signes de réussite au toucher, à l’œil et à l’odeur. Tu signales quand une méthode',
     'populaire est inférieure à une autre, en donnant le compromis, sans faire la leçon. Tu tiens compte de l’équipement possédé',
     'et de la liste d’épicerie fournie : substitutions d’abord, plutôt que de renvoyer au magasin.',
+    'Quand un inventaire du garde-manger, du frigidaire et du congélateur t’est fourni, il est ta matière première :',
+    'compose d’abord avec ce qui s’y trouve, nomme ce que tu y puises, et ne mets dans "epicerie" que ce qui ne figure',
+    'ni dans l’inventaire ni sur la liste d’épicerie.',
     '',
     'PREMIÈRE RÉPONSE : réponds UNIQUEMENT par un objet JSON (aucun texte autour, aucune clôture de code) de cette forme :',
     '{',
@@ -160,7 +216,7 @@ const Conseiller = (() => {
    * Envoie la conversation au modèle, en flux, et retourne le texte complet.
    * `surProgres(nbCaracteres)` permet d'animer l'attente.
    */
-  async function consulter(messages, surProgres) {
+  async function consulter(messages, surProgres, systeme) {
     const reponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -173,7 +229,7 @@ const Conseiller = (() => {
         model: MODELE,
         max_tokens: 12000,
         stream: true,
-        system: [{ type: 'text', text: CHARTE, cache_control: { type: 'ephemeral' } }],
+        system: [{ type: 'text', text: systeme ?? CHARTE, cache_control: { type: 'ephemeral' } }],
         messages,
       }),
     });
@@ -241,6 +297,17 @@ const Conseiller = (() => {
       morceaux.push('Sur ma liste d’épicerie cette semaine : '
         + contexte.epicerie.map((a) => a.nom + (a.qte ? ' (' + a.qte + ')' : '')).join(', ') + '.');
     }
+    if (contexte.inventaire) {
+      const zones = [
+        ['garde-manger', contexte.inventaire.gardeManger],
+        ['frigidaire', contexte.inventaire.frigo],
+        ['congélateur', contexte.inventaire.congelateur],
+      ].filter(([, z]) => z.items.length);
+      if (zones.length) {
+        morceaux.push('Mon inventaire en stock — compose d’abord avec lui : '
+          + zones.map(([nom, z]) => nom + ' : ' + z.items.join(', ')).join(' ; ') + '.');
+      }
+    }
     morceaux.push('Date d’aujourd’hui : ' + new Intl.DateTimeFormat('fr-CA', { dateStyle: 'long' }).format(new Date()) + '.');
 
     return {
@@ -260,6 +327,10 @@ const Conseiller = (() => {
     try { return JSON.parse(texte.slice(debut, fin + 1)); } catch { return null; }
   }
 
-  return { cle, definirCle, preparerPhoto, listeDeLaSemaine, verserALEpicerie, consulter, premierTour, extraireJSON };
+  return {
+    cle, definirCle, preparerPhoto, listeDeLaSemaine, verserALEpicerie,
+    inventaire, definirInventaire, analyserInventaire,
+    consulter, premierTour, extraireJSON,
+  };
 
 })();

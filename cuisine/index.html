@@ -34,6 +34,7 @@
   </div>
   <div class="entete-boutons">
     <button type="button" id="bouton-cle" class="bouton discret">🔑 Conseiller</button>
+    <button type="button" id="bouton-inventaire" class="bouton discret">🧺 Inventaire</button>
     <button type="button" id="bouton-equipement" class="bouton discret">🍳 Ma cuisine</button>
     <button type="button" id="bouton-carnet" class="bouton discret">📖 Carnet</button>
   </div>
@@ -171,6 +172,27 @@
       des substitutions plutôt que de vous renvoyer au magasin.
     </p>
     <div id="liste-equipement" class="liste-equipement"></div>
+    <div class="actions-dialogue">
+      <button type="submit" class="bouton principal">C'est noté</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- L'inventaire : garde-manger, frigidaire, congélateur -->
+<dialog id="dialogue-inventaire">
+  <form method="dialog" id="formulaire-inventaire">
+    <h2>Mon inventaire</h2>
+    <p class="explication">
+      Photographiez chaque zone d'ensemble — tablettes bien éclairées, étiquettes
+      vers l'objectif — et le conseiller dressera la liste de ce qu'il y
+      reconnaît. Corrigez-la ensuite à votre guise, un aliment par ligne :
+      c'est cette liste, pas la photo, qui accompagnera chaque recette.
+    </p>
+    <div id="zones-inventaire"></div>
+    <p class="indice">
+      L'inventaire ne se met pas à jour tout seul : après une grosse épicerie ou
+      une grosse semaine, refaites les photos, ou retouchez les lignes à la main.
+    </p>
     <div class="actions-dialogue">
       <button type="submit" class="bouton principal">C'est noté</button>
     </div>
