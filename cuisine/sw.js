@@ -8,7 +8,7 @@
  * Penser à incrémenter VERSION à chaque déploiement.
  */
 
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE = `ma-cuisine-${VERSION}`;
 
 /** Fichiers indispensables au premier affichage. */
@@ -20,6 +20,7 @@ const COQUILLE = [
   'assets/js/pieces.js',
   'assets/js/moteur.js',
   'assets/js/conseiller.js',
+  'assets/js/exporteur.js',
   'assets/js/app.js',
   'assets/icones/favicon.svg',
   'assets/icones/icone-192.png',

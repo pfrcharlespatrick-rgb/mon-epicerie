@@ -13,6 +13,7 @@
   <script defer src="assets/js/pieces.js"></script>
   <script defer src="assets/js/moteur.js"></script>
   <script defer src="assets/js/conseiller.js"></script>
+  <script defer src="assets/js/exporteur.js"></script>
   <script defer src="assets/js/app.js"></script>
 </head>
 <body>
@@ -100,7 +101,9 @@
       <div class="actions-recette">
         <button type="button" id="bouton-epicerie" class="bouton" hidden>🛒 Manquants vers Mon Épicerie</button>
         <button type="button" id="bouton-garder-conseil" class="bouton">💾 Garder au carnet</button>
-        <button type="button" id="bouton-imprimer-conseil" class="bouton">🖨️ Imprimer</button>
+        <button type="button" id="bouton-imprimer-conseil" class="bouton">🖨️ Imprimer / PDF</button>
+        <button type="button" id="bouton-word-conseil" class="bouton">📄 Word</button>
+        <button type="button" id="bouton-partager-conseil" class="bouton">📤 Partager</button>
       </div>
       <div id="fil-conseil" class="fil-conseil"></div>
       <form id="formulaire-replique" class="replique">
@@ -156,7 +159,9 @@
     <div id="contenu-recette"></div>
     <div class="actions-recette">
       <button type="button" id="bouton-enregistrer" class="bouton">💾 Garder au carnet</button>
-      <button type="button" id="bouton-imprimer" class="bouton">🖨️ Imprimer</button>
+      <button type="button" id="bouton-imprimer" class="bouton">🖨️ Imprimer / PDF</button>
+      <button type="button" id="bouton-word-recette" class="bouton">📄 Word</button>
+      <button type="button" id="bouton-partager-recette" class="bouton">📤 Partager</button>
       <button type="button" id="bouton-recommencer" class="bouton discret">↩︎ Une autre pièce</button>
     </div>
   </section>
