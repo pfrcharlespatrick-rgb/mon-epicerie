@@ -8,7 +8,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { chargerMoteur } from './aide/cuisine.mjs';
+import { chargerMoteur, MAINTENANT } from './aide/cuisine.mjs';
 
 const { Moteur, PIECES } = chargerMoteur();
 
@@ -64,9 +64,15 @@ test('echapper() neutralise le HTML', () => {
 // --- Le calendrier à rebours ------------------------------------------------
 
 const piece = () => PIECES.find((p) => p.id === 'cote-de-boeuf');
-const ctxDe = (service, poids) => {
+
+/**
+ * Un contexte daté. `maintenant` est fourni explicitement : le calendrier ne
+ * consulte plus l'horloge de la machine, si bien que ces tests disent la même
+ * chose à trois heures du matin qu'à midi, et en janvier qu'en août.
+ */
+const ctxDe = (service, poids, maintenant = MAINTENANT) => {
   const p = piece();
-  return { poids: poids ?? p.poids.defaut, cuisson: p.cuissons[1], equip: {}, service };
+  return { poids: poids ?? p.poids.defaut, cuisson: p.cuissons[1], equip: {}, service, maintenant };
 };
 
 test('sans heure de service, pas de calendrier', () => {
@@ -109,7 +115,7 @@ test('chaque étape du jour part quand la précédente finit', () => {
 test('les étapes des jours d’avance gardent leur libellé, au pluriel juste', () => {
   const dinde = PIECES.find((p) => /dinde/i.test(p.nom));
   const service = new Date(2026, 11, 25, 17, 0);
-  const ctx = { poids: dinde.poids.defaut, cuisson: dinde.cuissons?.[0] ?? null, equip: {}, service };
+  const ctx = { poids: dinde.poids.defaut, cuisson: dinde.cuissons?.[0] ?? null, equip: {}, service, maintenant: MAINTENANT };
   const liste = moments(Moteur.calendrier(dinde.etapes(ctx), ctx));
 
   assert.ok(liste.some((m) => /^\d+ jours avant$/.test(m)), `aucun « N jours avant » dans ${liste.join(' / ')}`);
@@ -119,7 +125,7 @@ test('les étapes des jours d’avance gardent leur libellé, au pluriel juste',
 test('le calendrier prévient quand le jour même commence la veille', () => {
   const dinde = PIECES.find((p) => /dinde/i.test(p.nom));
   const tot = new Date(2026, 11, 25, 6, 0);   // service très tôt : on remonte avant minuit
-  const ctx = { poids: dinde.poids.max, cuisson: dinde.cuissons?.[0] ?? null, equip: {}, service: tot };
+  const ctx = { poids: dinde.poids.max, cuisson: dinde.cuissons?.[0] ?? null, equip: {}, service: tot, maintenant: MAINTENANT };
   assert.match(Moteur.calendrier(dinde.etapes(ctx), ctx), /commence la veille du service/);
 
   const tard = new Date(2026, 11, 25, 19, 0);
@@ -127,12 +133,61 @@ test('le calendrier prévient quand le jour même commence la veille', () => {
   assert.equal(/commence la veille du service/.test(Moteur.calendrier(dinde.etapes(ctx2), ctx2)), false);
 });
 
-test('un service déjà entamé déclenche l’avertissement, pas un service à venir', () => {
+/** Le calendrier prévient-il qu'il faudrait déjà avoir commencé ? */
+function enRetard(service, maintenant) {
+  const ctx = ctxDe(service, undefined, maintenant);
+  return /L’horloge est contre vous/.test(Moteur.calendrier(piece().etapes(ctx), ctx));
+}
+
+/** L'heure à laquelle il faudrait se mettre au travail pour servir à `service`. */
+function departDuJour(service) {
+  const ctx = ctxDe(service);
+  const total = piece().etapes(ctx).filter((e) => e.quand === 'jour').reduce((s, e) => s + e.duree, 0);
+  return new Date(service.getTime() - total * 60000);
+}
+
+test('l’avertissement de retard ne dépend plus de l’heure qu’il est vraiment', () => {
+  const service = new Date(2026, 7, 29, 18, 0);
+  const depart = departDuJour(service);
+  const enPleinTravail = new Date(Math.round((depart.getTime() + service.getTime()) / 2));
+
+  // La même question posée depuis n'importe quel moment reçoit la réponse que
+  // ce moment commande — et rien d'autre ne s'en mêle.
+  const aTemps = [new Date(2026, 0, 1, 3, 0), new Date(2025, 11, 31, 23, 59), new Date(depart.getTime() - 3600000)];
+  for (const maintenant of aTemps) {
+    assert.equal(enRetard(service, maintenant), false, `depuis ${maintenant.toISOString()}`);
+  }
+
+  const tropTard = [enPleinTravail, new Date(service.getTime() - 60000)];
+  for (const maintenant of tropTard) {
+    assert.equal(enRetard(service, maintenant), true, `depuis ${maintenant.toISOString()}`);
+  }
+});
+
+test('l’avertissement s’allume à la minute où le départ est manqué', () => {
+  const service = new Date(2026, 7, 29, 18, 0);
+  const depart = departDuJour(service);
+
+  assert.equal(enRetard(service, new Date(depart.getTime() - 60000)), false, 'une minute avant le départ : tout va bien');
+  assert.equal(enRetard(service, depart), false, 'pile à l’heure du départ : encore temps');
+  assert.equal(enRetard(service, new Date(depart.getTime() + 60000)), true, 'une minute trop tard : on prévient');
+});
+
+test('un service déjà passé ne fait pas courir aux fourneaux', () => {
+  const service = new Date(2026, 7, 29, 18, 0);
+  assert.equal(enRetard(service, new Date(2026, 7, 29, 17, 59)), true, 'une minute avant le service : il est trop tard, mais on peut encore agir');
+  assert.equal(enRetard(service, service), false, 'à l’heure du service : plus rien à dire');
+  assert.equal(enRetard(service, new Date(2026, 7, 30, 9, 0)), false, 'le lendemain : la recette se consulte, elle ne se court plus');
+});
+
+test('sans horloge fournie, le moteur retombe sur celle de la machine', () => {
+  // C'est ce que fait l'application : `ctx.maintenant` lui est inutile.
   const p = piece();
-  const passe = new Date(Date.now() + 30 * 60000);        // dans 30 min : trop tard
-  const futur = new Date(Date.now() + 30 * 24 * 3600000); // dans un mois : tout va bien
-  assert.match(Moteur.calendrier(p.etapes(ctxDe(passe)), ctxDe(passe)), /L’horloge est contre vous/);
-  assert.equal(/L’horloge est contre vous/.test(Moteur.calendrier(p.etapes(ctxDe(futur)), ctxDe(futur))), false);
+  const service = new Date(Date.now() + 365 * 24 * 3600000);
+  const ctx = { poids: p.poids.defaut, cuisson: p.cuissons[1], equip: {}, service };
+  assert.doesNotThrow(() => Moteur.calendrier(p.etapes(ctx), ctx));
+  assert.equal(/L’horloge est contre vous/.test(Moteur.calendrier(p.etapes(ctx), ctx)), false,
+    'un service dans un an ne saurait être en retard');
 });
 
 test('le changement d’heure ne décale pas le calendrier', () => {
@@ -151,7 +206,7 @@ test('le changement d’heure ne décale pas le calendrier', () => {
 test('le calendrier échappe ce qu’il affiche', () => {
   const service = new Date(2026, 7, 29, 18, 0);
   const etapes = [{ quand: 'jour', titre: '<script>alert(1)</script>', duree: 10 }];
-  const html = Moteur.calendrier(etapes, { service, poids: 1000, cuisson: null, equip: {} });
+  const html = Moteur.calendrier(etapes, { service, poids: 1000, cuisson: null, equip: {}, maintenant: MAINTENANT });
   assert.equal(html.includes('<script>'), false);
   assert.match(html, /&lt;script&gt;/);
 });

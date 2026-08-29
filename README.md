@@ -270,6 +270,12 @@ tests/pont.test.mjs        le contrat entre Ma Cuisine et Mon Épicerie
 tests/horsligne.test.mjs   ce que les pages réclament contre ce que le cache garde
 ```
 
+Le moteur reçoit l'heure courante par son contexte (`ctx.maintenant`) au lieu
+de la prendre à l'horloge : c'est ce qui permet de vérifier l'avertissement
+« l'horloge est contre vous » à la minute près, sans que la réponse dépende du
+moment où l'on lance les tests. Le champ est facultatif — l'application ne le
+fournit pas et retombe sur l'horloge.
+
 Deux fichiers demandent un mot :
 
 - [`tests/references/identifiants-catalogue.txt`](tests/references/identifiants-catalogue.txt)

@@ -6,6 +6,8 @@
  *
  * Contexte reçu par les fonctions :
  *   { poids, cuisson, equip, service, peremption }
+ * Le moteur y ajoute `maintenant` (facultatif) pour dater le calendrier ; les
+ * textes des pièces, eux, n'ont pas à savoir l'heure qu'il est.
  *
  * Une étape : { quand, titre, duree (minutes, pour le calendrier),
  *   dureeTexte (affichage), critique, texte }

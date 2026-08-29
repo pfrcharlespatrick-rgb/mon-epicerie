@@ -68,12 +68,20 @@ export function chargerMoteur() {
  */
 export const rapatrier = (valeur) => JSON.parse(JSON.stringify(valeur ?? null));
 
-/** Un contexte de composition complet, avec des valeurs par défaut sensées. */
-export function contexteDe(piece, { poids, cuisson, equip = {}, service = null } = {}) {
+/**
+ * Un contexte de composition complet, avec des valeurs par défaut sensées.
+ *
+ * `maintenant` vaut par défaut une date fixe et lointaine : les tests ne
+ * doivent dépendre ni de l'heure à laquelle on les lance, ni du jour.
+ */
+export const MAINTENANT = new Date(2026, 7, 29, 10, 0);   // samedi 29 août 2026, 10 h
+
+export function contexteDe(piece, { poids, cuisson, equip = {}, service = null, maintenant = MAINTENANT } = {}) {
   return {
     poids: poids ?? piece.poids.defaut,
     cuisson: cuisson ?? piece.cuissons?.[0] ?? null,
     equip,
     service,
+    maintenant,
   };
 }

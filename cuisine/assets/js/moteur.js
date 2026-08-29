@@ -3,6 +3,13 @@
  * équipement, heure du service, date « meilleur avant »), compose la recette
  * complète — en-tête, étapes numérotées, sauce, conservation, calendrier à
  * rebours. Aucun état ici : uniquement des fonctions.
+ *
+ * L'heure courante entre elle aussi par le contexte, sous `maintenant` : le
+ * calendrier a besoin de savoir l'heure qu'il est pour prévenir qu'il faudrait
+ * déjà avoir commencé. La lire ici plutôt que de la prendre à l'horloge fait
+ * du moteur une fonction au sens propre — mêmes entrées, même sortie, à toute
+ * heure du jour. Le champ est facultatif : sans lui, on retombe sur l'horloge,
+ * ce qui convient à l'application et ne convient pas aux tests.
  */
 
 'use strict';
@@ -73,6 +80,7 @@ const Moteur = {
   calendrier(etapes, ctx) {
     if (!ctx.service) return '';
     const service = ctx.service;
+    const maintenant = ctx.maintenant ?? new Date();
 
     const duJour = etapes.filter((e) => e.quand === 'jour');
     const totalJour = duJour.reduce((somme, e) => somme + e.duree, 0);
@@ -94,7 +102,9 @@ const Moteur = {
     }
     lignes.push({ moment: this.heure(service), titre: 'Le service', final: true });
 
-    const enRetard = debutJour < new Date() && service > new Date();
+    // On ne sermonne que celui qui peut encore agir : un service déjà passé
+    // se consulte pour la prochaine fois, pas pour courir aux fourneaux.
+    const enRetard = debutJour < maintenant && service > maintenant;
     const memeJour = debutJour.toDateString() === service.toDateString();
 
     return '<h4>Le calendrier à rebours</h4>'
