@@ -145,8 +145,12 @@ alors des étapes numérotées, titrées et minutées, selon des règles constan
 Le bouton **🍳 Ma cuisine** consigne l'équipement possédé (thermomètre à
 sonde, fonte, cocotte…) : les recettes s'y adaptent et proposent des
 substitutions plutôt que de renvoyer au magasin. Le **📖 Carnet** garde les
-recettes composées (localStorage, comme la liste d'épicerie), et l'impression
-sort une feuille de cuisine épurée.
+recettes composées (localStorage, comme la liste d'épicerie). Chaque recette
+affichée s'emporte de quatre façons : **Imprimer / PDF** (la feuille épurée,
+que le navigateur sait enregistrer en PDF), **📄 Word** (un `.docx` véritable,
+fabriqué dans le navigateur sans bibliothèque — une archive ZIP OOXML
+minimale), et **📤 Partager** (la feuille de partage native du téléphone —
+messagerie, courriel —, avec repli sur la copie dans le presse-papiers).
 
 ### Le conseiller à l'œil : la photo
 

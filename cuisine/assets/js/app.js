@@ -168,6 +168,22 @@
 
   $('#bouton-imprimer').addEventListener('click', () => window.print());
 
+  /* ---------- Word et partage : la recette voyage ---------- */
+
+  function brancherExport(idWord, idPartage, conteneur) {
+    $(idWord).addEventListener('click', () => Exporteur.telechargerWord(conteneur));
+    $(idPartage).addEventListener('click', async () => {
+      const bouton = $(idPartage);
+      const sort = await Exporteur.partager(conteneur);
+      if (sort === 'copie') {
+        bouton.textContent = '✓ Copié — collez-le où bon vous semble';
+        setTimeout(() => { bouton.textContent = '📤 Partager'; }, 3000);
+      }
+    });
+  }
+
+  brancherExport('#bouton-word-recette', '#bouton-partager-recette', contenuRecette);
+
   /* ---------- Le carnet ---------- */
 
   $('#bouton-enregistrer').addEventListener('click', () => {
@@ -466,6 +482,7 @@
   });
 
   $('#bouton-imprimer-conseil').addEventListener('click', () => window.print());
+  brancherExport('#bouton-word-conseil', '#bouton-partager-conseil', contenuConseil);
 
   $('#bouton-garder-conseil').addEventListener('click', () => {
     if (!dernierConseil) return;
