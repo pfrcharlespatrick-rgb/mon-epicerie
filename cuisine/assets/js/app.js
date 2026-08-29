@@ -25,7 +25,14 @@
   /* ---------- État ---------- */
 
   const lire = (cle, defaut) => {
-    try { return JSON.parse(localStorage.getItem(cle)) ?? defaut; } catch { return defaut; }
+    try {
+      const valeur = JSON.parse(localStorage.getItem(cle)) ?? defaut;
+      // Un stockage partagé avec d'autres versions n'est jamais garanti : on
+      // exige au moins la forme attendue, sinon on repart du défaut.
+      if (Array.isArray(defaut) !== Array.isArray(valeur)) return defaut;
+      if (valeur === null || typeof valeur !== 'object') return defaut;
+      return valeur;
+    } catch { return defaut; }
   };
   const ecrire = (cle, valeur) => {
     try { localStorage.setItem(cle, JSON.stringify(valeur)); } catch { /* stockage plein ou privé : tant pis */ }
@@ -132,15 +139,24 @@
   function composer(donnees) {
     const piece = PIECES.find((p) => p.id === donnees.pieceId);
     if (!piece) return;
+
+    // Le poids ne vient pas toujours du formulaire : une entrée de carnet
+    // écrite par une version antérieure, ou retouchée à la main dans le
+    // stockage du navigateur, passe aussi par ici. Mieux vaut ne rien
+    // composer qu'une recette qui annonce « NaN g ».
+    const poids = Moteur.poidsValide(donnees.poids, piece);
+    if (poids === null) return;
+
     const cuisson = piece.cuissons.find((c) => c.id === donnees.cuissonId) ?? piece.cuissons[0];
+    const service = donnees.service ? new Date(donnees.service) : null;
     const ctx = {
-      poids: donnees.poids,
+      poids,
       cuisson,
       equip,
-      service: donnees.service ? new Date(donnees.service) : null,
+      service: service && !Number.isNaN(service.getTime()) ? service : null,
     };
     contenuRecette.innerHTML = Moteur.composer(piece, ctx);
-    derniereRecette = donnees;
+    derniereRecette = { ...donnees, poids };
     sectionRecette.hidden = false;
     sectionRecette.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -148,8 +164,8 @@
   $('#formulaire-details').addEventListener('submit', (evenement) => {
     evenement.preventDefault();
     if (!pieceActive) return;
-    const poids = Math.round(Number(champPoids.value));
-    if (!Number.isFinite(poids) || poids <= 0) return;
+    const poids = Moteur.poidsValide(champPoids.value, pieceActive);
+    if (poids === null) return;
     composer({
       pieceId: pieceActive.id,
       poids,

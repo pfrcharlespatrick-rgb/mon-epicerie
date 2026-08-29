@@ -240,7 +240,46 @@ assets/js/export.js     impression, presse-papiers, sauvegarde/restauration
 assets/js/app.js        branchement de l'interface
 sw.js                   mise en cache pour le hors-ligne
 outils/generer-icones.mjs  régénère les icônes PNG (node outils/generer-icones.mjs)
+tests/                  le banc d'essai (npm test)
 ```
+
+### Les tests
+
+Aucune dépendance non plus de ce côté : le banc d'essai tient dans le
+`node --test` livré avec Node (20 ou plus récent).
+
+```sh
+npm test
+```
+
+Les fichiers de `assets/js/` sont des modules, importés tels quels avec un
+`localStorage` de fortune ; ceux de `cuisine/` sont des scripts à globales,
+rejoués dans un bac à sable `vm` comme le ferait un navigateur. Les deux
+aides tiennent dans [`tests/aide/`](tests/aide/).
+
+```
+tests/catalogue.test.mjs   identifiants du catalogue — le fil qui relie une liste à ses produits
+tests/etat.test.mjs        persistance, fusion du catalogue, import, rayons et magasins
+tests/rendu.test.mjs       filtres, recherche et regroupement
+tests/export.test.mjs      récapitulatif texte, lecture d'un fichier de sauvegarde
+tests/moteur.test.mjs      formats d'affichage et calendrier à rebours
+tests/pieces.test.mjs      les vingt pièces composées à toutes leurs bornes
+tests/exporteur.test.mjs   le .docx : CRC et archive ZIP relus octet par octet
+tests/conseiller.test.mjs  la frontière avec le modèle : flux, JSON, inventaire
+tests/pont.test.mjs        le contrat entre Ma Cuisine et Mon Épicerie
+tests/horsligne.test.mjs   ce que les pages réclament contre ce que le cache garde
+```
+
+Deux fichiers demandent un mot :
+
+- [`tests/references/identifiants-catalogue.txt`](tests/references/identifiants-catalogue.txt)
+  fige les identifiants des produits livrés. Un identifiant qui change détache
+  l'article de la liste des gens qui l'avaient déjà : ajouter un produit est
+  normal, en renommer un ne l'est pas sans y avoir pensé. Le test signale les
+  ajouts, refuse les disparitions.
+- `tests/horsligne.test.mjs` compare les fichiers que réclament les pages —
+  imports de modules compris — à la coquille des deux `sw.js`. C'est le garde-fou
+  du paragraphe suivant.
 
 ### Après un déploiement
 

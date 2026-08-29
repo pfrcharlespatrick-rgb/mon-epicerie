@@ -5,13 +5,14 @@
  * article saisi par l'utilisateur ne peut jamais être interprété comme du HTML.
  */
 
-import { normaliser } from './catalogue.js';
+import { normaliser, RAYON_DEFAUT } from './catalogue.js';
 import {
   etat,
   estPrepare,
   articlesPrepares,
   rayons,
   magasins,
+  rayonParId,
   magasinParNom,
 } from './etat.js';
 
@@ -74,9 +75,23 @@ function articlesDeBase() {
   return etat.vue === 'preparee' ? articlesPrepares() : etat.articles;
 }
 
-/** Un article passe-t-il les filtres et la recherche en cours ? */
-function correspond(article) {
-  if (etat.rayonActif !== 'tous' && article.rayon !== etat.rayonActif) return false;
+/**
+ * Le rayon sous lequel un article se range effectivement. Un rayon devenu
+ * inconnu — un fichier importé d'une version qui en avait d'autres — retombe
+ * sur « Divers » plutôt que de faire disparaître l'article. Filtrage et
+ * regroupement doivent en juger pareillement, faute de quoi un article se
+ * verrait dans un groupe qu'aucun filtre ne sait atteindre.
+ */
+export function rayonEffectif(article) {
+  return rayonParId(article.rayon) ? article.rayon : RAYON_DEFAUT;
+}
+
+/**
+ * Un article passe-t-il les filtres et la recherche en cours ?
+ * Exportée pour les tests : c'est la règle qui décide de ce qui s'affiche.
+ */
+export function correspond(article) {
+  if (etat.rayonActif !== 'tous' && rayonEffectif(article) !== etat.rayonActif) return false;
 
   if (etat.magasinActif !== 'tous') {
     const attendu = etat.magasinActif === SANS_MAGASIN ? '' : etat.magasinActif;
@@ -327,7 +342,7 @@ function majLigne(li, article) {
 // --- Groupes ---------------------------------------------------------------
 
 /** Répartit les articles visibles en groupes ordonnés, selon la préférence. */
-function grouper(articles) {
+export function grouper(articles) {
   const groupes = new Map();
 
   if (etat.groupement === 'magasin') {
@@ -346,8 +361,7 @@ function grouper(articles) {
     }
 
     for (const article of articles) {
-      const cle = groupes.has(article.rayon) ? article.rayon : 'misc';
-      groupes.get(cle).articles.push(article);
+      groupes.get(rayonEffectif(article)).articles.push(article);
     }
   }
 

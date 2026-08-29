@@ -11,6 +11,20 @@ const Moteur = {
 
   /* ---------- Formats ---------- */
 
+  /**
+   * Ramène un poids — saisi au clavier, ou relu d'une entrée de carnet
+   * vieillie — à un entier de grammes utilisable, borné aux limites de la
+   * pièce. Retourne `null` quand rien n'est exploitable : mieux vaut ne rien
+   * composer du tout qu'une recette qui annonce « NaN g » et une dose de sel
+   * manquante.
+   */
+  poidsValide(valeur, piece) {
+    const g = Math.round(Number(valeur));
+    if (!Number.isFinite(g) || g <= 0) return null;
+    if (!piece || !piece.poids) return g;
+    return Math.min(Math.max(g, piece.poids.min), piece.poids.max);
+  },
+
   /** 1800 → « 1,8 kg », 450 → « 450 g ». */
   poids(g) {
     if (g >= 1000) {

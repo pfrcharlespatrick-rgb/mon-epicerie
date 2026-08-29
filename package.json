@@ -1,0 +1,12 @@
+{
+  "name": "mon-epicerie",
+  "private": true,
+  "type": "module",
+  "description": "Liste de courses et conseiller culinaire — application statique sans dépendance.",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.mjs\""
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

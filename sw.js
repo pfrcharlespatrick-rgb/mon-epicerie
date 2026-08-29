@@ -9,7 +9,7 @@
  * fichiers soient remplacés.
  */
 
-const VERSION = 'v7';
+const VERSION = 'v8';
 const CACHE = `mon-epicerie-${VERSION}`;
 
 /** Fichiers indispensables au premier affichage. */
@@ -24,6 +24,7 @@ const COQUILLE = [
   'assets/js/rendu.js',
   'assets/js/export.js',
   'assets/icones/favicon.svg',
+  'assets/icones/icone-180.png',
   'assets/icones/icone-192.png',
   'assets/icones/icone-512.png',
 ].map((chemin) => new URL(chemin, self.registration.scope).href);

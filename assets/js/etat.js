@@ -147,10 +147,14 @@ export function sauvegarderMaintenant() {
  * `null` si l'objet n'a rien d'un article — c'est la seule barrière entre un
  * fichier JSON douteux et l'état de l'application.
  *
+ * `idsPris` recueille les identifiants déjà attribués : un fichier qui en
+ * répète un verrait sinon deux articles se confondre, et le second deviendrait
+ * impossible à cocher, à modifier ou à supprimer.
+ *
  * À n'appeler qu'une fois les rayons de l'utilisateur chargés : un article
  * rangé dans un rayon perso serait sinon renvoyé dans « Divers ».
  */
-function assainirArticle(brut) {
+function assainirArticle(brut, idsPris) {
   if (!brut || typeof brut !== 'object') return null;
 
   const nom = typeof brut.nom === 'string' ? brut.nom : brut.name;
@@ -161,8 +165,14 @@ function assainirArticle(brut) {
 
   const texte = (v) => (typeof v === 'string' ? v.trim().slice(0, 120) : '');
 
+  let id = typeof brut.id === 'string' && brut.id ? brut.id : nouvelIdentifiant();
+  if (idsPris) {
+    while (idsPris.has(id)) id = nouvelIdentifiant();
+    idsPris.add(id);
+  }
+
   return {
-    id: typeof brut.id === 'string' && brut.id ? brut.id : nouvelIdentifiant(),
+    id,
     nom: nom.trim().slice(0, 120),
     qte: texte(brut.qte ?? brut.qty),
     magasin: texte(brut.magasin ?? brut.store),
@@ -177,12 +187,23 @@ function nouvelIdentifiant() {
   return `perso-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-/** Nettoie un rayon personnalisé venant du stockage ou d'un import. */
-function assainirRayonPerso(brut, idsPris) {
+/**
+ * Nettoie un rayon personnalisé venant du stockage ou d'un import.
+ *
+ * Le nom compte autant que l'identifiant : l'export texte regroupe les
+ * articles par intitulé de rayon, de sorte que deux rayons homonymes — l'un
+ * livré, l'autre venu d'un fichier — se confondraient sur la feuille imprimée.
+ */
+function assainirRayonPerso(brut, idsPris, nomsPris = null) {
   if (!brut || typeof brut !== 'object') return null;
   if (typeof brut.nom !== 'string' || brut.nom.trim() === '') return null;
 
   const nom = brut.nom.trim().slice(0, 40);
+  if (nomsPris) {
+    if (nomsPris.has(normaliser(nom))) return null;
+    nomsPris.add(normaliser(nom));
+  }
+
   let id = typeof brut.id === 'string' && brut.id ? brut.id : `perso-${identifiant(nom)}`;
   while (idsPris.has(id)) id = `${id}-2`;
   idsPris.add(id);
@@ -224,8 +245,9 @@ function fusionnerCatalogue(sauvegardes, supprimes) {
 /** Reprend les rayons et magasins personnalisés d'un objet sauvegardé. */
 function chargerPerso(donnees) {
   const idsPris = new Set(RAYONS.map((r) => r.id));
+  const nomsRayonsPris = new Set(RAYONS.map((r) => normaliser(r.nom)));
   etat.rayonsPerso = (Array.isArray(donnees?.rayonsPerso) ? donnees.rayonsPerso : [])
-    .map((brut) => assainirRayonPerso(brut, idsPris))
+    .map((brut) => assainirRayonPerso(brut, idsPris, nomsRayonsPris))
     .filter(Boolean)
     .slice(0, MAX_PERSO);
 
@@ -259,7 +281,8 @@ export function charger() {
     Array.isArray(donnees.supprimes) ? donnees.supprimes.filter((v) => typeof v === 'string') : [],
   );
 
-  const assainis = donnees.articles.map(assainirArticle).filter(Boolean);
+  const idsPris = new Set();
+  const assainis = donnees.articles.map((a) => assainirArticle(a, idsPris)).filter(Boolean);
   etat.articles = fusionnerCatalogue(assainis, etat.supprimes);
 
   const prefs = donnees.preferences ?? {};
@@ -316,7 +339,10 @@ export function basculerCoche(id) {
 
 /** Ajoute un article créé à la main, en tête de liste. */
 export function ajouter({ nom, qte = '', magasin = '', rayon = RAYON_DEFAUT }) {
-  const article = assainirArticle({ id: nouvelIdentifiant(), nom, qte, magasin, rayon });
+  const article = assainirArticle(
+    { id: nouvelIdentifiant(), nom, qte, magasin, rayon },
+    new Set(etat.articles.map((a) => a.id)),
+  );
   if (!article) return null;
 
   etat.articles.unshift(article);
@@ -379,11 +405,21 @@ export function remplacerArticles(donnees) {
   const brut = Array.isArray(donnees) ? { articles: donnees } : donnees;
 
   // Les rayons personnalisés du fichier d'abord : sans eux, les articles qui
-  // s'y rattachent seraient renvoyés dans « Divers ».
+  // s'y rattachent seraient renvoyés dans « Divers ». Mais un fichier dont
+  // aucun article ne survit à l'assainissement ne doit rien remplacer du tout :
+  // on garde donc de quoi revenir en arrière avant d'y toucher.
+  const rayonsAvant = etat.rayonsPerso;
+  const magasinsAvant = etat.magasinsPerso;
   chargerPerso(brut);
 
-  const assainis = (brut.articles ?? []).map(assainirArticle).filter(Boolean);
-  if (assainis.length === 0) return 0;
+  const idsPris = new Set();
+  const assainis = (brut.articles ?? []).map((a) => assainirArticle(a, idsPris)).filter(Boolean);
+  if (assainis.length === 0) {
+    etat.rayonsPerso = rayonsAvant;
+    etat.magasinsPerso = magasinsAvant;
+    reindexer();
+    return 0;
+  }
 
   etat.articles = assainis;
   etat.supprimes = new Set(
@@ -413,6 +449,8 @@ export function ajouterRayon({ nom, emoji }) {
     return { erreur: `« ${propre} » existe déjà.` };
   }
 
+  // Le doublon de nom est déjà écarté ci-dessus, avec un message pour
+  // l'utilisateur : inutile de le refaire ici.
   const idsPris = new Set(rayons().map((r) => r.id));
   const rayon = assainirRayonPerso({ nom: propre, emoji }, idsPris);
   etat.rayonsPerso.push(rayon);

@@ -237,6 +237,15 @@ const Exporteur = (() => {
     }
   }
 
-  return { telechargerWord, partager };
+  return {
+    telechargerWord,
+    partager,
+    /**
+     * Les rouages qui ne touchent pas au DOM, ouverts aux tests. Le ZIP et son
+     * CRC se vérifient octet par octet ou pas du tout : un document Word
+     * légèrement faux s'ouvre chez nous et se refuse chez le destinataire.
+     */
+    interne: { crc32, zip, versTexte, versDocumentXml, versDocx, nomDeFichier, extraire },
+  };
 
 })();

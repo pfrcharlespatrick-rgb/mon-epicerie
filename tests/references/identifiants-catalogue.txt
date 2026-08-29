@@ -1,0 +1,163 @@
+piment-vert	Piment vert
+piment-rouge	Piment rouge
+piment-jaune	Piment jaune
+tomates	Tomates
+tomates-cerises-mini-tomates	Tomates cerises / mini tomates
+avocats	Avocats
+brocoli	Brocoli
+chou-fleur	Chou-fleur
+chou-vert	Chou vert
+navet	Navet
+betteraves-fraiches	Betteraves fraîches
+c-ur-de-celeri	Cœur de céleri
+poireau	Poireau
+carottes-de-differentes-couleurs	Carottes de différentes couleurs
+champignons-blancs	Champignons blancs
+echalotes	Échalotes
+echalotes-francaises	Échalotes françaises
+oignon-blanc	Oignon blanc
+oignon-rouge	Oignon rouge
+feves-vertes-et-jaunes	Fèves vertes et jaunes
+epinards	Épinards
+ble-d-inde	Blé d’Inde
+patate-douce	Patate douce
+patates-grelots-patates	Patates grelots / Patates
+salade-en-plastique	Salade en plastique
+trempette-de-legumes	Trempette de légumes
+bananes	Bananes
+framboises	Framboises
+bleuets	Bleuets
+fraises	Fraises
+clementines	Clémentines
+citrons	Citrons
+limes	Limes
+ananas	Ananas
+raisins-verts-ou-rouges	Raisins verts ou rouges
+porc-hache	Porc haché
+veau-hache	Veau haché
+dinde-hachee	Dinde hachée
+steak-hache-extra-maigre	Steak haché extra maigre
+cuisses-de-poulet	Cuisses de poulet
+poitrine-de-poulet	Poitrine de poulet
+brochettes-de-poulet	Brochettes de poulet
+poulet-entier-cuit	Poulet entier cuit
+c-urs-de-poulet-congeles	Cœurs de poulet congelés
+patte-de-cochon	Patte de cochon
+jambon	Jambon
+bacon-tranche-mince	Bacon tranché mince
+creton	Creton
+boudin	Boudin
+saucisses-a-dejeuner	Saucisses à déjeuner
+petite-saucisse	Petite saucisse
+saucisses-hot-dog-porc-b-uf	Saucisses hot-dog / porc & bœuf
+pate-de-foie-gras	Pâté de foie gras
+pate-chinois	Pâté chinois
+viande-a-lunch-charcuterie	Viande à lunch (charcuterie)
+saumon-fume	Saumon fumé
+saumon-morceau	Saumon (morceau)
+saumon-farci-aux-crevettes	Saumon farci aux crevettes
+turbot	Turbot
+huitres-fraiches	Huîtres fraîches
+crabe-arrange-defait	Crabe arrangé / défait
+lait-3-25	Lait 3.25%
+lait-2	Lait 2%
+lait-2-sans-lactose	Lait 2% sans lactose
+creme-35	Crème 35%
+beurre-sans-sel	Beurre sans sel
+beurre-sale	Beurre salé
+fromage-boivin	Fromage Boivin
+fromage-bleu	Fromage bleu
+fromage-feta	Fromage Feta
+grosse-meule-de-fromage-brie	Grosse meule de Fromage Brie
+fromage-velveeta-en-tranches	Fromage Velveeta en tranches
+fromage-en-crotte	Fromage en crotte
+yogourt-grec-nature	Yogourt grec nature
+bio-k-a-la-mangue	Bio-K à la mangue
+cool-whip	Cool Whip
+pain-baguette	Pain baguette
+pain-grand-pere	Pain Grand-Père
+pain-tranche-brioche	Pain tranché brioché
+pain-blanc-brun-tranche	Pain blanc/brun tranché
+pain-hot-dog	Pain hot-dog
+pain-hamburger	Pain hamburger
+sandwich-prepare	Sandwich préparé
+confiture-de-framboises	Confiture de framboises
+pois-chiches-en-conserve	Pois chiches en conserve
+betteraves-tranchees-habitant	Betteraves tranchées (Habitant)
+olives-kalamata-tranchees	Olives Kalamata TRANCHÉES
+capres	Câpres
+soupe-aux-pois	Soupe aux pois
+feves-aux-lard	Fèves aux lard
+sauce-brune-en-conserve	Sauce brune en conserve
+sauce-hot-chicken-en-conserve	Sauce hot chicken en conserve
+sauce-orange-et-gingembre	Sauce orange et gingembre
+riz-arborio	Riz arborio
+riz-basmati	Riz basmati
+riz-sauvage	Riz sauvage
+riz-danty-au-poulet	Riz Danty au poulet
+lentilles	Lentilles
+orge-perle	Orge perlé
+quinoa	Quinoa
+avoine-belait-gruau-erable	Avoine Bêlait / Gruau érable
+graines-de-lin	Graines de lin
+graines-de-chanvre	Graines de chanvre
+canneberges-sechees-fraiches	Canneberges séchées/fraîches
+chapelure	Chapelure
+huile-d-avocat	Huile d’avocat
+pam-a-l-olive	Pam à l’olive
+epices-clamato-bloody-caesar	Épices Clamato / Bloody Caesar
+paprika-moulu	Paprika moulu
+sirop-d-erable	Sirop d’érable
+cafe-de-qualite-vrac-moulu	Café de qualité (vrac/moulu)
+cafe-en-grains	Café en grains
+ufs-extra-gros	Œufs extra gros
+compote-de-pommes-jean-marc	Compote de pommes (Jean-Marc)
+collagene-en-poudre	Collagène en poudre
+frites-congelees-ondulees	Frites congelées ondulées
+patates-congelees	Patates congelées
+mini-fondues	Mini fondues
+chips-ruffles-creme-sure-reg	Chips Ruffles crème sure / Rég.
+chips-assortiment	Chips (assortiment)
+meli-melo	Méli-mélo
+biscuits-boite-34	Biscuits (boîte 34)
+palette-caramilk	Palette Caramilk
+tartes-au-sucre	Tartes au sucre
+tarte-aux-pommes	Tarte aux pommes
+gateau-reine-elizabeth	Gâteau Reine Elizabeth
+gateaux-vachon-mille-feuilles	Gâteaux Vachon (Mille-feuilles)
+creme-glacee-vanille	Crème glacée vanille
+buche-de-noel-creme-glacee	Bûche de Noël crème glacée
+bouteilles-d-eau	Bouteilles d’eau
+jus-de-pomme-a-l-ancienne	Jus de pomme à l’ancienne
+jus-d-orange-mangue	Jus d’orange & mangue
+jus-de-canneberge	Jus de canneberge
+jus-vert-de-legumes	Jus vert de légumes
+clamato-petites-bouteilles	Clamato (petites bouteilles)
+liqueur-boisson-gazeuse	Liqueur (boisson gazeuse)
+pepsi-diete-mini	Pepsi diète (mini)
+pepsi-ordinaire-mini	Pepsi ordinaire (mini)
+vin-blanc-sans-alcool	Vin blanc sans alcool
+vin-blanc-sancerre	Vin blanc Sancerre
+vin-blanc-chablis	Vin blanc Chablis
+grey-goose	Grey Goose
+savon-a-linge	Savon à linge
+fleecy-assouplisseur-liquide	Fleecy / Assouplisseur liquide
+spray-n-wash-detachant	Spray n Wash (détachant)
+savon-a-vaisselle	Savon à vaisselle
+m-net-vim	M. Net / Vim
+hertel	Hertel
+fantastik	Fantastik
+perfection	Perfection
+gants-de-plastique-medium	Gants de plastique (médium)
+sulcowarp-pellicule-plastique	Sulcowarp pellicule plastique
+papier-de-toilette	Papier de toilette
+kleenex	Kleenex
+essuie-tout-scott-towers	Essuie-tout (Scott Towers)
+serviettes-de-table-napkins	Serviettes de table (Napkins)
+verres-a-vin-en-plastique	Verres à vin en plastique
+verres-en-plastique-10-oz	Verres en plastique 10 oz
+ustensiles-en-plastique	Ustensiles en plastique
+plant-de-basilic	Plant de basilic
+canne-nourriture-pour-elliot	Canne/Nourriture pour Elliot
+batteries-piles	Batteries / Piles
+agenda-2026	Agenda 2026
