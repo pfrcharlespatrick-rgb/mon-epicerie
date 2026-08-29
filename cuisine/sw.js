@@ -8,7 +8,7 @@
  * Penser à incrémenter VERSION à chaque déploiement.
  */
 
-const VERSION = 'v5';
+const VERSION = 'v6';
 const CACHE = `ma-cuisine-${VERSION}`;
 
 /** Fichiers indispensables au premier affichage. */
