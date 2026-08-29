@@ -307,6 +307,11 @@
   function montrerAttente(oui) {
     attente.hidden = !oui;
     boutonConsulter.disabled = oui;
+    const boutonReplique = document.querySelector('#formulaire-replique button');
+    if (boutonReplique) {
+      boutonReplique.disabled = oui;
+      boutonReplique.textContent = oui ? '…' : 'Envoyer';
+    }
     clearInterval(minuterieAttente);
     if (oui) {
       let i = 0;
@@ -325,6 +330,7 @@
       const p = document.createElement('p');
       p.textContent = message;
       erreurConseiller.append(p);
+      erreurConseiller.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }
 
@@ -414,7 +420,19 @@
     evenement.preventDefault();
     const champ = $('#champ-replique');
     const question = champ.value.trim();
-    if (!question || !conversation.length) return;
+    if (!question) return;
+    if (!Conseiller.cle()) { $('#dialogue-cle').showModal(); return; }
+
+    // Une recette rouverte du carnet arrive sans sa conversation (la photo
+    // n'est pas conservée) : on la fait renaître depuis le JSON gardé, pour
+    // que la réplique reste possible.
+    if (!conversation.length) {
+      if (!dernierConseil) { montrerErreur('Composez d’abord une recette, puis répliquez-lui.'); return; }
+      conversation = [
+        { role: 'user', content: 'Pour contexte, voici la recette que tu m’avais composée, telle que gardée à mon carnet (la photo n’est plus disponible) : ' + JSON.stringify(dernierConseil) + '\nRéponds désormais à mes questions en prose, fidèle à la même charte.' },
+        { role: 'assistant', content: [{ type: 'text', text: 'Bien reçu : je poursuis sur cette recette, en prose.' }] },
+      ];
+    }
 
     const blocQuestion = document.createElement('p');
     blocQuestion.className = 'vous';
