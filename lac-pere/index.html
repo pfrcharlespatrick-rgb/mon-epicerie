@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lac Péré — Inventaire du domaine</title>
+  <meta name="description" content="L'inventaire complet de l'épicerie et du matériel du domaine de pêche du Lac Péré : ce qui reste au moment de la fermeture, classé, archivé, partageable." />
+  <meta name="theme-color" content="#0f766e" />
+  <link rel="icon" href="assets/icones/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/icones/icone-180.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="assets/css/app.css" />
+  <script defer src="assets/js/catalogue.js"></script>
+  <script defer src="assets/js/etat.js"></script>
+  <script defer src="assets/js/rendu.js"></script>
+  <script defer src="assets/js/export.js"></script>
+  <script defer src="assets/js/app.js"></script>
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete-titre">
+    <svg class="logo" viewBox="0 0 100 100" aria-hidden="true">
+      <rect width="100" height="100" rx="20" fill="#0f766e"/>
+      <path d="M22 46 50 24l28 22v4H22Z" fill="#dc2626"/>
+      <path d="M30 50h40v20H30Z" fill="#fff"/>
+      <rect x="43" y="56" width="14" height="14" rx="2" fill="#0f766e"/>
+      <path d="M14 80c6 0 6-5 12-5s6 5 12 5 6-5 12-5 6 5 12 5 6-5 12-5 6 5 12 5" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <h1>Lac Péré — Inventaire</h1>
+      <p class="sous-titre">Ce qui reste au domaine, du garde-manger au hangar.</p>
+    </div>
+  </div>
+  <div class="entete-boutons">
+    <button type="button" id="bouton-reglages" class="bouton discret">👤 Qui compte ?</button>
+    <button type="button" id="bouton-aide" class="bouton discret">❓ Guide</button>
+  </div>
+</header>
+
+<nav class="onglets" aria-label="Sections">
+  <button type="button" class="onglet" data-vue="inventaire" aria-selected="true">📋 Inventaire</button>
+  <button type="button" class="onglet" data-vue="fermeture" aria-selected="false">🔒 Fermeture</button>
+  <button type="button" class="onglet" data-vue="archives" aria-selected="false">🗄️ Archives</button>
+  <button type="button" class="onglet" data-vue="partage" aria-selected="false">📤 Partage</button>
+</nav>
+
+<main>
+
+  <!-- ------------------------------------------------ Inventaire -->
+  <div id="vue-inventaire" class="vue">
+
+    <section class="banniere">
+      <img src="assets/photos/chalets-du-domaine.jpg" alt="Les chalets aux toits rouges du domaine, vus du lac" />
+      <div class="banniere-texte">
+        <p class="banniere-saison"><span id="banniere-saison">Saison</span></p>
+        <h2>Domaine de pêche du Lac Péré</h2>
+        <p>L'état du stock, bâtiment par bâtiment. Comptez au fur et à mesure ;
+          l'application retient qui a compté quoi, et quand.</p>
+      </div>
+    </section>
+
+    <section class="carte">
+      <div id="tableau-bord" class="chiffres"></div>
+      <div id="barre-avancement" class="barre" role="img" aria-label="Avancement du comptage"><span></span></div>
+      <p id="texte-avancement" class="explication"></p>
+    </section>
+
+    <section class="carte">
+      <div class="filtres">
+        <input type="search" id="champ-recherche" placeholder="🔎 Chercher un article…" aria-label="Chercher un article" />
+        <select id="filtre-rayon" aria-label="Filtrer par rayon"><option value="">Tous les rayons</option></select>
+        <select id="filtre-zone" aria-label="Filtrer par emplacement"><option value="">Tous les emplacements</option></select>
+      </div>
+
+      <div class="chips" id="filtres-etat">
+        <button type="button" class="chip" data-etat="" aria-pressed="true">Tout</button>
+        <button type="button" class="chip" data-etat="a-commander" aria-pressed="false">⚠️ À commander</button>
+        <button type="button" class="chip" data-etat="non-comptes" aria-pressed="false">⬜ Non comptés</button>
+        <button type="button" class="chip" data-etat="comptes" aria-pressed="false">✅ Comptés</button>
+        <button type="button" class="chip" data-etat="estimes" aria-pressed="false">👁️ Estimés</button>
+      </div>
+
+      <div class="barre-outils">
+        <span id="compte-resultats" class="explication"></span>
+        <span class="barre-outils-actions">
+          <button type="button" id="bouton-groupement" class="bouton">🗂️ Grouper par emplacement</button>
+          <button type="button" id="bouton-ajouter" class="bouton principal">＋ Ajouter un article</button>
+        </span>
+      </div>
+    </section>
+
+    <div id="liste-inventaire" class="liste"></div>
+  </div>
+
+  <!-- ------------------------------------------------ Fermeture -->
+  <div id="vue-fermeture" class="vue" hidden>
+
+    <section class="carte">
+      <h2>L'inventaire de fermeture</h2>
+      <p class="explication">
+        C'est le geste important de la saison : figer ce qui reste en stock au
+        moment où l'on ferme le domaine. Faites la tournée des emplacements
+        ci-dessous, puis archivez. L'archive ne bougera plus — on pourra la
+        consulter, l'imprimer et la comparer l'an prochain.
+      </p>
+
+      <div class="champs-deux">
+        <label class="champ">Saison
+          <input type="text" id="champ-saison" placeholder="2026" />
+        </label>
+        <label class="champ">Qui fait le relevé
+          <input type="text" id="champ-responsable" placeholder="Votre nom" />
+        </label>
+      </div>
+    </section>
+
+    <section class="carte">
+      <h3>La tournée, emplacement par emplacement</h3>
+      <p class="explication">Touchez un emplacement pour n'afficher que ses articles.</p>
+      <div id="liste-tournee" class="tournee"></div>
+    </section>
+
+    <section class="carte carte-action">
+      <h3>Archiver l'inventaire de fermeture</h3>
+      <p class="explication">
+        Fige les quantités comptées dans une archive datée et signée. Les
+        articles non comptés en sont exclus — comptez d'abord, archivez ensuite.
+      </p>
+      <div class="champ">
+        <label for="champ-note-fermeture">Une remarque à joindre <span class="facultatif">(facultatif)</span></label>
+        <input type="text" id="champ-note-fermeture" placeholder="p. ex. : congélateur 2 vidé et débranché" />
+      </div>
+      <div class="actions">
+        <button type="button" id="bouton-archiver" class="bouton principal">🔒 Archiver la fermeture</button>
+        <button type="button" id="bouton-imprimer-courant" class="bouton">🖨️ Imprimer l'état actuel</button>
+      </div>
+    </section>
+
+    <section class="carte">
+      <h3>Recommencer un comptage</h3>
+      <p class="explication">
+        À l'ouverture de la saison suivante, on remet tous les décomptes à zéro
+        pour repartir à neuf. Les archives, elles, sont conservées.
+      </p>
+      <button type="button" id="bouton-reinitialiser" class="bouton danger">♻️ Vider les décomptes</button>
+    </section>
+  </div>
+
+  <!-- ------------------------------------------------ Archives -->
+  <div id="vue-archives" class="vue" hidden>
+    <section class="carte">
+      <h2>Les inventaires archivés</h2>
+      <p class="explication">
+        Chaque fermeture laisse ici une photographie du stock. Rien ne s'y
+        modifie : c'est la mémoire du domaine.
+      </p>
+    </section>
+    <div id="liste-archives" class="liste"></div>
+  </div>
+
+  <!-- ------------------------------------------------ Partage -->
+  <div id="vue-partage" class="vue" hidden>
+
+    <section class="banniere banniere-haute">
+      <img src="assets/photos/domaine-vue-aerienne.jpg" alt="Le domaine et le lac Péré vus d'avion" />
+    </section>
+
+    <section class="carte">
+      <h2>Passer le relais</h2>
+      <p class="explication">
+        L'application n'a pas de serveur : vos données restent sur votre
+        appareil. Pour qu'un collègue voie votre inventaire, on s'échange un
+        fichier de sauvegarde — et l'application sait réunir deux comptages
+        sans rien perdre.
+      </p>
+      <div class="actions">
+        <button type="button" id="bouton-sauvegarde" class="bouton principal">💾 Sauvegarder (.json)</button>
+        <button type="button" id="bouton-envoyer" class="bouton">📤 Envoyer à un collègue</button>
+        <button type="button" id="bouton-restaurer" class="bouton">📥 Ouvrir un fichier reçu</button>
+        <input type="file" id="champ-fichier" accept="application/json,.json" hidden />
+      </div>
+    </section>
+
+    <section class="carte">
+      <h3>Sortir l'inventaire</h3>
+      <div class="actions">
+        <button type="button" id="bouton-imprimer" class="bouton">🖨️ Imprimer / PDF</button>
+        <button type="button" id="bouton-csv" class="bouton">📊 Tableur (Excel)</button>
+        <button type="button" id="bouton-copier" class="bouton">📋 Copier le texte</button>
+        <button type="button" id="bouton-partager-texte" class="bouton">💬 Partager par message</button>
+      </div>
+      <p class="explication">
+        L'impression et le tableur suivent les filtres de l'onglet Inventaire :
+        filtrez sur « À commander » pour obtenir la liste d'épicerie du
+        prochain voyage.
+      </p>
+    </section>
+
+    <section class="carte">
+      <h3>Installer l'application</h3>
+      <ol class="marches">
+        <li><b>Sur iPhone ou iPad</b> — ouvrez l'adresse dans Safari, touchez le
+          bouton de partage, puis « Sur l'écran d'accueil ».</li>
+        <li><b>Sur Android</b> — ouvrez l'adresse dans Chrome, menu ⋮, puis
+          « Installer l'application » ou « Ajouter à l'écran d'accueil ».</li>
+        <li><b>Sur ordinateur</b> — ajoutez la page aux favoris ; elle
+          fonctionne aussi hors ligne une fois ouverte.</li>
+      </ol>
+      <p class="explication">
+        Une fois installée, elle s'ouvre sans réseau — utile au domaine, où la
+        connexion est rare.
+      </p>
+    </section>
+  </div>
+
+</main>
+
+<footer class="pied">
+  <p>Domaine de pêche du Lac Péré · inventaire tenu hors ligne, sans compte ni serveur.</p>
+</footer>
+
+<!-- ------------------------------------------------ Fenêtres -->
+
+<dialog id="dialogue-fiche">
+  <form method="dialog" id="formulaire-fiche">
+    <h3 id="titre-fiche">Fiche de l'article</h3>
+
+    <div class="champs-deux">
+      <label class="champ">Nom
+        <input type="text" id="fiche-nom" required />
+      </label>
+      <label class="champ">Format
+        <input type="text" id="fiche-format" placeholder="540 ml, 10 kg, à l’unité…" />
+      </label>
+    </div>
+
+    <div class="champs-deux">
+      <label class="champ">Rayon
+        <select id="fiche-rayon"></select>
+      </label>
+      <label class="champ">Emplacement
+        <select id="fiche-zone"></select>
+      </label>
+    </div>
+
+    <div class="champs-trois">
+      <label class="champ">Quantité
+        <input type="number" id="fiche-quantite" min="0" step="1" inputmode="numeric" placeholder="—" />
+      </label>
+      <label class="champ">Unité
+        <input type="text" id="fiche-unite" list="liste-unites" />
+      </label>
+      <label class="champ">Seuil d'alerte
+        <input type="number" id="fiche-seuil" min="0" step="1" inputmode="numeric" />
+      </label>
+    </div>
+
+    <datalist id="liste-unites"></datalist>
+
+    <label class="champ champ-case">
+      <input type="checkbox" id="fiche-estime" />
+      <span>Quantité <b>estimée</b> (comptée à l'œil, ou d'après une photo)</span>
+    </label>
+
+    <label class="champ">Remarque
+      <input type="text" id="fiche-note" placeholder="p. ex. : boîte entamée, à vérifier au printemps" />
+    </label>
+
+    <p id="fiche-signature" class="explication"></p>
+
+    <div class="actions-dialogue">
+      <button type="button" id="fiche-supprimer" class="bouton danger">🗑️ Retirer</button>
+      <span class="espace"></span>
+      <button type="button" id="fiche-annuler" class="bouton">Annuler</button>
+      <button type="submit" class="bouton principal">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dialogue-reglages">
+  <form method="dialog">
+    <h3>Qui fait le relevé ?</h3>
+    <p class="explication">
+      Votre nom signe chaque saisie et chaque archive — c'est ainsi qu'on sait,
+      plus tard, qui a compté quoi.
+    </p>
+    <label class="champ">Nom
+      <input type="text" id="reglages-responsable" placeholder="Votre nom" />
+    </label>
+    <label class="champ">Saison
+      <input type="text" id="reglages-saison" placeholder="2026" />
+    </label>
+    <div class="actions-dialogue">
+      <button type="button" id="reglages-annuler" class="bouton">Annuler</button>
+      <button type="button" id="reglages-enregistrer" class="bouton principal">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dialogue-archive">
+  <div>
+    <h3 id="titre-archive">Inventaire archivé</h3>
+    <p id="details-archive" class="explication"></p>
+    <div id="contenu-archive" class="contenu-archive"></div>
+    <div class="actions-dialogue">
+      <button type="button" id="archive-imprimer" class="bouton">🖨️ Imprimer</button>
+      <button type="button" id="archive-csv" class="bouton">📊 Tableur</button>
+      <span class="espace"></span>
+      <button type="button" id="archive-fermer" class="bouton principal">Fermer</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dialogue-aide">
+  <div>
+    <h3>Le guide en cinq minutes</h3>
+    <ol class="marches">
+      <li><b>Dites qui vous êtes</b> — bouton « Qui compte ? » en haut. Votre
+        nom signera vos saisies.</li>
+      <li><b>Comptez</b> — dans l'onglet Inventaire, tapez la quantité ou
+        touchez les boutons − et +. Un article laissé vide reste « non
+        compté ».</li>
+      <li><b>Estimez sans crainte</b> — si vous comptez à l'œil (une armoire
+        pleine, une caisse entamée), cochez « estimée » dans la fiche ✏️. Le
+        rapport le dira.</li>
+      <li><b>Ajoutez ce qui manque</b> — bouton « ＋ Ajouter un article » pour
+        tout ce que le catalogue ne prévoit pas.</li>
+      <li><b>Archivez à la fermeture</b> — onglet Fermeture. C'est cette
+        archive qui répond, l'hiver venu, à « qu'est-ce qu'il nous reste ? ».</li>
+      <li><b>Partagez</b> — onglet Partage : une sauvegarde `.json` s'envoie
+        par courriel ou message, et se réunit avec le comptage d'un collègue.</li>
+    </ol>
+    <div class="actions-dialogue">
+      <button type="button" id="aide-fermer" class="bouton principal">C'est compris</button>
+    </div>
+  </div>
+</dialog>
+
+<div id="message" class="message" hidden></div>
+<div id="zone-impression" class="feuille" aria-hidden="true"></div>
+
+</body>
+</html>

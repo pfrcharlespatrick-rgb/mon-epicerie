@@ -4,12 +4,18 @@ Liste de courses hebdomadaire pour la région de Québec : un catalogue de
 163 produits habituels, des quantités, des enseignes, l'impression et la
 sauvegarde. Et, par la marmite en haut de la liste, **Ma Cuisine** : le
 conseiller culinaire qui mène ce qu'on rapporte du marché jusqu'à la table,
-piloté à la température à cœur. Le tout fonctionne hors ligne et sans compte.
+piloté à la température à cœur. Et, par le chalet, **l'inventaire du Lac
+Péré** : ce que le domaine de pêche a en stock au moment de fermer. Le tout
+fonctionne hors ligne et sans compte.
 
 **→ [Ouvrir l'application](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/)**
 
 **→ [Ouvrir Ma Cuisine](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/cuisine/)** —
 voir [sa section](#ma-cuisine--le-conseiller-culinaire) plus bas.
+
+**→ [Ouvrir l'inventaire du Lac Péré](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/lac-pere/)** —
+l'inventaire de l'épicerie et du matériel du domaine de pêche, conçu pour la
+fermeture de saison ; voir [sa section](#lac-péré--linventaire-du-domaine).
 
 ---
 
@@ -216,6 +222,105 @@ Pour ajouter une pièce, tout tient dans
 ses textes. Contrairement à l'épicerie, ces fichiers n'utilisent pas de
 modules : la page s'ouvre aussi par un double-clic sur `index.html`.
 
+## Lac Péré — l'inventaire du domaine
+
+**→ [Ouvrir l'application](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/lac-pere/)**
+
+L'inventaire complet de ce que possède le domaine de pêche du Lac Péré :
+l'épicerie et le matériel, du garde-manger au hangar à moteurs. Il répond à
+une question précise, celle qu'on se pose tout l'hiver — **qu'est-ce qu'il
+restait au moment de la fermeture ?**
+
+Ce qu'il fait :
+
+- **218 articles livrés d'avance**, classés en 16 rayons (épicerie sèche,
+  congelé, literie, pêche et embarcations, carburants, premiers soins…) et
+  répartis dans 13 emplacements du domaine.
+- **Un décompte par article** — au clavier ou par les boutons − et +, avec un
+  seuil d'alerte qui fait passer l'article en « à commander ».
+- **Des quantités estimées assumées** : une case « estimée » distingue le
+  compté à l'unité de l'évalué à l'œil, et le rapport le dit.
+- **Une archive de fermeture** datée et signée, qui ne bouge plus. C'est la
+  mémoire du domaine, saison après saison.
+- **Un rapport imprimable** avec lignes de signature, un tableur `.csv` pour
+  Excel, et une sauvegarde `.json` qui sert à passer le relais.
+
+### Le geste de la fermeture
+
+L'onglet **Fermeture** mène la tournée : chaque emplacement affiche son
+avancement (`0 / 18`), et un contact ouvre la liste de ses seuls articles.
+Quand tout est compté, un bouton fige l'ensemble dans une archive — titre,
+date, nom du responsable, remarque. Les articles laissés vides en sont
+exclus : une archive ne contient que du compté.
+
+L'onglet **Archives** garde ces photographies du stock. On les consulte, on
+les imprime, et on peut *recharger* l'une d'elles dans l'inventaire courant
+pour repartir de l'état de l'automne dernier.
+
+### Partager avec ses employeurs
+
+L'application n'a pas de serveur : chaque appareil garde ses propres données.
+Le partage se fait par fichier, en trois gestes.
+
+1. **Vous** — onglet *Partage* → **💾 Sauvegarder (.json)**, ou
+   **📤 Envoyer à un collègue** sur téléphone, qui propose directement le
+   courriel ou la messagerie.
+2. **Eux** — ils ouvrent la même adresse web, puis onglet *Partage* →
+   **📥 Ouvrir un fichier reçu**.
+3. **Deux comptages à la fois** — l'application demande alors *fusionner* ou
+   *remplacer*. **Fusionner** est le choix sûr : article par article, la
+   saisie la plus récente gagne. Deux personnes peuvent compter chacune leur
+   bâtiment et réunir les deux fichiers sans rien perdre.
+
+C'est aussi pour cela que le bouton « Qui compte ? » demande un nom : chaque
+quantité retient qui l'a saisie et quand, et c'est ce qui départage deux
+versions.
+
+### Installer sur un téléphone
+
+- **iPhone / iPad** — ouvrir l'adresse dans Safari, bouton de partage, *Sur
+  l'écran d'accueil*.
+- **Android** — ouvrir l'adresse dans Chrome, menu ⋮, *Installer
+  l'application*.
+
+Une fois installée, elle fonctionne sans réseau : au domaine, c'est
+l'essentiel.
+
+### Modifier le stock livré
+
+Comme pour l'épicerie, ajouter un article *pour tout le monde* tient dans un
+seul fichier,
+[`lac-pere/assets/js/catalogue.js`](lac-pere/assets/js/catalogue.js) :
+
+```js
+{ id: 'sec-riz-brun', nom: 'Riz brun', rayon: 'sec', zone: 'garde-manger',
+  unite: 'sac', format: '8 kg', seuil: 1 },
+```
+
+L'`id` ne se réutilise jamais : c'est lui qui relie un article à son décompte
+et à toutes les archives où il figure. Un article ajouté au catalogue apparaît
+chez chacun au prochain chargement, **sans effacer aucune quantité déjà
+saisie**. Depuis l'application elle-même, le bouton *＋ Ajouter un article*
+fait la même chose pour un seul appareil.
+
+### Organisation de `lac-pere/`
+
+```
+lac-pere/index.html               structure de la page
+lac-pere/assets/css/app.css       mise en forme (thèmes clair/sombre, feuille imprimée)
+lac-pere/assets/js/catalogue.js   données : emplacements, rayons, articles livrés
+lac-pere/assets/js/etat.js        décomptes, archives, fusion des sauvegardes
+lac-pere/assets/js/rendu.js       construction du DOM
+lac-pere/assets/js/export.js      impression, tableur, sauvegarde, partage
+lac-pere/assets/js/app.js         branchement de l'interface
+lac-pere/assets/photos/           les photos du domaine, pour la présentation
+lac-pere/sw.js                    cache hors-ligne (VERSION à incrémenter au déploiement)
+outils/generer-icones-lac-pere.mjs  régénère les icônes PNG
+```
+
+Comme `cuisine/`, ces fichiers n'utilisent pas de modules : la page s'ouvre
+aussi par un double-clic sur `index.html`.
+
 ## Développement
 
 Aucune dépendance, aucune étape de compilation. Il suffit de servir le dossier :
@@ -244,8 +349,10 @@ outils/generer-icones.mjs  régénère les icônes PNG (node outils/generer-icon
 
 ### Après un déploiement
 
-Incrémenter `VERSION` dans [`sw.js`](sw.js), sinon les navigateurs qui ont déjà
-visité le site continueront de servir les anciens fichiers depuis leur cache.
+Incrémenter `VERSION` dans le `sw.js` de l'application touchée —
+[`sw.js`](sw.js), [`cuisine/sw.js`](cuisine/sw.js) ou
+[`lac-pere/sw.js`](lac-pere/sw.js) —, sinon les navigateurs qui ont déjà visité
+le site continueront de servir les anciens fichiers depuis leur cache.
 
 ## Publication
 

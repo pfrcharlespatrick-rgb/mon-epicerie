@@ -1,0 +1,578 @@
+/* Inventaire du Lac Péré — mise en forme.
+   Palette d'eau et de forêt, toits rouges pour l'alerte. Thèmes clair et
+   sombre, et une feuille imprimée qui tient lieu de document officiel.
+   Aucune dépendance. */
+
+:root {
+  --fond: #f6f7f5;
+  --carte: #ffffff;
+  --encre: #1c2321;
+  --encre-douce: #5f6b67;
+  --accent: #0f766e;
+  --accent-sombre: #115e59;
+  --accent-fond: #e6f2f0;
+  --bord: #dfe4e1;
+  --alerte: #b91c1c;
+  --alerte-fond: #fdecec;
+  --attention: #b45309;
+  --attention-fond: #fdf3e7;
+  --reussite: #047857;
+  --message-fond: #115e59;
+  --message-encre: #ffffff;
+  --ombre: 0 1px 3px rgba(28, 35, 33, 0.09);
+  --ombre-haute: 0 8px 24px rgba(28, 35, 33, 0.14);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fond: #14191a;
+    --carte: #1d2426;
+    --encre: #e6eae8;
+    --encre-douce: #9db0ab;
+    --accent: #2dd4bf;
+    --accent-sombre: #5eead4;
+    --accent-fond: #143430;
+    --bord: #2e3739;
+    --alerte: #f87171;
+    --alerte-fond: #3a1e1e;
+    --attention: #fbbf24;
+    --attention-fond: #362a17;
+    --reussite: #34d399;
+    --message-fond: #2dd4bf;
+    --message-encre: #06231f;
+    --ombre: 0 1px 3px rgba(0, 0, 0, 0.45);
+    --ombre-haute: 0 8px 24px rgba(0, 0, 0, 0.55);
+  }
+}
+
+* { box-sizing: border-box; }
+
+/* L'attribut hidden doit l'emporter sur tout display posé par une classe. */
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--fond);
+  color: var(--encre);
+  font-family: Georgia, 'Times New Roman', serif;
+  line-height: 1.6;
+  font-size: 1.02rem;
+}
+
+/* --- En-tête et onglets ------------------------------------------------- */
+
+.entete {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.5rem;
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.entete-titre { display: flex; align-items: center; gap: 0.85rem; }
+.logo { width: 3rem; height: 3rem; flex: none; }
+h1 { margin: 0; font-size: 1.5rem; letter-spacing: 0.01em; }
+.sous-titre { margin: 0.1rem 0 0; color: var(--encre-douce); font-style: italic; font-size: 0.92rem; }
+.entete-boutons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+.onglets {
+  display: flex;
+  gap: 0.25rem;
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--bord);
+}
+
+.onglet {
+  font: inherit;
+  font-size: 0.95rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--encre-douce);
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.onglet:hover { color: var(--encre); }
+
+.onglet[aria-selected='true'] {
+  color: var(--accent-sombre);
+  border-bottom-color: var(--accent);
+  font-weight: bold;
+}
+
+/* --- Cartes -------------------------------------------------------------- */
+
+main { max-width: 56rem; margin: 0 auto; padding: 1.25rem 1.25rem 3rem; }
+
+.carte {
+  background: var(--carte);
+  border: 1px solid var(--bord);
+  border-radius: 14px;
+  box-shadow: var(--ombre);
+  padding: 1.15rem 1.3rem;
+  margin-bottom: 1.15rem;
+}
+
+.carte-action { border-color: var(--accent); }
+
+h2 { margin: 0 0 0.5rem; font-size: 1.25rem; color: var(--accent-sombre); }
+h3 { margin: 0 0 0.4rem; font-size: 1.08rem; color: var(--accent-sombre); }
+h4 { margin: 1rem 0 0.3rem; font-size: 1rem; color: var(--accent-sombre); }
+
+.explication { color: var(--encre-douce); margin: 0.25rem 0 0.75rem; font-size: 0.94rem; }
+.facultatif { color: var(--encre-douce); font-style: italic; font-weight: normal; font-size: 0.88rem; }
+
+/* --- Bannière photo ------------------------------------------------------ */
+
+.banniere {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 1.15rem;
+  box-shadow: var(--ombre);
+  background: #0b1f24;
+}
+
+.banniere img {
+  display: block;
+  width: 100%;
+  height: 14rem;
+  object-fit: cover;
+  opacity: 0.85;
+}
+
+.banniere-haute img { height: 20rem; object-position: center 40%; opacity: 1; }
+
+.banniere-texte {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 1.5rem 1.3rem 1.1rem;
+  background: linear-gradient(to top, rgba(6, 20, 24, 0.92), rgba(6, 20, 24, 0));
+  color: #f4faf8;
+}
+
+.banniere-texte h2 { color: #fff; margin: 0.1rem 0 0.25rem; font-size: 1.35rem; }
+.banniere-texte p { margin: 0; font-size: 0.92rem; color: #d8e6e2; }
+
+.banniere-saison {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem !important;
+  color: #7dd3c4 !important;
+  font-family: system-ui, sans-serif;
+}
+
+/* --- Chiffres du tableau de bord ---------------------------------------- */
+
+.chiffres {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.chiffre {
+  border: 1px solid var(--bord);
+  border-radius: 11px;
+  padding: 0.7rem 0.8rem;
+  background: var(--fond);
+}
+
+.chiffre b { display: block; font-size: 1.45rem; line-height: 1.2; }
+.chiffre span { font-size: 0.82rem; color: var(--encre-douce); font-family: system-ui, sans-serif; }
+.chiffre.ton-accent { background: var(--accent-fond); border-color: var(--accent); }
+.chiffre.ton-accent b { color: var(--accent-sombre); }
+.chiffre.ton-alerte { background: var(--alerte-fond); border-color: var(--alerte); }
+.chiffre.ton-alerte b { color: var(--alerte); }
+
+.barre {
+  height: 0.6rem;
+  border-radius: 999px;
+  background: var(--bord);
+  overflow: hidden;
+}
+
+.barre span {
+  display: block;
+  height: 100%;
+  width: var(--avancement, 0%);
+  background: linear-gradient(90deg, var(--accent), var(--reussite));
+  transition: width 0.3s ease;
+}
+
+/* --- Filtres -------------------------------------------------------------- */
+
+.filtres {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+
+@media (min-width: 40rem) {
+  .filtres { grid-template-columns: 2fr 1fr 1fr; }
+}
+
+input, select, textarea {
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 9px;
+  border: 1px solid var(--bord);
+  background: var(--carte);
+  color: var(--encre);
+  width: 100%;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.75rem 0 0.5rem; }
+
+.chip {
+  font: inherit;
+  font-size: 0.88rem;
+  font-family: system-ui, sans-serif;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--bord);
+  background: var(--carte);
+  color: var(--encre-douce);
+  cursor: pointer;
+}
+
+.chip:hover { border-color: var(--accent); }
+
+.chip[aria-pressed='true'] {
+  background: var(--accent-fond);
+  border-color: var(--accent);
+  color: var(--accent-sombre);
+  font-weight: bold;
+}
+
+.barre-outils {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.6rem;
+}
+
+.barre-outils-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.barre-outils .explication { margin: 0; }
+
+/* --- Boutons --------------------------------------------------------------- */
+
+.bouton {
+  font: inherit;
+  font-size: 0.92rem;
+  padding: 0.48rem 0.95rem;
+  border-radius: 10px;
+  border: 1px solid var(--bord);
+  background: var(--carte);
+  color: var(--encre);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bouton:hover { border-color: var(--accent); }
+
+.bouton.principal {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: bold;
+}
+
+.bouton.principal:hover { background: var(--accent-sombre); border-color: var(--accent-sombre); }
+.bouton.discret { background: transparent; }
+.bouton.danger { color: var(--alerte); border-color: var(--alerte); background: transparent; }
+.bouton.danger:hover { background: var(--alerte-fond); }
+
+.actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
+
+/* --- Liste d'inventaire ---------------------------------------------------- */
+
+.liste { display: flex; flex-direction: column; gap: 1.15rem; }
+
+.groupe {
+  background: var(--carte);
+  border: 1px solid var(--bord);
+  border-radius: 14px;
+  box-shadow: var(--ombre);
+  overflow: hidden;
+}
+
+.groupe-entete {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  background: var(--accent-fond);
+  border-bottom: 1px solid var(--bord);
+}
+
+.groupe-entete h3 { margin: 0; font-size: 1rem; display: flex; gap: 0.5rem; align-items: baseline; }
+.groupe-compte { font-size: 0.8rem; color: var(--encre-douce); font-family: system-ui, sans-serif; white-space: nowrap; }
+
+.ligne {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--bord);
+  border-left: 4px solid transparent;
+}
+
+.ligne:last-child { border-bottom: none; }
+
+.ligne-identite { flex: 1 1 12rem; min-width: 0; }
+.ligne-nom { display: block; }
+.ligne-details, .ligne-note {
+  display: block;
+  font-size: 0.83rem;
+  color: var(--encre-douce);
+  font-family: system-ui, sans-serif;
+}
+.ligne-note { font-style: italic; }
+
+.ligne-compte { display: flex; align-items: center; gap: 0.35rem; flex: none; }
+
+.pas {
+  font: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 8px;
+  border: 1px solid var(--bord);
+  background: var(--carte);
+  color: var(--encre);
+  cursor: pointer;
+}
+
+.pas:hover { border-color: var(--accent); color: var(--accent); }
+
+.champ-quantite {
+  width: 4.2rem;
+  text-align: center;
+  padding: 0.4rem 0.3rem;
+}
+
+.ligne-unite {
+  font-size: 0.8rem;
+  color: var(--encre-douce);
+  font-family: system-ui, sans-serif;
+  min-width: 3.5rem;
+}
+
+.fiche {
+  font-size: 0.95rem;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.35rem 0.45rem;
+  cursor: pointer;
+}
+
+.fiche:hover { border-color: var(--bord); }
+
+.etat-ok { border-left-color: var(--reussite); }
+.etat-bas { border-left-color: var(--attention); background: var(--attention-fond); }
+.etat-epuise { border-left-color: var(--alerte); background: var(--alerte-fond); }
+.etat-non-compte { border-left-color: var(--bord); }
+
+.vide { padding: 1.5rem; text-align: center; color: var(--encre-douce); background: var(--carte);
+  border: 1px dashed var(--bord); border-radius: 14px; }
+
+/* --- La tournée de fermeture ------------------------------------------------ */
+
+.tournee { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.6rem; }
+
+.etape {
+  font: inherit;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--bord);
+  border-radius: 11px;
+  background: var(--fond);
+  color: var(--encre);
+  cursor: pointer;
+}
+
+.etape:hover { border-color: var(--accent); }
+.etape-faite { background: var(--accent-fond); border-color: var(--accent); }
+.etape-emoji { font-size: 1.3rem; flex: none; }
+.etape-texte { flex: 1; min-width: 0; }
+.etape-texte b { display: block; font-size: 0.98rem; }
+.etape-texte small { color: var(--encre-douce); font-family: system-ui, sans-serif; font-size: 0.78rem; }
+.etape-compte { font-family: system-ui, sans-serif; font-size: 0.82rem; color: var(--encre-douce); flex: none; }
+
+/* --- Archives ---------------------------------------------------------------- */
+
+.archive {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--carte);
+  border: 1px solid var(--bord);
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  box-shadow: var(--ombre);
+  padding: 0.85rem 1rem;
+}
+
+.archive-texte { flex: 1 1 16rem; min-width: 0; }
+.archive-titre { display: block; }
+.archive-details, .archive-note {
+  display: block;
+  font-size: 0.83rem;
+  color: var(--encre-douce);
+  font-family: system-ui, sans-serif;
+}
+.archive-note { font-style: italic; }
+.archive-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+
+.contenu-archive { max-height: 55vh; overflow-y: auto; margin: 0.5rem 0; }
+
+.tableau { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.tableau td { padding: 0.25rem 0.4rem; border-bottom: 1px solid var(--bord); }
+.tableau small { color: var(--encre-douce); }
+.nombre { text-align: right; white-space: nowrap; }
+
+/* --- Fenêtres ------------------------------------------------------------------ */
+
+dialog {
+  border: 1px solid var(--bord);
+  border-radius: 14px;
+  box-shadow: var(--ombre-haute);
+  background: var(--carte);
+  color: var(--encre);
+  padding: 1.25rem;
+  max-width: 34rem;
+  width: calc(100% - 2rem);
+}
+
+dialog::backdrop { background: rgba(10, 20, 20, 0.55); }
+
+.champ { display: block; margin: 0.6rem 0; font-size: 0.9rem; color: var(--encre-douce); }
+.champ input, .champ select { margin-top: 0.2rem; color: var(--encre); font-size: 0.98rem; }
+.champ-case { display: flex; align-items: center; gap: 0.5rem; }
+.champ-case input { width: auto; margin: 0; }
+.champ-case span { color: var(--encre); }
+
+.champs-deux { display: grid; grid-template-columns: 1fr; gap: 0 0.75rem; }
+.champs-trois { display: grid; grid-template-columns: 1fr; gap: 0 0.75rem; }
+
+@media (min-width: 34rem) {
+  .champs-deux { grid-template-columns: 1fr 1fr; }
+  .champs-trois { grid-template-columns: 1fr 1fr 1fr; }
+}
+
+.actions-dialogue { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 1rem; }
+.espace { flex: 1; }
+
+.marches { margin: 0.5rem 0; padding-left: 1.2rem; color: var(--encre-douce); font-size: 0.94rem; }
+.marches li { margin-bottom: 0.45rem; }
+.marches b { color: var(--encre); }
+
+/* --- Message passager ------------------------------------------------------------ */
+
+.message {
+  position: fixed;
+  left: 50%;
+  bottom: 1.25rem;
+  transform: translateX(-50%);
+  background: var(--message-fond);
+  color: var(--message-encre);
+  padding: 0.65rem 1.1rem;
+  border-radius: 999px;
+  box-shadow: var(--ombre-haute);
+  font-size: 0.92rem;
+  z-index: 10;
+  max-width: calc(100% - 2rem);
+  text-align: center;
+}
+
+.message-alerte { background: var(--alerte); color: #fff; }
+
+.pied {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 0 1.25rem 2rem;
+  color: var(--encre-douce);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* --- La feuille imprimée ------------------------------------------------------------
+   Un document que l'on peut classer : en-tête, tableaux par rayon, lignes de
+   signature. À l'écran elle n'existe pas ; à l'impression, elle est seule. */
+
+.feuille { display: none; }
+
+@media print {
+  body { background: #fff; color: #000; font-size: 10.5pt; }
+  .entete, .onglets, main, .pied, .message, dialog { display: none !important; }
+
+  .feuille {
+    display: block;
+    max-width: none;
+    padding: 0;
+  }
+
+  .feuille-entete {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    border-bottom: 2px solid #000;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .feuille h1, .feuille h2 { color: #000; }
+  .feuille-entete h1 { font-size: 15pt; margin: 0; }
+  .feuille-sous-titre { margin: 0.15rem 0 0; font-style: italic; }
+
+  .feuille-meta { display: grid; grid-template-columns: auto auto; gap: 0 0.6rem; margin: 0; font-size: 9pt; }
+  .feuille-meta div { display: contents; }
+  .feuille-meta dt { font-weight: bold; }
+  .feuille-meta dd { margin: 0; }
+
+  .feuille-note { font-size: 9.5pt; margin: 0 0 0.5rem; }
+
+  .feuille-groupe { break-inside: avoid; margin-bottom: 0.7rem; }
+  .feuille-groupe h2 { font-size: 11pt; margin: 0.5rem 0 0.2rem; border-bottom: 1px solid #999; }
+
+  .feuille table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+  .feuille th { text-align: left; border-bottom: 1px solid #000; padding: 0.15rem 0.3rem; font-size: 8.5pt;
+    text-transform: uppercase; letter-spacing: 0.04em; }
+  .feuille td { padding: 0.15rem 0.3rem; border-bottom: 1px solid #ddd; vertical-align: top; }
+  .feuille .nombre { text-align: right; white-space: nowrap; }
+  .feuille .ligne-basse td { font-weight: bold; }
+
+  .feuille-pied { display: flex; gap: 1.5rem; margin-top: 1.5rem; break-inside: avoid; }
+  .signature { flex: 1; font-size: 9pt; }
+  .signature .trait { display: block; border-bottom: 1px solid #000; height: 1.6rem; }
+
+  @page { margin: 1.5cm; }
+}
