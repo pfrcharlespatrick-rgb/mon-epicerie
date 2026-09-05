@@ -9,7 +9,7 @@
  * Penser à incrémenter VERSION à chaque déploiement.
  */
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = `lac-pere-${VERSION}`;
 
 /** Fichiers indispensables au premier affichage. */
@@ -21,6 +21,7 @@ const COQUILLE = [
   'assets/js/catalogue.js',
   'assets/js/etat.js',
   'assets/js/rendu.js',
+  'assets/js/analyseur.js',
   'assets/js/export.js',
   'assets/js/app.js',
   'assets/icones/favicon.svg',

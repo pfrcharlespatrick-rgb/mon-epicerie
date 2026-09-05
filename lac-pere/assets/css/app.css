@@ -576,3 +576,126 @@ dialog::backdrop { background: rgba(10, 20, 20, 0.55); }
 
   @page { margin: 1.5cm; }
 }
+
+/* --- L'analyse de photo -------------------------------------------------- */
+
+.encart {
+  border: 1px solid var(--accent);
+  background: var(--accent-fond);
+  border-radius: 11px;
+  padding: 0.75rem 1rem;
+  margin: 0.75rem 0;
+  font-size: 0.94rem;
+}
+
+.encart p { margin: 0; }
+.encart.alerte { border-color: var(--alerte); background: var(--alerte-fond); }
+
+.zone-photos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 5.5rem;
+  border: 2px dashed var(--bord);
+  border-radius: 12px;
+  color: var(--encre-douce);
+  cursor: pointer;
+  text-align: center;
+  padding: 1rem;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.zone-photos:hover { border-color: var(--accent); color: var(--accent-sombre); }
+
+.apercus { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.apercu {
+  position: relative;
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--bord);
+}
+
+.apercu img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.apercu .retirer {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.2rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(10, 20, 20, 0.75);
+  color: #fff;
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* L'attente : un fanion qui bat, le temps que la réponse arrive. */
+
+.attente {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--encre-douce);
+  font-size: 0.94rem;
+  margin-top: 0.75rem;
+}
+
+.fanion {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 3px;
+  background: var(--accent);
+  animation: battement 1.1s ease-in-out infinite;
+  flex: none;
+}
+
+@keyframes battement {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.6); opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fanion { animation: none; }
+}
+
+/* Les propositions à relire avant d'être appliquées. */
+
+.propositions { display: flex; flex-direction: column; margin: 0.5rem 0; }
+
+.proposition {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  padding: 0.6rem 0.2rem;
+  border-bottom: 1px solid var(--bord);
+  border-left: 4px solid var(--reussite);
+  padding-left: 0.75rem;
+}
+
+.proposition:last-child { border-bottom: none; }
+.proposition-estimee { border-left-color: var(--attention); }
+
+.proposition-choix { flex: none; margin: 0; }
+.proposition-choix input { width: 1.15rem; height: 1.15rem; }
+
+.proposition-texte { flex: 1 1 11rem; min-width: 0; }
+.proposition-nom { display: block; }
+.proposition-details, .proposition-note {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--encre-douce);
+  font-family: system-ui, sans-serif;
+}
+.proposition-note { font-style: italic; }
+
+.proposition-quantite { display: flex; align-items: center; gap: 0.4rem; flex: none; }
+.proposition-quantite input { width: 4.5rem; text-align: center; padding: 0.4rem 0.3rem; }
+.proposition-unite { font-size: 0.8rem; color: var(--encre-douce); font-family: system-ui, sans-serif; min-width: 3.5rem; }
