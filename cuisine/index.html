@@ -62,9 +62,12 @@
 
     <form id="formulaire-conseiller">
       <label id="zone-photo" class="zone-photo" for="champ-photo">
-        <input type="file" id="champ-photo" accept="image/*" capture="environment" hidden />
+        <!-- Pas d'attribut `capture` : il ouvrirait l'appareil photo d'autorité,
+             sans laisser le choix de l'album. La pièce est souvent déjà
+             photographiée — chez le boucher, ou au retour du marché. -->
+        <input type="file" id="champ-photo" accept="image/*" hidden />
         <img id="apercu-photo" alt="" hidden />
-        <span id="invite-photo">📷 Prendre ou choisir une photo (facultatif)</span>
+        <span id="invite-photo">📷 Photographier la pièce, ou en choisir une dans l’album (facultatif)</span>
       </label>
 
       <div class="champ">
