@@ -168,6 +168,16 @@
     $('#analyse-invite').textContent = photos.length
       ? `📷 Ajouter une photo (${photos.length} sur ${Analyseur.MAX_PHOTOS})`
       : '📷 Prendre une photo ou en choisir dans l’album';
+
+    // Le poids annoncé avant l'envoi : c'est lui qui décide si la demande
+    // partira, et il vaut mieux le voir monter que le découvrir en échec.
+    const poids = $('#analyse-poids');
+    if (photos.length) {
+      poids.hidden = false;
+      poids.textContent = `${photos.length} photo(s) prête(s) — ${Analyseur.lisible(Analyseur.poidsDesPhotos(photos))} à envoyer.`;
+    } else {
+      poids.hidden = true;
+    }
   }
 
   async function ajouterPhotos(fichiers) {
@@ -515,6 +525,24 @@
       rafraichirCle();
       $('#dialogue-cle').close();
       message('Clé effacée de cet appareil.');
+    });
+
+    $('#bouton-tester').addEventListener('click', async (e) => {
+      const bouton = e.currentTarget;
+      bouton.disabled = true;
+      bouton.textContent = '🔌 Essai en cours…';
+      $('#analyse-erreur').hidden = true;
+      try {
+        await Analyseur.tester();
+        message('La clé et la connexion fonctionnent — le problème vient donc des photos.');
+      } catch (erreur) {
+        const encart = $('#analyse-erreur');
+        encart.textContent = erreur.message;
+        encart.hidden = false;
+      } finally {
+        bouton.disabled = false;
+        bouton.textContent = '🔌 Tester la connexion';
+      }
     });
 
     $('#analyse-photos').addEventListener('change', (e) => {

@@ -20,6 +20,15 @@ const Analyseur = (() => {
   const MODELE = 'claude-opus-5';
   const MAX_PHOTOS = 6;
 
+  // 1100 px de côté : au-delà, le service réduit l'image de toute façon, et
+  // les étiquettes d'une tablette restent parfaitement lisibles en deçà.
+  const COTE_ANALYSE = 1100;
+  const QUALITE = 0.72;
+
+  // Au-delà de cette taille, les navigateurs de téléphone abandonnent l'envoi
+  // plutôt que d'échouer proprement : mieux vaut le dire avant de partir.
+  const POIDS_MAX = 4.5 * 1024 * 1024;
+
   /* ---------- La clé ---------- */
 
   function cle() {
@@ -41,25 +50,47 @@ const Analyseur = (() => {
    * lisibles bien en deçà de la pleine résolution d'un téléphone, et une
    * photo légère part vite même sur le réseau du domaine.
    */
+  /** Redessine l'image à la taille voulue et rend son data-URL JPEG. */
+  function redimensionner(image, cote, qualite) {
+    const echelle = Math.min(1, cote / Math.max(image.width, image.height));
+    const canevas = document.createElement('canvas');
+    canevas.width = Math.max(1, Math.round(image.width * echelle));
+    canevas.height = Math.max(1, Math.round(image.height * echelle));
+    canevas.getContext('2d').drawImage(image, 0, 0, canevas.width, canevas.height);
+    const donnees = canevas.toDataURL('image/jpeg', qualite);
+    // Un canevas de téléphone occupe plusieurs mégaoctets tant qu'il garde ses
+    // dimensions. Le ramener à 1×1 rend la mémoire tout de suite, au lieu
+    // d'attendre le ramasse-miettes — six photos plus loin, c'est ce qui
+    // décide si la page tient debout.
+    canevas.width = 1;
+    canevas.height = 1;
+    return donnees;
+  }
+
   function preparerPhoto(fichier) {
     return new Promise((resoudre, rejeter) => {
       const image = new Image();
       const url = URL.createObjectURL(fichier);
       image.onload = () => {
         URL.revokeObjectURL(url);
-        const MAX = 1500;
-        const echelle = Math.min(1, MAX / Math.max(image.width, image.height));
-        const canevas = document.createElement('canvas');
-        canevas.width = Math.round(image.width * echelle);
-        canevas.height = Math.round(image.height * echelle);
-        canevas.getContext('2d').drawImage(image, 0, 0, canevas.width, canevas.height);
-        const donneesUrl = canevas.toDataURL('image/jpeg', 0.85);
-        resoudre({ data: donneesUrl.split(',')[1], media_type: 'image/jpeg', apercu: donneesUrl });
+        // Deux tailles, et non une seule : la vignette d'écran ne pèse rien,
+        // et surtout la grande image n'a pas à rester en mémoire une fois
+        // encodée. Six photos de téléphone gardées en pleine taille suffisent
+        // à faire abandonner la requête au navigateur, sans autre explication
+        // qu'un « Load failed ».
+        const grande = redimensionner(image, COTE_ANALYSE, QUALITE);
+        const vignette = redimensionner(image, 240, 0.7);
+        resoudre({ data: grande.split(',')[1], media_type: 'image/jpeg', apercu: vignette });
       };
       image.onerror = () => { URL.revokeObjectURL(url); rejeter(new Error('Cette image ne peut pas être lue.')); };
       image.src = url;
     });
   }
+
+  /** Le poids réel de ce qu'on s'apprête à envoyer, en octets. */
+  const poidsDesPhotos = (photos) => photos.reduce((total, p) => total + Math.ceil(p.data.length * 3 / 4), 0);
+
+  const lisible = (octets) => (octets / (1024 * 1024)).toFixed(1).replace('.', ',') + ' Mo';
 
   /* ---------- Ce qu'on apprend au modèle ---------- */
 
@@ -116,12 +147,83 @@ const Analyseur = (() => {
   /* ---------- L'appel ---------- */
 
   /**
+   * Envoie une requête au service et rend la réponse — ou lève une erreur
+   * dite en français.
+   *
+   * `fetch` distingue mal deux échecs très différents : le service qui refuse
+   * (on a un code et un message) et la requête qui n'est jamais partie (un
+   * `TypeError` nu, que Safari nomme « Load failed »). Le second cas est le
+   * plus déroutant pour qui n'y peut rien : on le nomme, et on dit quoi faire.
+   */
+  async function appeler(corps, poids) {
+    let reponse;
+    try {
+      reponse = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': cle(),
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify(corps),
+      });
+    } catch (erreur) {
+      const taille = poids ? ` L’envoi pesait ${lisible(poids)}.` : '';
+      throw new Error(
+        'La demande n’a pas pu partir — le téléphone a abandonné avant d’atteindre Claude.' + taille
+        + ' Vérifiez le réseau, puis réessayez avec moins de photos.'
+        + ' Le bouton « 🔌 Tester la connexion » dira si la clé et le réseau sont en cause.'
+        + ' (Détail technique : ' + (erreur?.message || 'échec réseau') + ')',
+      );
+    }
+
+    if (!reponse.ok) {
+      let detail = '';
+      try { detail = (await reponse.json())?.error?.message ?? ''; } catch { /* corps illisible */ }
+      if (reponse.status === 401) throw new Error('La clé est refusée. Vérifiez-la dans « 🔑 Ma clé Claude ».');
+      if (reponse.status === 400 && /credit|balance/i.test(detail)) {
+        throw new Error('Le compte Anthropic n’a plus de crédit. Rechargez-le dans la console.');
+      }
+      if (reponse.status === 413) throw new Error('L’envoi est trop volumineux : retirez des photos et réessayez.');
+      if (reponse.status === 429) throw new Error('Trop de demandes d’un coup — patientez une minute et recommencez.');
+      if (reponse.status === 529) throw new Error('Le service est surchargé. Réessayez dans quelques instants.');
+      throw new Error(detail || ('Le service a répondu ' + reponse.status + '.'));
+    }
+
+    return reponse;
+  }
+
+  /**
+   * Un aller-retour minuscule, sans photo : il coûte une fraction de cent et
+   * répond à la seule question qui compte quand rien ne marche — est-ce la
+   * clé et le réseau, ou bien les photos ?
+   */
+  async function tester() {
+    if (!cle()) throw new Error('Il manque la clé : touchez « 🔑 Ma clé Claude » pour l’ajouter.');
+    const reponse = await appeler({
+      model: MODELE,
+      max_tokens: 16,
+      messages: [{ role: 'user', content: 'Réponds exactement : prêt.' }],
+    });
+    await reponse.json();
+    return true;
+  }
+
+
+  /**
    * Envoie les photos au modèle, en flux, et retourne les propositions.
    * `surProgres(nbCaracteres)` sert à animer l'attente.
    */
   async function analyser({ photos, zoneId, precisions }, surProgres) {
     if (!cle()) throw new Error('Il manque la clé : touchez « 🔑 Ma clé Claude » pour l’ajouter.');
     if (!photos.length) throw new Error('Ajoutez au moins une photo.');
+
+    const poids = poidsDesPhotos(photos);
+    if (poids > POIDS_MAX) {
+      throw new Error(`Ces photos pèsent ${lisible(poids)} — c’est trop pour un seul envoi. `
+        + 'Retirez-en deux ou trois et analysez en plusieurs fois.');
+    }
 
     const zone = Etat.zone(zoneId);
     const catalogue = catalogueDeLaZone(zoneId);
@@ -153,36 +255,15 @@ const Analyseur = (() => {
 
     contenu.push({ type: 'text', text: demande });
 
-    const reponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': cle(),
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: MODELE,
-        max_tokens: 16000,
-        stream: true,
-        // Le catalogue ne bouge pas d'une photo à l'autre : on le met en cache
-        // pour que la deuxième armoire coûte moins cher que la première.
-        system: [{ type: 'text', text: systeme, cache_control: { type: 'ephemeral' } }],
-        messages: [{ role: 'user', content: contenu }],
-      }),
-    });
-
-    if (!reponse.ok) {
-      let detail = '';
-      try { detail = (await reponse.json())?.error?.message ?? ''; } catch { /* corps illisible */ }
-      if (reponse.status === 401) throw new Error('La clé est refusée. Vérifiez-la dans « 🔑 Ma clé Claude ».');
-      if (reponse.status === 400 && /credit|balance/i.test(detail)) {
-        throw new Error('Le compte Anthropic n’a plus de crédit. Rechargez-le dans la console.');
-      }
-      if (reponse.status === 429) throw new Error('Trop de demandes d’un coup — patientez une minute et recommencez.');
-      if (reponse.status === 529) throw new Error('Le service est surchargé. Réessayez dans quelques instants.');
-      throw new Error(detail || ('Le service a répondu ' + reponse.status + '.'));
-    }
+    const reponse = await appeler({
+      model: MODELE,
+      max_tokens: 16000,
+      stream: true,
+      // Le catalogue ne bouge pas d'une photo à l'autre : on le met en cache
+      // pour que la deuxième armoire coûte moins cher que la première.
+      system: [{ type: 'text', text: systeme, cache_control: { type: 'ephemeral' } }],
+      messages: [{ role: 'user', content: contenu }],
+    }, poids);
 
     const texte = await lireLeFlux(reponse, surProgres);
     const objet = extraireJSON(texte);
@@ -277,5 +358,5 @@ const Analyseur = (() => {
     };
   }
 
-  return { cle, definirCle, preparerPhoto, analyser, MAX_PHOTOS };
+  return { cle, definirCle, preparerPhoto, analyser, tester, poidsDesPhotos, lisible, MAX_PHOTOS };
 })();
