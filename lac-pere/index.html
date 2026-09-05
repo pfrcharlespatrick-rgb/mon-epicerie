@@ -13,6 +13,7 @@
   <script defer src="assets/js/catalogue.js"></script>
   <script defer src="assets/js/etat.js"></script>
   <script defer src="assets/js/rendu.js"></script>
+  <script defer src="assets/js/analyseur.js"></script>
   <script defer src="assets/js/export.js"></script>
   <script defer src="assets/js/app.js"></script>
 </head>
@@ -40,6 +41,7 @@
 
 <nav class="onglets" aria-label="Sections">
   <button type="button" class="onglet" data-vue="inventaire" aria-selected="true">📋 Inventaire</button>
+  <button type="button" class="onglet" data-vue="analyse" aria-selected="false">📷 Analyse</button>
   <button type="button" class="onglet" data-vue="fermeture" aria-selected="false">🔒 Fermeture</button>
   <button type="button" class="onglet" data-vue="archives" aria-selected="false">🗄️ Archives</button>
   <button type="button" class="onglet" data-vue="partage" aria-selected="false">📤 Partage</button>
@@ -91,6 +93,88 @@
     </section>
 
     <div id="liste-inventaire" class="liste"></div>
+  </div>
+
+  <!-- ------------------------------------------------ Analyse -->
+  <div id="vue-analyse" class="vue" hidden>
+
+    <section class="carte">
+      <h2>L'analyse à l'œil</h2>
+      <p class="explication">
+        Photographiez une armoire, une tablette, un congélateur : Claude dresse
+        la liste de ce qu'il y voit, avec les quantités. Vous relisez, vous
+        cochez ce qui est juste, et l'inventaire se remplit. Ce qui est évalué
+        à l'œil arrive marqué <b>estimé</b> — jamais confondu avec un décompte.
+      </p>
+
+      <div id="analyse-sans-cle" class="encart" hidden>
+        <p><b>L'analyse a besoin d'une clé.</b> Elle passe par Claude, avec
+        <i>votre</i> clé personnelle — le bouton ci-dessous explique comment
+        l'obtenir en cinq minutes. Tout le reste de l'application fonctionne
+        sans elle, gratuitement et hors ligne.</p>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="bouton-cle" class="bouton">🔑 Ma clé Claude</button>
+      </div>
+    </section>
+
+    <section class="carte">
+      <div class="champ">
+        <label for="analyse-zone">Quel emplacement photographiez-vous ?</label>
+        <select id="analyse-zone"></select>
+      </div>
+
+      <label id="analyse-zone-photos" class="zone-photos" for="analyse-photos">
+        <input type="file" id="analyse-photos" accept="image/*" capture="environment" multiple hidden />
+        <span id="analyse-invite">📷 Prendre ou choisir des photos</span>
+      </label>
+      <div id="analyse-apercus" class="apercus"></div>
+      <p class="explication" id="analyse-compte-photos">
+        Jusqu'à 6 photos à la fois. Plusieurs angles de la même tablette aident
+        beaucoup — l'analyse les réunit en un seul décompte.
+      </p>
+
+      <div class="champ">
+        <label for="analyse-precisions">Précisions <span class="facultatif">(facultatif)</span></label>
+        <input type="text" id="analyse-precisions" placeholder="p. ex. : la caisse du bas est pleine, celle du haut entamée" />
+      </div>
+
+      <div class="actions">
+        <button type="button" id="bouton-analyser" class="bouton principal">🔎 Analyser les photos</button>
+        <button type="button" id="bouton-vider-photos" class="bouton">Retirer les photos</button>
+      </div>
+
+      <div id="analyse-attente" class="attente" hidden>
+        <span class="fanion" aria-hidden="true"></span>
+        <span id="analyse-attente-texte">Claude examine les tablettes…</span>
+      </div>
+
+      <div id="analyse-erreur" class="encart alerte" hidden></div>
+    </section>
+
+    <section id="analyse-resultat" class="carte" hidden>
+      <h3>Ce que Claude a vu</h3>
+      <p id="analyse-observations" class="explication"></p>
+
+      <div class="barre-outils">
+        <span id="analyse-compte" class="explication"></span>
+        <span class="barre-outils-actions">
+          <button type="button" id="bouton-tout-cocher" class="bouton">Tout cocher</button>
+          <button type="button" id="bouton-tout-decocher" class="bouton">Tout décocher</button>
+        </span>
+      </div>
+
+      <div id="analyse-propositions" class="propositions"></div>
+
+      <div class="actions">
+        <button type="button" id="bouton-appliquer" class="bouton principal">✔️ Appliquer à l'inventaire</button>
+      </div>
+      <p class="explication">
+        Rien n'est écrit tant que vous n'avez pas appliqué. Vous pourrez
+        corriger chaque quantité ensuite, article par article.
+      </p>
+    </section>
   </div>
 
   <!-- ------------------------------------------------ Fermeture -->
@@ -312,6 +396,36 @@
   </div>
 </dialog>
 
+<dialog id="dialogue-cle">
+  <form method="dialog">
+    <h3>Votre clé Claude</h3>
+    <p class="explication">
+      L'analyse de photo est la seule partie de l'application qui parle à
+      l'extérieur. Elle s'adresse directement à Claude, depuis votre appareil,
+      avec une clé qui vous appartient — nous n'avons ni serveur ni compte.
+    </p>
+    <ol class="marches">
+      <li>Ouvrez <b>console.anthropic.com</b> et créez un compte.</li>
+      <li>Ajoutez quelques dollars de crédit (<b>Billing</b>).</li>
+      <li>Section <b>API keys</b> → <b>Create key</b>. Copiez la clé.</li>
+      <li>Collez-la ci-dessous. Elle reste sur cet appareil, dans ce navigateur.</li>
+    </ol>
+    <label class="champ">Clé
+      <input type="password" id="champ-cle" placeholder="sk-ant-..." autocomplete="off" />
+    </label>
+    <p class="explication">
+      Comptez environ <b>5 à 10 ¢ par analyse</b>, selon le nombre de photos.
+      La clé ne quitte jamais votre appareil, sauf pour parler à Anthropic.
+    </p>
+    <div class="actions-dialogue">
+      <button type="button" id="cle-effacer" class="bouton danger">Effacer la clé</button>
+      <span class="espace"></span>
+      <button type="button" id="cle-annuler" class="bouton">Annuler</button>
+      <button type="button" id="cle-enregistrer" class="bouton principal">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="dialogue-aide">
   <div>
     <h3>Le guide en cinq minutes</h3>
@@ -324,6 +438,9 @@
       <li><b>Estimez sans crainte</b> — si vous comptez à l'œil (une armoire
         pleine, une caisse entamée), cochez « estimée » dans la fiche ✏️. Le
         rapport le dira.</li>
+      <li><b>Ou photographiez</b> — onglet 📷 Analyse : Claude lit vos photos
+        d'armoire et propose les quantités, marquées « estimé ». Demande une
+        clé personnelle, expliquée sur place.</li>
       <li><b>Ajoutez ce qui manque</b> — bouton « ＋ Ajouter un article » pour
         tout ce que le catalogue ne prévoit pas.</li>
       <li><b>Archivez à la fermeture</b> — onglet Fermeture. C'est cette

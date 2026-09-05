@@ -56,9 +56,9 @@ Le bouton **Exporter** propose quatre choses :
 
 Tout est stocké dans le navigateur (`localStorage`), sur votre appareil.
 L'application n'a pas de serveur, pas de compte, pas de traceur, et n'envoie
-aucune requête vers l'extérieur — à une exception près, choisie et expliquée :
-l'analyse de photo de Ma Cuisine, qui parle directement à l'API d'Anthropic
-avec votre propre clé. Corollaire : vider les données du navigateur
+aucune requête vers l'extérieur — à deux exceptions près, choisies et
+expliquées : l'analyse de photo de Ma Cuisine et celle de l'inventaire du Lac
+Péré, qui parlent directement à l'API d'Anthropic avec votre propre clé. Corollaire : vider les données du navigateur
 efface la liste — d'où l'intérêt de la sauvegarde `.json` avant un grand ménage.
 
 ## Vos propres rayons et magasins
@@ -242,6 +242,8 @@ Ce qu'il fait :
   compté à l'unité de l'évalué à l'œil, et le rapport le dit.
 - **Une archive de fermeture** datée et signée, qui ne bouge plus. C'est la
   mémoire du domaine, saison après saison.
+- **L'analyse de photo** : photographiez une armoire, Claude en dresse la
+  liste avec les quantités (voir plus bas).
 - **Un rapport imprimable** avec lignes de signature, un tableur `.csv` pour
   Excel, et une sauvegarde `.json` qui sert à passer le relais.
 
@@ -256,6 +258,36 @@ exclus : une archive ne contient que du compté.
 L'onglet **Archives** garde ces photographies du stock. On les consulte, on
 les imprime, et on peut *recharger* l'une d'elles dans l'inventaire courant
 pour repartir de l'état de l'automne dernier.
+
+### Photographier plutôt que compter
+
+L'onglet **📷 Analyse** confie les tablettes à Claude : on choisit
+l'emplacement, on prend jusqu'à six photos — plusieurs angles de la même
+tablette valent mieux qu'une seule vue —, et la liste revient article par
+article, avec les quantités.
+
+Ce qui gouverne cette page tient en une phrase : **une estimation ne doit
+jamais passer pour un décompte**. Chaque ligne dit lequel des deux elle est, et
+sur quoi elle se fonde (« trois sacs debout, un quatrième possible derrière »).
+Ce qui est évalué à l'œil entre dans l'inventaire marqué *estimé*, et le reste
+jusqu'à ce qu'on le corrige. Rien n'est écrit avant que vous n'ayez relu et
+appliqué ; chaque quantité proposée reste modifiable dans la liste même.
+
+Deux garde-fous du côté du code : le catalogue de l'emplacement est envoyé au
+modèle pour qu'il reprenne les identifiants exacts plutôt que d'inventer des
+noms, et toute proposition mal formée — quantité absurde, article sans nom,
+rayon inconnu — est écartée avant de pouvoir toucher l'inventaire. Un article
+inconnu du catalogue est proposé comme *nouvel article*, à accepter ou non.
+
+**La clé.** Cette analyse est la seule partie de l'application qui parle à
+l'extérieur. Elle s'adresse directement à `api.anthropic.com` depuis le
+navigateur, avec une clé personnelle obtenue sur `console.anthropic.com` — pas
+de serveur intermédiaire, pas de compte chez nous. La clé vit dans le
+`localStorage` de l'appareil et s'efface d'un bouton. Comptez environ **5 à
+10 ¢ par analyse** selon le nombre de photos ; le catalogue est mis en cache
+d'un appel à l'autre, si bien que la deuxième armoire coûte moins que la
+première. Sans clé, tout le reste de l'application fonctionne comme avant,
+gratuitement et hors ligne.
 
 ### Partager avec ses employeurs
 
@@ -311,6 +343,7 @@ lac-pere/assets/css/app.css       mise en forme (thèmes clair/sombre, feuille i
 lac-pere/assets/js/catalogue.js   données : emplacements, rayons, articles livrés
 lac-pere/assets/js/etat.js        décomptes, archives, fusion des sauvegardes
 lac-pere/assets/js/rendu.js       construction du DOM
+lac-pere/assets/js/analyseur.js   analyse de photo (API Claude, clé personnelle)
 lac-pere/assets/js/export.js      impression, tableur, sauvegarde, partage
 lac-pere/assets/js/app.js         branchement de l'interface
 lac-pere/assets/photos/           les photos du domaine, pour la présentation

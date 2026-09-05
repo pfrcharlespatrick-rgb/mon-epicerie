@@ -21,6 +21,10 @@
   let ficheOuverte = null;
   let archiveOuverte = null;
 
+  /** Les photos préparées et les propositions issues de la dernière analyse. */
+  let photos = [];
+  let propositions = [];
+
   /* ---------- Messages passagers ---------- */
 
   let minuterieMessage = null;
@@ -56,6 +60,7 @@
     $('#filtre-zone').insertAdjacentHTML('beforeend', optionsZones);
     $('#fiche-rayon').innerHTML = optionsRayons;
     $('#fiche-zone').innerHTML = optionsZones;
+    $('#analyse-zone').innerHTML = optionsZones;
     $('#liste-unites').innerHTML = UNITES.map((u) => `<option value="${u}"></option>`).join('');
   }
 
@@ -133,6 +138,188 @@
     $('#dialogue-fiche').close();
     rafraichir();
     message(`« ${nom} » retiré de la liste.`);
+  }
+
+  /* ---------- L'analyse de photo ---------- */
+
+  function rafraichirCle() {
+    const munie = Boolean(Analyseur.cle());
+    $('#analyse-sans-cle').hidden = munie;
+    $('#bouton-cle').textContent = munie ? '🔑 Ma clé Claude ✓' : '🔑 Ma clé Claude';
+  }
+
+  /** Redessine la bande d'aperçus, avec de quoi retirer une photo. */
+  function rendrePhotos() {
+    const bande = $('#analyse-apercus');
+    bande.innerHTML = '';
+
+    for (const [index, photo] of photos.entries()) {
+      const vignette = document.createElement('div');
+      vignette.className = 'apercu';
+      vignette.innerHTML = '<img alt="" /><button type="button" class="retirer" aria-label="Retirer cette photo">✕</button>';
+      vignette.querySelector('img').src = photo.apercu;
+      vignette.querySelector('.retirer').addEventListener('click', () => {
+        photos.splice(index, 1);
+        rendrePhotos();
+      });
+      bande.append(vignette);
+    }
+
+    $('#analyse-invite').textContent = photos.length
+      ? `📷 Ajouter une photo (${photos.length} sur ${Analyseur.MAX_PHOTOS})`
+      : '📷 Prendre ou choisir des photos';
+  }
+
+  async function ajouterPhotos(fichiers) {
+    for (const fichier of fichiers) {
+      if (photos.length >= Analyseur.MAX_PHOTOS) {
+        message(`Six photos à la fois au maximum — analysez celles-ci d'abord.`, 'alerte');
+        break;
+      }
+      try {
+        photos.push(await Analyseur.preparerPhoto(fichier));
+      } catch {
+        message('Une des images n’a pas pu être lue.', 'alerte');
+      }
+    }
+    rendrePhotos();
+  }
+
+  /** Une proposition à relire : la quantité reste modifiable avant d'être appliquée. */
+  function ligneProposition(proposition, index) {
+    const ligne = document.createElement('article');
+    ligne.className = 'proposition' + (proposition.estime ? ' proposition-estimee' : '');
+
+    ligne.innerHTML = `
+      <label class="proposition-choix">
+        <input type="checkbox" checked />
+      </label>
+      <div class="proposition-texte">
+        <b class="proposition-nom"></b>
+        <span class="proposition-details"></span>
+        <span class="proposition-note"></span>
+      </div>
+      <div class="proposition-quantite">
+        <input type="number" min="0" step="1" inputmode="decimal" />
+        <span class="proposition-unite"></span>
+      </div>`;
+
+    ligne.querySelector('.proposition-nom').textContent = proposition.nom;
+
+    const details = [
+      proposition.format,
+      Etat.rayon(proposition.rayon).nom,
+      proposition.id ? null : 'nouvel article',
+      proposition.estime ? 'estimé' : 'compté',
+      proposition.ancienne !== null ? 'avant : ' + proposition.ancienne : null,
+    ].filter(Boolean).join(' · ');
+    ligne.querySelector('.proposition-details').textContent = details;
+
+    const note = ligne.querySelector('.proposition-note');
+    if (proposition.note) note.textContent = '« ' + proposition.note + ' »'; else note.hidden = true;
+
+    const champ = ligne.querySelector('.proposition-quantite input');
+    champ.value = proposition.quantite;
+    champ.addEventListener('change', () => {
+      propositions[index].quantite = Math.max(0, Number(champ.value) || 0);
+    });
+
+    ligne.querySelector('.proposition-unite').textContent = proposition.unite;
+    ligne.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+      propositions[index].retenue = e.target.checked;
+    });
+
+    return ligne;
+  }
+
+  function rendrePropositions(observations) {
+    $('#analyse-observations').textContent = observations || '';
+    const cible = $('#analyse-propositions');
+    cible.innerHTML = '';
+
+    for (const [index, proposition] of propositions.entries()) {
+      cible.append(ligneProposition(proposition, index));
+    }
+
+    const estimes = propositions.filter((p) => p.estime).length;
+    $('#analyse-compte').textContent = propositions.length
+      ? `${propositions.length} article(s) proposé(s), dont ${estimes} estimé(s)`
+      : 'Aucun article reconnu sur ces photos.';
+    $('#analyse-resultat').hidden = false;
+  }
+
+  function cocherTout(valeur) {
+    for (const p of propositions) p.retenue = valeur;
+    for (const case_ of $$('#analyse-propositions input[type="checkbox"]')) case_.checked = valeur;
+  }
+
+  async function analyser() {
+    if (!Analyseur.cle()) { $('#dialogue-cle').showModal(); return; }
+
+    $('#analyse-erreur').hidden = true;
+    $('#analyse-resultat').hidden = true;
+    $('#analyse-attente').hidden = false;
+    $('#bouton-analyser').disabled = true;
+
+    const debut = Date.now();
+    const minuterie = setInterval(() => {
+      const secondes = Math.round((Date.now() - debut) / 1000);
+      $('#analyse-attente-texte').textContent = `Claude examine les tablettes… ${secondes} s`;
+    }, 1000);
+
+    try {
+      const resultat = await Analyseur.analyser({
+        photos,
+        zoneId: $('#analyse-zone').value,
+        precisions: $('#analyse-precisions').value.trim(),
+      });
+      propositions = resultat.propositions.map((p) => ({ ...p, retenue: true }));
+      rendrePropositions(resultat.observations);
+    } catch (erreur) {
+      const encart = $('#analyse-erreur');
+      encart.textContent = erreur.message;
+      encart.hidden = false;
+    } finally {
+      clearInterval(minuterie);
+      $('#analyse-attente').hidden = true;
+      $('#analyse-attente-texte').textContent = 'Claude examine les tablettes…';
+      $('#bouton-analyser').disabled = false;
+    }
+  }
+
+  /** Verse les propositions retenues dans l'inventaire, et va les montrer. */
+  function appliquerPropositions() {
+    const retenues = propositions.filter((p) => p.retenue);
+    if (!retenues.length) { message('Aucune proposition n’est cochée.', 'alerte'); return; }
+
+    let mis = 0;
+    let ajoutes = 0;
+
+    for (const p of retenues) {
+      const note = p.note ? 'D’après photo : ' + p.note : '';
+      if (p.id && Etat.article(p.id)) {
+        Etat.majQuantite(p.id, p.quantite, { estime: p.estime });
+        if (note) Etat.majArticle(p.id, { note });
+        mis++;
+      } else {
+        Etat.ajouterArticle({
+          nom: p.nom, rayon: p.rayon, zone: p.zone, unite: p.unite,
+          format: p.format, seuil: 0, quantite: p.quantite, estime: p.estime, note,
+        });
+        ajoutes++;
+      }
+    }
+
+    const zoneId = $('#analyse-zone').value;
+    propositions = [];
+    photos = [];
+    rendrePhotos();
+    $('#analyse-resultat').hidden = true;
+    $('#analyse-precisions').value = '';
+
+    rafraichir();
+    actions.ouvrirZone(zoneId);
+    message(`${mis} article(s) mis à jour, ${ajoutes} ajouté(s) — tout est modifiable.`);
   }
 
   /* ---------- Fermeture et archives ---------- */
@@ -311,6 +498,39 @@
       message('C’est noté — vos saisies porteront votre nom.');
     });
 
+    $('#bouton-cle').addEventListener('click', () => {
+      $('#champ-cle').value = Analyseur.cle();
+      $('#dialogue-cle').showModal();
+    });
+    $('#cle-annuler').addEventListener('click', () => $('#dialogue-cle').close());
+    $('#cle-enregistrer').addEventListener('click', () => {
+      Analyseur.definirCle($('#champ-cle').value);
+      rafraichirCle();
+      $('#dialogue-cle').close();
+      message(Analyseur.cle() ? 'Clé enregistrée — l’analyse est prête.' : 'Clé effacée.');
+    });
+    $('#cle-effacer').addEventListener('click', () => {
+      Analyseur.definirCle('');
+      $('#champ-cle').value = '';
+      rafraichirCle();
+      $('#dialogue-cle').close();
+      message('Clé effacée de cet appareil.');
+    });
+
+    $('#analyse-photos').addEventListener('change', (e) => {
+      ajouterPhotos([...e.target.files]);
+      e.target.value = '';
+    });
+    $('#bouton-vider-photos').addEventListener('click', () => {
+      photos = [];
+      rendrePhotos();
+      $('#analyse-resultat').hidden = true;
+    });
+    $('#bouton-analyser').addEventListener('click', analyser);
+    $('#bouton-tout-cocher').addEventListener('click', () => cocherTout(true));
+    $('#bouton-tout-decocher').addEventListener('click', () => cocherTout(false));
+    $('#bouton-appliquer').addEventListener('click', appliquerPropositions);
+
     $('#bouton-aide').addEventListener('click', () => $('#dialogue-aide').showModal());
     $('#aide-fermer').addEventListener('click', () => $('#dialogue-aide').close());
 
@@ -384,6 +604,7 @@
     ouvrirFiche,
 
     ouvrirZone(zoneId) {
+      $('#analyse-zone').value = zoneId;
       filtres.zone = zoneId;
       filtres.etat = '';
       $('#filtre-zone').value = zoneId;
@@ -405,6 +626,8 @@
   Rendu.brancher(actions);
   brancherTout();
   remplirChampsFermeture();
+  rafraichirCle();
+  rendrePhotos();
   rafraichir();
 
   // Le guide s'ouvre une seule fois, à la toute première visite.
