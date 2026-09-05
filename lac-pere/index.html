@@ -125,14 +125,19 @@
         <select id="analyse-zone"></select>
       </div>
 
+      <!-- Pas d'attribut `capture` : il ouvrirait l'appareil photo d'autorité,
+           sans laisser le choix de l'album — et, sur iPhone, il interdirait de
+           surcroît la sélection multiple. Sans lui, le téléphone propose les
+           deux : photographier maintenant, ou piger dans la photothèque. -->
       <label id="analyse-zone-photos" class="zone-photos" for="analyse-photos">
-        <input type="file" id="analyse-photos" accept="image/*" capture="environment" multiple hidden />
-        <span id="analyse-invite">📷 Prendre ou choisir des photos</span>
+        <input type="file" id="analyse-photos" accept="image/*" multiple hidden />
+        <span id="analyse-invite">📷 Prendre une photo ou en choisir dans l'album</span>
       </label>
       <div id="analyse-apercus" class="apercus"></div>
       <p class="explication" id="analyse-compte-photos">
-        Jusqu'à 6 photos à la fois. Plusieurs angles de la même tablette aident
-        beaucoup — l'analyse les réunit en un seul décompte.
+        Jusqu'à 6 photos à la fois, prises sur-le-champ ou tirées de votre
+        album — le téléphone vous laissera choisir. Plusieurs angles de la même
+        tablette aident beaucoup : l'analyse les réunit en un seul décompte.
       </p>
 
       <div class="champ">

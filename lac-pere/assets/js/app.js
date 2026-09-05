@@ -167,7 +167,7 @@
 
     $('#analyse-invite').textContent = photos.length
       ? `📷 Ajouter une photo (${photos.length} sur ${Analyseur.MAX_PHOTOS})`
-      : '📷 Prendre ou choisir des photos';
+      : '📷 Prendre une photo ou en choisir dans l’album';
   }
 
   async function ajouterPhotos(fichiers) {
