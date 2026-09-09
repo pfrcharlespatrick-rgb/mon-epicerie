@@ -87,6 +87,7 @@
         <span id="compte-resultats" class="explication"></span>
         <span class="barre-outils-actions">
           <button type="button" id="bouton-groupement" class="bouton">🗂️ Grouper par emplacement</button>
+          <button type="button" id="bouton-classement" class="bouton">🏷️ Rayons et emplacements</button>
           <button type="button" id="bouton-ajouter" class="bouton principal">＋ Ajouter un article</button>
         </span>
       </div>
@@ -229,12 +230,34 @@
     </section>
 
     <section class="carte">
-      <h3>Recommencer un comptage</h3>
+      <h3>Recommencer</h3>
       <p class="explication">
-        À l'ouverture de la saison suivante, on remet tous les décomptes à zéro
-        pour repartir à neuf. Les archives, elles, sont conservées.
+        Deux façons de repartir, selon ce qu'on veut garder. Dans les deux cas,
+        <b>les archives sont conservées</b> : ce sont les inventaires déjà
+        signés, et rien ici ne peut les effacer.
       </p>
-      <button type="button" id="bouton-reinitialiser" class="bouton danger">♻️ Vider les décomptes</button>
+      <ul class="marches">
+        <li><b>Vider les décomptes</b> — les articles restent, les quantités
+          repartent à « non compté ». C'est le geste de l'ouverture de saison.</li>
+        <li><b>Tout effacer</b> — l'inventaire redevient vide, articles compris.
+          C'est le geste de qui repart de zéro.</li>
+      </ul>
+      <div class="actions">
+        <button type="button" id="bouton-reinitialiser" class="bouton danger">♻️ Vider les décomptes</button>
+        <button type="button" id="bouton-tout-effacer" class="bouton danger">🗑️ Tout effacer</button>
+      </div>
+    </section>
+
+    <section class="carte">
+      <h3>Le stock suggéré</h3>
+      <p class="explication">
+        L'application connaît le stock habituel d'un domaine de pêche —
+        <span id="compte-suggeres">plus de deux cents</span> articles, des
+        conserves aux bonbonnes de propane. Vous pouvez le verser d'un coup
+        dans votre inventaire, puis retirer ce qui ne vous concerne pas. Les
+        articles que vous avez déjà ne sont jamais touchés.
+      </p>
+      <button type="button" id="bouton-stock-suggere-2" class="bouton">📚 Charger le stock suggéré</button>
     </section>
   </div>
 
@@ -367,6 +390,39 @@
       <button type="submit" class="bouton principal">Enregistrer</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="dialogue-classement">
+  <div>
+    <h3>Mes rayons et emplacements</h3>
+    <p class="explication">
+      Ce sont vos listes : renommez, changez l'icône, ajoutez ce qui manque,
+      retirez ce qui ne sert pas. Un rayon ou un emplacement supprimé ne fait
+      jamais disparaître d'article — ce qui s'y trouvait est déplacé, et
+      l'écran vous dit où.
+    </p>
+
+    <h4>🏷️ Rayons <span class="facultatif">(le classement du rapport)</span></h4>
+    <div id="liste-rayons" class="classement"></div>
+    <form id="ajout-rayon" class="ajout-classement">
+      <input type="text" id="rayon-emoji" placeholder="📦" aria-label="Icône du rayon" maxlength="4" />
+      <input type="text" id="rayon-nom" placeholder="Nom du nouveau rayon" aria-label="Nom du rayon" />
+      <button type="submit" class="bouton">＋ Ajouter</button>
+    </form>
+
+    <h4>📍 Emplacements <span class="facultatif">(où l'on va compter)</span></h4>
+    <div id="liste-zones" class="classement"></div>
+    <form id="ajout-zone" class="ajout-classement">
+      <input type="text" id="zone-emoji" placeholder="📍" aria-label="Icône de l'emplacement" maxlength="4" />
+      <input type="text" id="zone-nom" placeholder="Nom du nouvel emplacement" aria-label="Nom de l'emplacement" />
+      <button type="submit" class="bouton">＋ Ajouter</button>
+    </form>
+
+    <div class="actions-dialogue">
+      <span class="espace"></span>
+      <button type="button" id="classement-fermer" class="bouton principal">Fermer</button>
+    </div>
+  </div>
 </dialog>
 
 <dialog id="dialogue-reglages">

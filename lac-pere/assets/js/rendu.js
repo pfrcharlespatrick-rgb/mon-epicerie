@@ -197,12 +197,24 @@ const Rendu = (() => {
       : `${liste.length} articles affichés`;
 
     if (!liste.length) {
-      cible.innerHTML = '<p class="vide">Aucun article ne correspond à cette recherche.</p>';
+      // Un inventaire vide n'est pas une recherche infructueuse : c'est un
+      // début, et il mérite qu'on dise par où commencer.
+      cible.innerHTML = Etat.actifs().length
+        ? '<p class="vide">Aucun article ne correspond à cette recherche.</p>'
+        : `<div class="vide">
+             <p><b>Votre inventaire est vide.</b> Il ne contiendra que ce que vous y mettez.</p>
+             <p>Ajoutez vos articles un à un avec <b>＋ Ajouter un article</b>, laissez
+                l'onglet <b>📷 Analyse</b> les tirer de vos photos, ou partez du stock
+                habituel d'un domaine de pêche et taillez-le à votre mesure.</p>
+             <button type="button" id="bouton-stock-suggere" class="bouton">📚 Charger le stock suggéré</button>
+           </div>`;
+      const bouton = cible.querySelector('#bouton-stock-suggere');
+      if (bouton) bouton.addEventListener('click', () => actions.chargerStockSuggere?.());
       return;
     }
 
     const parEmplacement = Etat.reglages().groupement === 'zone';
-    const familles = parEmplacement ? ZONES : RAYONS;
+    const familles = parEmplacement ? Etat.zones() : Etat.rayons();
 
     for (const famille of familles) {
       const articles = liste
@@ -290,7 +302,7 @@ const Rendu = (() => {
     }
 
     const morceaux = [];
-    for (const r of RAYONS) {
+    for (const r of Etat.rayons()) {
       const lignes = parRayon.get(r.id);
       if (!lignes) continue;
       morceaux.push(`<h4>${r.emoji} ${r.nom}</h4><table class="tableau"><tbody>` +

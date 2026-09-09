@@ -730,3 +730,55 @@ body.avec-bandeau { padding-top: 3.25rem; }
   .bandeau-version { display: none !important; }
   body.avec-bandeau { padding-top: 0; }
 }
+
+/* --- Mes rayons et emplacements ------------------------------------------ */
+
+.classement { display: flex; flex-direction: column; margin: 0.4rem 0 0.8rem; }
+
+.classement-ligne {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--bord);
+}
+
+.classement-ligne:last-child { border-bottom: none; }
+
+.classement-emoji { width: 3.2rem; text-align: center; flex: none; padding: 0.35rem 0.2rem; }
+.classement-nom { flex: 1; min-width: 0; padding: 0.35rem 0.5rem; }
+
+.classement-compte {
+  font-size: 0.78rem;
+  color: var(--encre-douce);
+  font-family: system-ui, sans-serif;
+  white-space: nowrap;
+  flex: none;
+}
+
+.classement-retirer { padding: 0.3rem 0.4rem; font-size: 0.95rem; }
+.classement-retirer:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.ajout-classement { display: flex; gap: 0.4rem; align-items: center; margin-bottom: 0.5rem; }
+.ajout-classement input:first-child { width: 3.2rem; text-align: center; flex: none; }
+.ajout-classement input { padding: 0.4rem 0.5rem; }
+.ajout-classement .bouton { flex: none; }
+
+/* L'écran d'un inventaire encore vide : il invite plutôt qu'il ne constate. */
+.vide p { margin: 0 0 0.6rem; }
+.vide p:last-of-type { margin-bottom: 0.9rem; }
+.vide b { color: var(--encre); }
+
+/* Une fenêtre plus haute que l'écran est une fenêtre sans issue : on la borne,
+   son contenu défile, et le bouton de sortie reste sous la main. */
+
+dialog { max-height: 85dvh; overflow-y: auto; }
+
+#dialogue-classement .actions-dialogue {
+  position: sticky;
+  bottom: -1.25rem;
+  margin-bottom: -1.25rem;
+  padding: 0.75rem 0 1.25rem;
+  background: var(--carte);
+  border-top: 1px solid var(--bord);
+}

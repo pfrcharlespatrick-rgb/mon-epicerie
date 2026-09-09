@@ -235,7 +235,7 @@ const Analyseur = (() => {
       catalogue.length ? catalogue.join('\n') : '(aucun article encore rattaché à cet emplacement)',
       '',
       'RAYONS DISPONIBLES (pour les articles hors catalogue) :',
-      RAYONS.map((r) => r.id + ' = ' + r.nom).join('\n'),
+      Etat.rayons().map((r) => r.id + ' = ' + r.nom).join('\n'),
     ].join('\n');
 
     const contenu = photos.map((photo) => ({
@@ -322,7 +322,7 @@ const Analyseur = (() => {
    * tient pas debout est écarté plutôt que d'entrer dans l'inventaire.
    */
   function normaliser(objet, zoneId) {
-    const rayonsConnus = new Set(RAYONS.map((r) => r.id));
+    const rayonsConnus = new Set(Etat.rayons().map((r) => r.id));
     const propositions = [];
 
     for (const brut of objet.articles) {
@@ -334,7 +334,7 @@ const Analyseur = (() => {
 
       const existant = brut?.id ? Etat.article(String(brut.id)) : null;
       const rayon = existant?.rayon
-        ?? (rayonsConnus.has(String(brut?.rayon)) ? String(brut.rayon) : RAYONS[0].id);
+        ?? (rayonsConnus.has(String(brut?.rayon)) ? String(brut.rayon) : Etat.rayons()[0].id);
 
       propositions.push({
         id: existant?.id ?? null,

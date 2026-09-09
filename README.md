@@ -233,9 +233,17 @@ restait au moment de la fermeture ?**
 
 Ce qu'il fait :
 
-- **218 articles livrés d'avance**, classés en 16 rayons (épicerie sèche,
-  congelé, literie, pêche et embarcations, carburants, premiers soins…) et
-  répartis dans 13 emplacements du domaine.
+- **Un inventaire qui commence vide** : il ne contient que ce qu'on y met.
+  Une liste de deux cents articles qu'on n'a pas est un brouillard, pas un
+  inventaire.
+- **Un stock suggéré à verser d'un bouton** — 218 articles classés en 16
+  rayons (épicerie sèche, congelé, literie, pêche et embarcations, carburants,
+  premiers soins…) et répartis dans 13 emplacements —, à tailler ensuite à la
+  mesure du domaine.
+- **Des rayons et des emplacements qui vous appartiennent** : renommez-les,
+  changez leur icône, ajoutez les vôtres, retirez ce qui ne sert pas. Retirer
+  un rayon ne perd jamais d'article : ce qui s'y trouvait est déplacé, et
+  l'écran dit où.
 - **Un décompte par article** — au clavier ou par les boutons − et +, avec un
   seuil d'alerte qui fait passer l'article en « à commander ».
 - **Des quantités estimées assumées** : une case « estimée » distingue le
@@ -318,10 +326,21 @@ versions.
 Une fois installée, elle fonctionne sans réseau : au domaine, c'est
 l'essentiel.
 
-### Modifier le stock livré
+### Recommencer
 
-Comme pour l'épicerie, ajouter un article *pour tout le monde* tient dans un
-seul fichier,
+Deux gestes, dans l'onglet **Fermeture**, et les archives survivent aux deux —
+ce sont les inventaires déjà signés, rien ne doit pouvoir les effacer par
+mégarde :
+
+- **Vider les décomptes** — les articles restent, les quantités repartent à
+  « non compté ». C'est l'ouverture de saison.
+- **Tout effacer** — l'inventaire redevient vide, articles compris. Les rayons
+  et emplacements, avec les noms que vous leur avez donnés, sont conservés.
+
+### Modifier le stock suggéré
+
+Comme pour l'épicerie, ajouter un article *à la liste que tout le monde peut
+verser* tient dans un seul fichier,
 [`lac-pere/assets/js/catalogue.js`](lac-pere/assets/js/catalogue.js) :
 
 ```js
@@ -330,10 +349,11 @@ seul fichier,
 ```
 
 L'`id` ne se réutilise jamais : c'est lui qui relie un article à son décompte
-et à toutes les archives où il figure. Un article ajouté au catalogue apparaît
-chez chacun au prochain chargement, **sans effacer aucune quantité déjà
-saisie**. Depuis l'application elle-même, le bouton *＋ Ajouter un article*
-fait la même chose pour un seul appareil.
+et à toutes les archives où il figure. Un article ajouté ici entre dans le
+stock suggéré ; il arrive chez les autres quand ils versent ce stock, **sans
+jamais toucher à ce qu'ils ont déjà**. Depuis l'application elle-même, le
+bouton *＋ Ajouter un article* fait la même chose pour un seul appareil, et
+*🏷️ Rayons et emplacements* y ajoute les classements maison.
 
 ### Organisation de `lac-pere/`
 

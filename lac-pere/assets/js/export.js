@@ -54,7 +54,7 @@ const Exporteur = (() => {
 
   /** Range les lignes par rayon, dans l'ordre du catalogue. */
   function parRayon(lignes) {
-    return RAYONS
+    return Etat.rayons()
       .map((r) => ({
         rayon: r,
         lignes: lignes

@@ -53,11 +53,13 @@
   /* ---------- Remplissage des menus déroulants ---------- */
 
   function remplirListes() {
-    const optionsRayons = RAYONS.map((r) => `<option value="${r.id}">${r.emoji} ${r.nom}</option>`).join('');
-    const optionsZones = ZONES.map((z) => `<option value="${z.id}">${z.emoji} ${z.nom}</option>`).join('');
+    const optionsRayons = Etat.rayons().map((r) => `<option value="${r.id}">${r.emoji} ${r.nom}</option>`).join('');
+    const optionsZones = Etat.zones().map((z) => `<option value="${z.id}">${z.emoji} ${z.nom}</option>`).join('');
 
-    $('#filtre-rayon').insertAdjacentHTML('beforeend', optionsRayons);
-    $('#filtre-zone').insertAdjacentHTML('beforeend', optionsZones);
+    // Rejouée à chaque retouche des listes : on repart de l'option « tous »,
+    // sans quoi les rayons s'empileraient à chaque passage.
+    $('#filtre-rayon').innerHTML = '<option value="">Tous les rayons</option>' + optionsRayons;
+    $('#filtre-zone').innerHTML = '<option value="">Tous les emplacements</option>' + optionsZones;
     $('#fiche-rayon').innerHTML = optionsRayons;
     $('#fiche-zone').innerHTML = optionsZones;
     $('#analyse-zone').innerHTML = optionsZones;
@@ -83,8 +85,8 @@
     $('#titre-fiche').textContent = a ? a.nom : 'Nouvel article';
     $('#fiche-nom').value = a?.nom ?? '';
     $('#fiche-format').value = a?.format ?? '';
-    $('#fiche-rayon').value = a?.rayon ?? filtres.rayon ?? RAYONS[0].id;
-    $('#fiche-zone').value = a?.zone ?? filtres.zone ?? ZONES[0].id;
+    $('#fiche-rayon').value = a?.rayon ?? filtres.rayon ?? Etat.rayons()[0].id;
+    $('#fiche-zone').value = a?.zone ?? filtres.zone ?? Etat.zones()[0].id;
     $('#fiche-quantite').value = a && a.quantite !== null ? a.quantite : '';
     $('#fiche-unite').value = a?.unite ?? 'unité';
     $('#fiche-seuil').value = a?.seuil ?? 0;
@@ -138,6 +140,106 @@
     $('#dialogue-fiche').close();
     rafraichir();
     message(`« ${nom} » retiré de la liste.`);
+  }
+
+  /* ---------- Mes rayons et emplacements ---------- */
+
+  /** Une ligne modifiable : l'icône, le nom, et de quoi retirer l'entrée. */
+  function ligneClassement(cle, entree, total) {
+    const ligne = document.createElement('div');
+    ligne.className = 'classement-ligne';
+    ligne.innerHTML = `
+      <input type="text" class="classement-emoji" maxlength="4" aria-label="Icône" />
+      <input type="text" class="classement-nom" aria-label="Nom" />
+      <span class="classement-compte"></span>
+      <button type="button" class="bouton discret classement-retirer" aria-label="Retirer">🗑️</button>`;
+
+    const champ = cle === 'rayons' ? 'rayon' : 'zone';
+    const combien = Etat.actifs().filter((a) => a[champ] === entree.id).length;
+
+    ligne.querySelector('.classement-emoji').value = entree.emoji ?? '';
+    ligne.querySelector('.classement-nom').value = entree.nom;
+    ligne.querySelector('.classement-compte').textContent = combien ? `${combien} article(s)` : 'vide';
+
+    ligne.querySelector('.classement-emoji').addEventListener('change', (e) => {
+      Etat.majClassement(cle, entree.id, { emoji: e.target.value });
+      apresClassement();
+    });
+    ligne.querySelector('.classement-nom').addEventListener('change', (e) => {
+      Etat.majClassement(cle, entree.id, { nom: e.target.value });
+      apresClassement();
+    });
+
+    const retirer = ligne.querySelector('.classement-retirer');
+    // Le dernier de la liste ne se retire pas : il faut bien ranger quelque part.
+    retirer.disabled = total <= 1;
+    retirer.addEventListener('click', () => {
+      const quoi = cle === 'rayons' ? 'le rayon' : 'l’emplacement';
+      const avertissement = combien
+        ? `\n\nLes ${combien} article(s) qui s’y trouvent seront déplacés, pas supprimés.`
+        : '';
+      if (!confirm(`Retirer ${quoi} « ${entree.nom} » ?${avertissement}`)) return;
+      const bilan = Etat.supprimerClassement(cle, entree.id);
+      apresClassement();
+      message(bilan.deplaces
+        ? `Retiré — ${bilan.deplaces} article(s) déplacé(s) vers « ${bilan.refuge} ».`
+        : 'Retiré.');
+    });
+
+    return ligne;
+  }
+
+  function rendreClassement() {
+    for (const [cle, cible] of [['rayons', '#liste-rayons'], ['zones', '#liste-zones']]) {
+      const liste = Etat[cle]();
+      const boite = $(cible);
+      boite.innerHTML = '';
+      for (const entree of liste) boite.append(ligneClassement(cle, entree, liste.length));
+    }
+  }
+
+  /** Après toute retouche des listes : les menus et l'écran suivent. */
+  function apresClassement() {
+    remplirListes();
+    $('#filtre-rayon').value = filtres.rayon;
+    $('#filtre-zone').value = filtres.zone;
+    rendreClassement();
+    rafraichir();
+  }
+
+  /* ---------- Le stock suggéré, et la table rase ---------- */
+
+  function chargerStockSuggere() {
+    const combien = Etat.nombreSuggeres();
+    if (!confirm(`Verser le stock suggéré dans votre inventaire ?\n\n`
+      + `Jusqu’à ${combien} articles s’ajouteront, sans quantité. Vous pourrez retirer `
+      + `ceux qui ne vous concernent pas, un à un. Rien de ce que vous avez déjà ne sera touché.`)) return;
+
+    const ajoutes = Etat.importerStockSuggere();
+    apresClassement();
+    montrer('inventaire');
+    message(ajoutes
+      ? `${ajoutes} article(s) ajoutés — à vous de tailler la liste.`
+      : 'Tous ces articles figuraient déjà dans votre inventaire.');
+  }
+
+  function toutEffacer() {
+    const combien = Etat.actifs().length;
+    if (!combien) { message('L’inventaire est déjà vide.', 'alerte'); return; }
+
+    if (!confirm(`Effacer les ${combien} articles de l’inventaire ?\n\n`
+      + 'L’inventaire redeviendra vide. Vos archives, elles, sont conservées.')) return;
+    if (!confirm('Dernière confirmation : les quantités saisies seront perdues si elles ne sont pas archivées ou sauvegardées.')) return;
+
+    Etat.effacerArticles();
+    filtres.recherche = '';
+    filtres.rayon = '';
+    filtres.zone = '';
+    filtres.etat = '';
+    $('#champ-recherche').value = '';
+    apresClassement();
+    montrer('inventaire');
+    message(`${combien} article(s) effacés — l’inventaire repart de zéro.`);
   }
 
   /* ---------- L'analyse de photo ---------- */
@@ -493,6 +595,30 @@
     brancherFiltres();
 
     $('#bouton-ajouter').addEventListener('click', () => ouvrirFiche(null));
+
+    $('#bouton-classement').addEventListener('click', () => {
+      rendreClassement();
+      $('#dialogue-classement').showModal();
+    });
+    $('#classement-fermer').addEventListener('click', () => $('#dialogue-classement').close());
+
+    for (const [cle, formulaire, champNom, champEmoji] of [
+      ['rayons', '#ajout-rayon', '#rayon-nom', '#rayon-emoji'],
+      ['zones', '#ajout-zone', '#zone-nom', '#zone-emoji'],
+    ]) {
+      $(formulaire).addEventListener('submit', (e) => {
+        e.preventDefault();
+        const entree = Etat.ajouterClassement(cle, { nom: $(champNom).value, emoji: $(champEmoji).value });
+        if (!entree) { message('Donnez-lui un nom.', 'alerte'); return; }
+        $(champNom).value = '';
+        $(champEmoji).value = '';
+        apresClassement();
+        message(`« ${entree.nom} » ajouté.`);
+      });
+    }
+
+    $('#bouton-stock-suggere-2').addEventListener('click', chargerStockSuggere);
+    $('#bouton-tout-effacer').addEventListener('click', toutEffacer);
     $('#formulaire-fiche').addEventListener('submit', enregistrerFiche);
     $('#fiche-annuler').addEventListener('click', () => $('#dialogue-fiche').close());
     $('#fiche-supprimer').addEventListener('click', supprimerFiche);
@@ -677,6 +803,8 @@
     },
 
     archive: gererArchive,
+
+    chargerStockSuggere,
   };
 
   /* ---------- Départ ---------- */
@@ -686,6 +814,7 @@
   Rendu.brancher(actions);
   brancherTout();
   remplirChampsFermeture();
+  $('#compte-suggeres').textContent = Etat.nombreSuggeres();
   rafraichirCle();
   rendrePhotos();
   rafraichir();
