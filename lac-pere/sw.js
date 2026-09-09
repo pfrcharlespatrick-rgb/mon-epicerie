@@ -9,7 +9,7 @@
  * Penser à incrémenter VERSION à chaque déploiement.
  */
 
-const VERSION = 'v4';
+const VERSION = 'v5';
 const CACHE = `lac-pere-${VERSION}`;
 
 /** Fichiers indispensables au premier affichage. */
