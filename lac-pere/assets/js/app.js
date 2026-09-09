@@ -602,6 +602,17 @@
     });
     $('#classement-fermer').addEventListener('click', () => $('#dialogue-classement').close());
 
+    $('#classement-retablir').addEventListener('click', () => {
+      const bilan = Etat.retablirListesLivrees();
+      apresClassement();
+      const morceaux = [];
+      if (bilan.rayons) morceaux.push(`${bilan.rayons} rayon(s)`);
+      if (bilan.zones) morceaux.push(`${bilan.zones} emplacement(s)`);
+      message(morceaux.length
+        ? `Rétabli : ${morceaux.join(' et ')}. Vos noms et vos ajouts sont intacts.`
+        : 'Toutes les listes livrées sont déjà là — rien à rétablir.');
+    });
+
     for (const [cle, formulaire, champNom, champEmoji] of [
       ['rayons', '#ajout-rayon', '#rayon-nom', '#rayon-emoji'],
       ['zones', '#ajout-zone', '#zone-nom', '#zone-emoji'],
