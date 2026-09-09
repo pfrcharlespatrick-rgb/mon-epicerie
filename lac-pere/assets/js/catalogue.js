@@ -9,8 +9,8 @@
  * Un article :
  *   { id, nom, rayon, zone, unite, format, seuil }
  *   - id     : identifiant stable, en minuscules, jamais réutilisé
- *   - rayon  : classement comptable (voir RAYONS)
- *   - zone   : où l'article se trouve physiquement (voir ZONES)
+ *   - rayon  : classement comptable (voir RAYONS_LIVRES)
+ *   - zone   : où l'article se trouve physiquement (voir ZONES_LIVREES)
  *   - unite  : ce qu'on compte (boîte, conserve, kg, caisse…)
  *   - format : la taille du contenant, pour lever toute ambiguïté
  *   - seuil  : quantité sous laquelle l'article passe « à commander »
@@ -18,8 +18,13 @@
 
 'use strict';
 
-/** Les emplacements physiques, dans l'ordre d'une tournée d'inventaire. */
-const ZONES = [
+/**
+ * Les emplacements physiques livrés avec l'application, dans l'ordre d'une
+ * tournée. Ils ne sont qu'un point de départ : chacun peut les renommer, en
+ * ajouter, en retirer depuis l'application — sa liste vit alors dans son
+ * navigateur, et c'est elle qui fait foi.
+ */
+const ZONES_LIVREES = [
   { id: 'garde-manger', nom: 'Garde-manger', emoji: '🚪', note: 'Réserve sèche de la cuisine principale' },
   { id: 'armoires-cuisine', nom: 'Armoires de cuisine', emoji: '🗄️', note: 'Hauts et bas, autour du comptoir' },
   { id: 'refrigerateur', nom: 'Réfrigérateurs', emoji: '❄️', note: 'Frigos de la cuisine principale' },
@@ -35,8 +40,11 @@ const ZONES = [
   { id: 'infirmerie', nom: 'Sécurité et premiers soins', emoji: '🚑', note: 'Trousses, extincteurs, VFI' },
 ];
 
-/** Le classement comptable du stock. L'ordre est celui du rapport imprimé. */
-const RAYONS = [
+/**
+ * Le classement comptable livré. Même principe que les emplacements : c'est
+ * une proposition, modifiable depuis l'application.
+ */
+const RAYONS_LIVRES = [
   { id: 'sec', nom: 'Épicerie sèche et conserves', emoji: '🥫', famille: 'Épicerie' },
   { id: 'dejeuner', nom: 'Boulangerie et déjeuner', emoji: '🥐', famille: 'Épicerie' },
   { id: 'frais', nom: 'Frais et laitier', emoji: '🥛', famille: 'Épicerie' },
@@ -62,10 +70,12 @@ const UNITES = [
 ];
 
 /**
- * Le stock habituel du domaine. Les quantités ne figurent pas ici : elles
- * sont saisies dans l'application, à la fermeture comme en cours de saison.
+ * Le stock habituel d'un domaine de pêche — une suggestion, et rien de plus.
+ * L'inventaire commence vide ; on verse cette liste dedans d'un bouton, en
+ * tout ou pas du tout, puis on la taille à son domaine. Les quantités ne
+ * figurent pas ici : elles se saisissent dans l'application.
  */
-const ARTICLES_DEPART = [
+const ARTICLES_SUGGERES = [
 
   /* --- Épicerie sèche et conserves ------------------------------------- */
   { id: 'sec-farine-tout-usage', nom: 'Farine tout usage', rayon: 'sec', zone: 'garde-manger', unite: 'sac', format: '10 kg', seuil: 2 },

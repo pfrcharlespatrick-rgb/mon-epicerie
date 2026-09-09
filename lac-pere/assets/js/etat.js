@@ -27,8 +27,16 @@ const Etat = (() => {
       version: VERSION_DONNEES,
       saison: String(new Date().getFullYear()),
       responsable: '',
+      // L'inventaire commence vide : il ne contient que ce que l'on y met.
+      // Le stock suggéré du catalogue s'importe à la demande, pas d'office —
+      // une liste de deux cents articles qu'on n'a pas est un brouillard, pas
+      // un inventaire.
       articles: [],
       archives: [],
+      // Copiés des listes livrées au premier chargement, puis à l'utilisateur :
+      // il peut les renommer, en ajouter, en retirer.
+      rayons: RAYONS_LIVRES.map((r) => ({ ...r })),
+      zones: ZONES_LIVREES.map((z) => ({ ...z })),
       reglages: { groupement: 'rayon' },
     };
   }
@@ -54,35 +62,47 @@ const Etat = (() => {
   }
 
   /**
-   * Fusionne le catalogue livré avec ce qui est déjà enregistré.
+   * Verse le stock suggéré dans l'inventaire — sur demande expresse, jamais
+   * de lui-même. Les articles déjà présents ne sont pas touchés, et les
+   * rayons ou emplacements qu'ils réclament sont rétablis s'ils manquent.
    *
-   * Un article ajouté au catalogue apparaît sans décompte ; un article que
-   * l'employé a modifié à la main (`perso`) garde sa version. Les décomptes
-   * ne sont jamais touchés.
+   * Retourne le nombre d'articles réellement ajoutés.
    */
-  function fusionnerCatalogue() {
-    const parId = new Map(donnees.articles.map((a) => [a.id, a]));
+  function importerStockSuggere() {
+    const connus = new Set(donnees.articles.map((a) => a.id));
+    let ajoutes = 0;
 
-    for (const modele of ARTICLES_DEPART) {
-      const existant = parId.get(modele.id);
-      if (!existant) {
-        donnees.articles.push({
-          ...modele,
-          quantite: null,
-          estime: false,
-          note: '',
-          maj: null,
-          par: '',
-          origine: 'catalogue',
-          perso: false,
-        });
-        continue;
-      }
-      if (!existant.perso) {
-        for (const champ of CHAMPS_DESCRIPTIFS) existant[champ] = modele[champ];
-      }
-      existant.origine = 'catalogue';
+    for (const modele of ARTICLES_SUGGERES) {
+      if (connus.has(modele.id)) continue;
+
+      // Un rayon ou un emplacement supprimé par l'utilisateur réapparaît si
+      // un article importé s'y rattache : mieux vaut le rétablir que de
+      // ranger l'article n'importe où.
+      retablirClassement('rayons', RAYONS_LIVRES, modele.rayon);
+      retablirClassement('zones', ZONES_LIVREES, modele.zone);
+
+      donnees.articles.push({
+        ...modele,
+        quantite: null,
+        estime: false,
+        note: '',
+        maj: null,
+        par: '',
+        origine: 'catalogue',
+        perso: false,
+      });
+      ajoutes++;
     }
+
+    if (ajoutes) sauver();
+    return ajoutes;
+  }
+
+  /** Remet dans la liste un rayon ou un emplacement livré qui en avait disparu. */
+  function retablirClassement(cle, livres, id) {
+    if (donnees[cle].some((entree) => entree.id === id)) return;
+    const modele = livres.find((entree) => entree.id === id);
+    if (modele) donnees[cle].push({ ...modele });
   }
 
   function charger() {
@@ -91,7 +111,14 @@ const Etat = (() => {
     donnees.articles ??= [];
     donnees.archives ??= [];
     donnees.reglages ??= { groupement: 'rayon' };
-    fusionnerCatalogue();
+    // Les inventaires d'avant cette version n'ont pas de listes propres :
+    // on les leur donne, à partir des listes livrées.
+    if (!Array.isArray(donnees.rayons) || !donnees.rayons.length) {
+      donnees.rayons = RAYONS_LIVRES.map((r) => ({ ...r }));
+    }
+    if (!Array.isArray(donnees.zones) || !donnees.zones.length) {
+      donnees.zones = ZONES_LIVREES.map((z) => ({ ...z }));
+    }
     sauver();
     return donnees;
   }
@@ -171,8 +198,8 @@ const Etat = (() => {
     const nouvel = {
       id: identifiant(champs.nom || 'article'),
       nom: champs.nom || 'Sans nom',
-      rayon: champs.rayon || RAYONS[0].id,
-      zone: champs.zone || ZONES[0].id,
+      rayon: champs.rayon || donnees.rayons[0].id,
+      zone: champs.zone || donnees.zones[0].id,
       unite: champs.unite || 'unité',
       format: champs.format || '',
       seuil: Number(champs.seuil) || 0,
@@ -238,7 +265,7 @@ const Etat = (() => {
 
   /** L'avancement du comptage, zone par zone — la tournée d'inventaire. */
   function avancementParZone() {
-    return ZONES.map((zone) => {
+    return donnees.zones.map((zone) => {
       const liste = actifs().filter((a) => a.zone === zone.id);
       const comptes = liste.filter((a) => a.quantite !== null).length;
       return { ...zone, total: liste.length, comptes };
@@ -298,6 +325,19 @@ const Etat = (() => {
     return true;
   }
 
+  /**
+   * Vide l'inventaire de tous ses articles — le geste de qui repart de rien.
+   * Les archives sont conservées : ce sont les inventaires déjà signés, la
+   * mémoire du domaine, et rien ici ne doit pouvoir l'effacer par mégarde.
+   * Les rayons et emplacements restent eux aussi, avec leurs noms.
+   */
+  function effacerArticles() {
+    const combien = donnees.articles.length;
+    donnees.articles = [];
+    sauver();
+    return combien;
+  }
+
   /** Remet tous les décomptes à « non compté » — le début d'une tournée. */
   function reinitialiserComptage() {
     for (const a of donnees.articles) {
@@ -337,7 +377,8 @@ const Etat = (() => {
 
     if (mode === 'remplacer') {
       donnees = { ...vierge(), ...entrant };
-      fusionnerCatalogue();
+      if (!Array.isArray(donnees.rayons) || !donnees.rayons.length) donnees.rayons = RAYONS_LIVRES.map((r) => ({ ...r }));
+      if (!Array.isArray(donnees.zones) || !donnees.zones.length) donnees.zones = ZONES_LIVREES.map((z) => ({ ...z }));
       sauver();
       return { ajoutes: entrant.articles.length, mis: 0, archives: (entrant.archives ?? []).length };
     }
@@ -379,8 +420,75 @@ const Etat = (() => {
 
   /* ---------- Petits services partagés ---------- */
 
-  const rayon = (id) => RAYONS.find((r) => r.id === id) ?? { id, nom: 'Rayon inconnu', emoji: '📦', famille: '—' };
-  const zone = (id) => ZONES.find((z) => z.id === id) ?? { id, nom: 'Emplacement inconnu', emoji: '📍' };
+  const rayons = () => donnees.rayons;
+  const zones = () => donnees.zones;
+  const rayon = (id) => donnees.rayons.find((r) => r.id === id) ?? { id, nom: 'Rayon inconnu', emoji: '📦', famille: '—' };
+  const zone = (id) => donnees.zones.find((z) => z.id === id) ?? { id, nom: 'Emplacement inconnu', emoji: '📍' };
+
+  /* ---------- Rayons et emplacements : les listes de l'utilisateur ---------- */
+
+  /** Un identifiant propre à cette liste, dérivé du nom. */
+  function identifiantClassement(cle, nom) {
+    const base = 'perso-' + nom
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30);
+    let id = base === 'perso-' ? 'perso-liste' : base;
+    let n = 2;
+    while (donnees[cle].some((entree) => entree.id === id)) id = `${base}-${n++}`;
+    return id;
+  }
+
+  function ajouterClassement(cle, { nom, emoji }) {
+    const propre = String(nom || '').trim().slice(0, 60);
+    if (!propre) return null;
+    const entree = {
+      id: identifiantClassement(cle, propre),
+      nom: propre,
+      emoji: String(emoji || '').trim().slice(0, 4) || (cle === 'rayons' ? '📦' : '📍'),
+      famille: cle === 'rayons' ? 'Le mien' : undefined,
+      perso: true,
+    };
+    donnees[cle].push(entree);
+    sauver();
+    return entree;
+  }
+
+  function majClassement(cle, id, champs) {
+    const entree = donnees[cle].find((e) => e.id === id);
+    if (!entree) return null;
+    if (champs.nom !== undefined) {
+      const propre = String(champs.nom).trim().slice(0, 60);
+      if (propre) entree.nom = propre;
+    }
+    if (champs.emoji !== undefined) {
+      entree.emoji = String(champs.emoji).trim().slice(0, 4) || entree.emoji;
+    }
+    sauver();
+    return entree;
+  }
+
+  /**
+   * Retire un rayon ou un emplacement. Les articles qui s'y trouvaient sont
+   * déplacés dans le premier de la liste restante — jamais perdus. Le dernier
+   * de la liste ne se supprime pas : il faut bien ranger quelque part.
+   */
+  function supprimerClassement(cle, id) {
+    if (donnees[cle].length <= 1) return { supprime: false, deplaces: 0 };
+
+    const restants = donnees[cle].filter((e) => e.id !== id);
+    if (restants.length === donnees[cle].length) return { supprime: false, deplaces: 0 };
+
+    const champ = cle === 'rayons' ? 'rayon' : 'zone';
+    const refuge = restants[0].id;
+    let deplaces = 0;
+    for (const article of donnees.articles) {
+      if (article[champ] === id) { article[champ] = refuge; deplaces++; }
+    }
+
+    donnees[cle] = restants;
+    sauver();
+    return { supprime: true, deplaces, refuge: restants[0].nom };
+  }
 
   /** État d'un article, pour la pastille de couleur et les filtres. */
   function etatArticle(a) {
@@ -392,6 +500,8 @@ const Etat = (() => {
 
   return {
     charger, sauver, tout, actifs, article, statistiques, avancementParZone,
+    rayons, zones, ajouterClassement, majClassement, supprimerClassement,
+    importerStockSuggere, effacerArticles, nombreSuggeres: () => ARTICLES_SUGGERES.length,
     majQuantite, ajusterQuantite, majArticle, ajouterArticle, supprimerArticle, retablirArticle,
     archiver, archives, supprimerArchive, restaurerArchive, reinitialiserComptage,
     exporter, importer, reglages, definirReglage, saison, definirSaison,
