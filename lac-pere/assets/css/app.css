@@ -699,3 +699,34 @@ dialog::backdrop { background: rgba(10, 20, 20, 0.55); }
 .proposition-quantite { display: flex; align-items: center; gap: 0.4rem; flex: none; }
 .proposition-quantite input { width: 4.5rem; text-align: center; padding: 0.4rem 0.3rem; }
 .proposition-unite { font-size: 0.8rem; color: var(--encre-douce); font-family: system-ui, sans-serif; min-width: 3.5rem; }
+
+/* --- L'annonce d'une nouvelle version -------------------------------------
+   En haut, et non en bas : le message passager occupe déjà le bas de l'écran,
+   et celui-ci doit rester jusqu'à ce qu'on y réponde. */
+
+.bandeau-version {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1rem;
+  background: var(--accent-fond);
+  border-bottom: 1px solid var(--accent);
+  color: var(--encre);
+  font-size: 0.92rem;
+  z-index: 20;
+  box-shadow: var(--ombre);
+}
+
+/* Le corps se décale d'autant, pour que le bandeau ne couvre pas l'en-tête. */
+body.avec-bandeau { padding-top: 3.25rem; }
+
+@media print {
+  .bandeau-version { display: none !important; }
+  body.avec-bandeau { padding-top: 0; }
+}

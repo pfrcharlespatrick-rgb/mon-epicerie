@@ -589,6 +589,8 @@
     $('#bouton-tout-decocher').addEventListener('click', () => cocherTout(false));
     $('#bouton-appliquer').addEventListener('click', appliquerPropositions);
 
+    $('#bandeau-recharger').addEventListener('click', () => window.location.reload());
+
     $('#bouton-aide').addEventListener('click', () => $('#dialogue-aide').showModal());
     $('#aide-fermer').addEventListener('click', () => $('#dialogue-aide').close());
 
@@ -696,7 +698,48 @@
     }
   } catch { /* stockage refusé : on se passe du guide automatique */ }
 
+  /* ---------- Les nouvelles versions ---------- */
+
+  /**
+   * L'application garde une copie d'elle-même pour s'ouvrir sans réseau. La
+   * contrepartie est cruelle : une correction publiée n'atteint personne tant
+   * que l'ancienne copie n'a pas été chassée, et rien à l'écran ne le dit —
+   * l'utilisateur cherche un bouton qui existe pourtant, en ligne.
+   *
+   * Le service worker prévient donc la page dès qu'une nouvelle version est
+   * prête, et la page le dit à qui la regarde, avec le bouton qui va avec.
+   */
+  function annoncerNouvelleVersion() {
+    if (!$('#bandeau-version').hidden) return;
+    $('#bandeau-version').hidden = false;
+    // Le bandeau est fixe en haut : sans ce décalage, il couvrirait l'en-tête.
+    document.body.classList.add('avec-bandeau');
+  }
+
+  function surveillerLesVersions(enregistrement) {
+    // Une version déjà installée et en attente : la dire tout de suite.
+    if (enregistrement.waiting && navigator.serviceWorker.controller) annoncerNouvelleVersion();
+
+    enregistrement.addEventListener('updatefound', () => {
+      const nouveau = enregistrement.installing;
+      if (!nouveau) return;
+      nouveau.addEventListener('statechange', () => {
+        // `controller` distingue la toute première visite — où il n'y a rien à
+        // annoncer — d'une vraie mise à jour.
+        if (nouveau.state === 'installed' && navigator.serviceWorker.controller) annoncerNouvelleVersion();
+      });
+    });
+
+    // Une application ajoutée à l'écran d'accueil peut rester ouverte des
+    // jours : on revérifie chaque fois qu'elle revient à l'avant-plan.
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) enregistrement.update().catch(() => {});
+    });
+  }
+
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').then(surveillerLesVersions).catch(() => {});
+    });
   }
 })();
