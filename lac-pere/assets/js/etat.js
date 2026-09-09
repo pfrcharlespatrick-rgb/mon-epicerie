@@ -468,6 +468,40 @@ const Etat = (() => {
   }
 
   /**
+   * Remet dans les listes les rayons et emplacements livrés qui en ont
+   * disparu — le filet de qui a supprimé trop vite.
+   *
+   * Ce qui est encore là n'est pas touché : un rayon renommé garde son nom,
+   * un rayon inventé garde sa place. Les listes retrouvent au passage l'ordre
+   * d'origine, les entrées maison à la suite.
+   */
+  function retablirListesLivrees() {
+    const bilan = { rayons: 0, zones: 0 };
+
+    for (const [cle, livres] of [['rayons', RAYONS_LIVRES], ['zones', ZONES_LIVREES]]) {
+      const presents = new Map(donnees[cle].map((e) => [e.id, e]));
+      const ordonnes = [];
+
+      for (const modele of livres) {
+        if (presents.has(modele.id)) {
+          ordonnes.push(presents.get(modele.id));
+          presents.delete(modele.id);
+        } else {
+          ordonnes.push({ ...modele });
+          bilan[cle]++;
+        }
+      }
+
+      // Les entrées maison suivent, dans l'ordre où on les a créées.
+      for (const restante of presents.values()) ordonnes.push(restante);
+      donnees[cle] = ordonnes;
+    }
+
+    if (bilan.rayons || bilan.zones) sauver();
+    return bilan;
+  }
+
+  /**
    * Retire un rayon ou un emplacement. Les articles qui s'y trouvaient sont
    * déplacés dans le premier de la liste restante — jamais perdus. Le dernier
    * de la liste ne se supprime pas : il faut bien ranger quelque part.
@@ -500,7 +534,7 @@ const Etat = (() => {
 
   return {
     charger, sauver, tout, actifs, article, statistiques, avancementParZone,
-    rayons, zones, ajouterClassement, majClassement, supprimerClassement,
+    rayons, zones, ajouterClassement, majClassement, supprimerClassement, retablirListesLivrees,
     importerStockSuggere, effacerArticles, nombreSuggeres: () => ARTICLES_SUGGERES.length,
     majQuantite, ajusterQuantite, majArticle, ajouterArticle, supprimerArticle, retablirArticle,
     archiver, archives, supprimerArchive, restaurerArchive, reinitialiserComptage,
