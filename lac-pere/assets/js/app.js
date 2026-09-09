@@ -510,9 +510,39 @@
 
     $('#bouton-cle').addEventListener('click', () => {
       $('#champ-cle').value = Analyseur.cle();
+      $('#champ-cle').type = 'password';
+      $('#cle-voir').textContent = '👁️ Voir la clé';
       $('#dialogue-cle').showModal();
     });
-    $('#cle-annuler').addEventListener('click', () => $('#dialogue-cle').close());
+    $('#cle-voir').addEventListener('click', () => {
+      const champ = $('#champ-cle');
+      const cachee = champ.type === 'password';
+      champ.type = cachee ? 'text' : 'password';
+      $('#cle-voir').textContent = cachee ? '🙈 Masquer la clé' : '👁️ Voir la clé';
+    });
+
+    $('#cle-copier').addEventListener('click', async () => {
+      const valeur = $('#champ-cle').value.trim();
+      if (!valeur) { message('Il n’y a pas de clé à copier sur cet appareil.', 'alerte'); return; }
+      try {
+        await navigator.clipboard.writeText(valeur);
+        message('Clé copiée — collez-la sur l’autre appareil.');
+      } catch {
+        // Certains navigateurs refusent le presse-papiers : à défaut, on
+        // montre la clé et on laisse l'utilisateur la sélectionner.
+        $('#champ-cle').type = 'text';
+        $('#champ-cle').select();
+        $('#cle-voir').textContent = '🙈 Masquer la clé';
+        message('Copie refusée par le navigateur — la clé est affichée, copiez-la à la main.', 'alerte');
+      }
+    });
+
+    $('#cle-annuler').addEventListener('click', () => {
+      // La clé ne doit pas rester lisible d'une ouverture à l'autre.
+      $('#champ-cle').type = 'password';
+      $('#cle-voir').textContent = '👁️ Voir la clé';
+      $('#dialogue-cle').close();
+    });
     $('#cle-enregistrer').addEventListener('click', () => {
       Analyseur.definirCle($('#champ-cle').value);
       rafraichirCle();

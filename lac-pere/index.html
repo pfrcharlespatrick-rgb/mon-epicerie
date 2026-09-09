@@ -420,9 +420,21 @@
     <label class="champ">Clé
       <input type="password" id="champ-cle" placeholder="sk-ant-..." autocomplete="off" />
     </label>
+
+    <!-- Une clé Anthropic n'est montrée qu'une fois, à sa création : la console
+         ne la redonne jamais. L'appareil qui la détient est donc le seul
+         endroit où la relire — d'où ces deux boutons, pour la reporter sur un
+         second appareil sans avoir à en créer une autre. -->
+    <div class="actions">
+      <button type="button" id="cle-voir" class="bouton">👁️ Voir la clé</button>
+      <button type="button" id="cle-copier" class="bouton">📋 Copier la clé</button>
+    </div>
+
     <p class="explication">
       Comptez environ <b>5 à 10 ¢ par analyse</b>, selon le nombre de photos.
       La clé ne quitte jamais votre appareil, sauf pour parler à Anthropic.
+      Pour l'utiliser sur un second appareil, copiez-la ici et collez-la là-bas :
+      une même clé sert partout.
     </p>
     <div class="actions-dialogue">
       <button type="button" id="cle-effacer" class="bouton danger">Effacer la clé</button>
