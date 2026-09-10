@@ -69,11 +69,27 @@ const Etat = (() => {
    * Retourne le nombre d'articles réellement ajoutés.
    */
   function importerStockSuggere() {
-    const connus = new Set(donnees.articles.map((a) => a.id));
+    const connus = new Map(donnees.articles.map((a) => [a.id, a]));
     let ajoutes = 0;
+    let retablis = 0;
 
     for (const modele of ARTICLES_SUGGERES) {
-      if (connus.has(modele.id)) continue;
+      const existant = connus.get(modele.id);
+
+      // Un article retiré porte une pierre tombale plutôt que de disparaître,
+      // pour que la fusion d'un fichier ne le ressuscite pas dans le dos de
+      // celui qui l'a écarté. Mais redemander le stock suggéré, c'est
+      // justement demander qu'il revienne : on lève la pierre, en gardant ce
+      // qui avait été compté.
+      if (existant) {
+        if (existant.retire) {
+          delete existant.retire;
+          retablirClassement('rayons', RAYONS_LIVRES, existant.rayon);
+          retablirClassement('zones', ZONES_LIVREES, existant.zone);
+          retablis++;
+        }
+        continue;
+      }
 
       // Un rayon ou un emplacement supprimé par l'utilisateur réapparaît si
       // un article importé s'y rattache : mieux vaut le rétablir que de
@@ -94,8 +110,8 @@ const Etat = (() => {
       ajoutes++;
     }
 
-    if (ajoutes) sauver();
-    return ajoutes;
+    if (ajoutes || retablis) sauver();
+    return { ajoutes, retablis };
   }
 
   /** Remet dans la liste un rayon ou un emplacement livré qui en avait disparu. */
@@ -497,7 +513,9 @@ const Etat = (() => {
       donnees[cle] = ordonnes;
     }
 
-    if (bilan.rayons || bilan.zones) sauver();
+    // Toujours enregistrer : même sans rien rétablir, l'ordre a pu changer,
+    // et un ordre remis à l'écran mais jamais sauvé se défait au rechargement.
+    sauver();
     return bilan;
   }
 
