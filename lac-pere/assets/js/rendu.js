@@ -50,8 +50,23 @@ const Rendu = (() => {
   const sansAccents = (texte) => String(texte ?? '')
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
+  /**
+   * L'ordre alphabétique français, avec les nombres lus comme des nombres :
+   * « Congélateur 2 » précède « Congélateur 10 », là où un tri de texte les
+   * inverse. Le comparateur est construit une fois, par propreté — mesuré,
+   * il ne va pas plus vite que `localeCompare` sur des listes de cette
+   * taille, et ce n'est pas ce qu'on lui demande.
+   */
+  const COMPARATEUR = new Intl.Collator('fr', { numeric: true });
+  const parNom = (a, b) => COMPARATEUR.compare(a.nom, b.nom);
+
   function filtrer(filtres) {
     const recherche = sansAccents(filtres.recherche);
+
+    // Les noms de rayon et d'emplacement ne servent qu'à la recherche : on les
+    // range une fois plutôt que de parcourir les listes article par article.
+    const nomsRayons = recherche ? new Map(Etat.rayons().map((r) => [r.id, r.nom])) : null;
+    const nomsZones = recherche ? new Map(Etat.zones().map((z) => [z.id, z.nom])) : null;
 
     return Etat.actifs().filter((a) => {
       if (filtres.rayon && a.rayon !== filtres.rayon) return false;
@@ -64,7 +79,8 @@ const Rendu = (() => {
       if (filtres.etat === 'estimes' && !a.estime) return false;
 
       if (recherche) {
-        const foin = sansAccents([a.nom, a.format, a.note, Etat.rayon(a.rayon).nom, Etat.zone(a.zone).nom].join(' '));
+        const foin = sansAccents([a.nom, a.format, a.note,
+          nomsRayons.get(a.rayon) ?? '', nomsZones.get(a.zone) ?? ''].join(' '));
         if (!foin.includes(recherche)) return false;
       }
       return true;
@@ -215,14 +231,38 @@ const Rendu = (() => {
 
     const parEmplacement = Etat.reglages().groupement === 'zone';
     const familles = parEmplacement ? Etat.zones() : Etat.rayons();
+    const champ = parEmplacement ? 'zone' : 'rayon';
 
-    for (const famille of familles) {
-      const articles = liste
-        .filter((a) => (parEmplacement ? a.zone : a.rayon) === famille.id)
-        .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
-      if (!articles.length) continue;
-      cible.append(groupe(famille.nom, famille.emoji, famille.note, articles));
+    // Une seule passe sur les articles : chacun tombe dans sa famille. Le
+    // balayage d'avant, famille par famille, laissait échapper les articles
+    // dont le rayon avait disparu des listes — ils n'apparaissaient nulle
+    // part, ce qui, dans un inventaire, est le pire des défauts.
+    const parFamille = new Map();
+    for (const a of liste) {
+      const groupeArticles = parFamille.get(a[champ]);
+      if (groupeArticles) groupeArticles.push(a);
+      else parFamille.set(a[champ], [a]);
     }
+
+    // Le document n'est touché qu'une fois, à la fin.
+    const fragment = document.createDocumentFragment();
+    for (const famille of familles) {
+      const articles = parFamille.get(famille.id);
+      if (!articles) continue;
+      articles.sort(parNom);
+      fragment.append(groupe(famille.nom, famille.emoji, famille.note, articles));
+      parFamille.delete(famille.id);
+    }
+
+    // Ce qui n'appartient à aucune famille connue ne doit pas disparaître de
+    // l'écran sans un mot : mieux vaut le montrer à part que le perdre.
+    for (const [id, articles] of parFamille) {
+      articles.sort(parNom);
+      const perdu = parEmplacement ? Etat.zone(id) : Etat.rayon(id);
+      fragment.append(groupe(perdu.nom, perdu.emoji, null, articles));
+    }
+
+    cible.append(fragment);
   }
 
   /* ---------- La tournée de fermeture ---------- */
@@ -307,7 +347,7 @@ const Rendu = (() => {
       if (!lignes) continue;
       morceaux.push(`<h4>${r.emoji} ${r.nom}</h4><table class="tableau"><tbody>` +
         lignes
-          .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
+          .sort(parNom)
           .map((l) => `<tr><td>${echapper(l.nom)}${l.format ? ` <small>${echapper(l.format)}</small>` : ''}</td>` +
             `<td class="nombre">${l.quantite}${l.estime ? ' <small>est.</small>' : ''} ${echapper(l.unite || '')}</td></tr>`)
           .join('') +

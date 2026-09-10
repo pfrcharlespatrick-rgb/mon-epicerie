@@ -52,16 +52,37 @@ const Exporteur = (() => {
     };
   }
 
-  /** Range les lignes par rayon, dans l'ordre du catalogue. */
+  /**
+   * Range les lignes par rayon, dans l'ordre des listes. Ce qui compte ici
+   * n'est pas la passe unique mais ce qu'elle rattrape : une ligne dont le
+   * rayon a disparu des listes finit désormais dans un groupe à son nom, au
+   * lieu d'être omise du rapport. Un article manquant sur la feuille signée
+   * est une erreur d'inventaire.
+   */
   function parRayon(lignes) {
-    return Etat.rayons()
-      .map((r) => ({
-        rayon: r,
-        lignes: lignes
-          .filter((l) => l.rayon === r.id)
-          .sort((a, b) => a.nom.localeCompare(b.nom, 'fr')),
-      }))
-      .filter((g) => g.lignes.length);
+    const comparateur = new Intl.Collator('fr', { numeric: true });
+    const parId = new Map();
+    for (const ligne of lignes) {
+      const groupe = parId.get(ligne.rayon);
+      if (groupe) groupe.push(ligne);
+      else parId.set(ligne.rayon, [ligne]);
+    }
+
+    const groupes = [];
+    for (const rayon of Etat.rayons()) {
+      const trouvees = parId.get(rayon.id);
+      if (!trouvees) continue;
+      trouvees.sort((a, b) => comparateur.compare(a.nom, b.nom));
+      groupes.push({ rayon, lignes: trouvees });
+      parId.delete(rayon.id);
+    }
+
+    for (const [id, trouvees] of parId) {
+      trouvees.sort((a, b) => comparateur.compare(a.nom, b.nom));
+      groupes.push({ rayon: Etat.rayon(id), lignes: trouvees });
+    }
+
+    return groupes;
   }
 
   const quantiteTexte = (l) =>

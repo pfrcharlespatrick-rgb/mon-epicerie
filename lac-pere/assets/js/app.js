@@ -200,6 +200,11 @@
 
   /** Après toute retouche des listes : les menus et l'écran suivent. */
   function apresClassement() {
+    // Un filtre resté sur un rayon supprimé ne montrerait plus rien, et
+    // l'écran n'aurait aucun moyen de dire pourquoi : on le relâche.
+    if (filtres.rayon && !Etat.rayons().some((r) => r.id === filtres.rayon)) filtres.rayon = '';
+    if (filtres.zone && !Etat.zones().some((z) => z.id === filtres.zone)) filtres.zone = '';
+
     remplirListes();
     $('#filtre-rayon').value = filtres.rayon;
     $('#filtre-zone').value = filtres.zone;
@@ -215,11 +220,15 @@
       + `Jusqu’à ${combien} articles s’ajouteront, sans quantité. Vous pourrez retirer `
       + `ceux qui ne vous concernent pas, un à un. Rien de ce que vous avez déjà ne sera touché.`)) return;
 
-    const ajoutes = Etat.importerStockSuggere();
+    const { ajoutes, retablis } = Etat.importerStockSuggere();
     apresClassement();
     montrer('inventaire');
-    message(ajoutes
-      ? `${ajoutes} article(s) ajoutés — à vous de tailler la liste.`
+
+    const morceaux = [];
+    if (ajoutes) morceaux.push(`${ajoutes} article(s) ajouté(s)`);
+    if (retablis) morceaux.push(`${retablis} rétabli(s)`);
+    message(morceaux.length
+      ? `${morceaux.join(', ')} — à vous de tailler la liste.`
       : 'Tous ces articles figuraient déjà dans votre inventaire.');
   }
 
@@ -410,6 +419,10 @@
     for (const p of retenues) {
       const note = p.note ? 'D’après photo : ' + p.note : '';
       if (p.id && Etat.article(p.id)) {
+        // L'article a pu être retiré de la liste depuis : le compter, c'est
+        // dire qu'on le veut de nouveau. Sans cela, la quantité se rangeait
+        // dans un article invisible, et le geste restait sans effet à l'écran.
+        Etat.retablirArticle(p.id);
         Etat.majQuantite(p.id, p.quantite, { estime: p.estime });
         if (note) Etat.majArticle(p.id, { note });
         mis++;
