@@ -223,8 +223,18 @@ const Exporteur = (() => {
     return `${prefixe}-${jour}.${extension}`;
   }
 
-  const sauvegarde = () =>
-    telecharger(nomDate('inventaire-lac-pere', 'json'), JSON.stringify(Etat.exporter(), null, 2), 'application/json');
+  /**
+   * Le contenu du fichier de sauvegarde. La clé Claude n'y entre que si on
+   * l'y met exprès : elle donne accès au crédit de son propriétaire.
+   */
+  function contenuSauvegarde({ cle } = {}) {
+    const objet = Etat.exporter();
+    if (cle) objet.cle = cle;
+    return JSON.stringify(objet, null, 2);
+  }
+
+  const sauvegarde = (options) =>
+    telecharger(nomDate('inventaire-lac-pere', 'json'), contenuSauvegarde(options), 'application/json');
 
   const tableur = (source) =>
     telecharger(nomDate('inventaire-lac-pere', 'csv'), csv(source), 'text/csv;charset=utf-8');
@@ -268,9 +278,9 @@ const Exporteur = (() => {
   }
 
   /** Envoie le fichier de sauvegarde par le partage du téléphone, si possible. */
-  async function partagerFichier() {
+  async function partagerFichier(options) {
     const fichier = new File(
-      [JSON.stringify(Etat.exporter(), null, 2)],
+      [contenuSauvegarde(options)],
       nomDate('inventaire-lac-pere', 'json'),
       { type: 'application/json' },
     );
@@ -283,7 +293,7 @@ const Exporteur = (() => {
         if (erreur?.name === 'AbortError') return 'annule';
       }
     }
-    sauvegarde();
+    sauvegarde(options);
     return 'telecharge';
   }
 

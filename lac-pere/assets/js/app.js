@@ -124,6 +124,10 @@
       Etat.majArticle(ficheOuverte.id, { ...champs, quantite });
       message('Fiche enregistrée.');
     } else {
+      // Le même nom au même emplacement, c'est presque toujours le même
+      // article : on le dit avant de créer un doublon.
+      const pareil = Etat.trouverParNom(champs.nom, champs.zone);
+      if (pareil && !confirm(`« ${pareil.nom} » existe déjà à cet emplacement.\n\nL’ajouter quand même, en double ?`)) return;
       Etat.ajouterArticle({ ...champs, quantite });
       message('Article ajouté au stock.');
     }
@@ -516,6 +520,24 @@
 
   /* ---------- Partage ---------- */
 
+  /**
+   * Faut-il joindre la clé Claude au fichier ? On le demande à chaque envoi,
+   * jamais d'office : le fichier donne alors accès au crédit de la clé, et
+   * c'est à celui qui l'envoie d'en juger.
+   */
+  function optionsDEnvoi() {
+    const cle = Analyseur.cle();
+    if (!cle) return {};
+    const joindre = confirm(
+      'Joindre votre clé Claude au fichier ?\n\n'
+      + 'OK : la personne qui le reçoit pourra analyser des photos avec la même clé, sans rien configurer. '
+      + 'Le fichier donnera accès à votre crédit — ne l’envoyez qu’à quelqu’un de confiance.\n\n'
+      + 'Annuler : le fichier part sans la clé.',
+    );
+    return joindre ? { cle } : {};
+  }
+
+
   function lireFichier(fichier) {
     const lecteur = new FileReader();
     lecteur.onload = () => {
@@ -537,11 +559,27 @@
 
       try {
         const bilan = Etat.importer(contenu, mode);
-        rafraichir();
+
+        // Une clé jointe au fichier est adoptée si l'appareil n'en a pas :
+        // c'est tout l'intérêt de l'avoir jointe. Une clé déjà en place
+        // n'est jamais écrasée en silence.
+        let noteCle = '';
+        if (typeof contenu?.cle === 'string' && contenu.cle.trim()) {
+          if (!Analyseur.cle()) {
+            Analyseur.definirCle(contenu.cle);
+            rafraichirCle();
+            noteCle = ' La clé Claude jointe a été installée : l’analyse de photo est prête.';
+          } else if (Analyseur.cle() !== contenu.cle.trim()) {
+            noteCle = ' Le fichier contenait une autre clé Claude ; la vôtre a été gardée.';
+          }
+        }
+
+        apresClassement();
         remplirChampsFermeture();
-        message(mode === 'remplacer'
+        message((mode === 'remplacer'
           ? 'Inventaire remplacé par le fichier reçu.'
-          : `Fusion faite : ${bilan.mis} article(s) mis à jour, ${bilan.ajoutes} ajouté(s), ${bilan.archives} archive(s) reprise(s).`);
+          : `Fusion faite : ${bilan.mis} article(s) mis à jour, ${bilan.ajoutes} ajouté(s), `
+            + `${bilan.listes} rayon(s) ou emplacement(s) repris, ${bilan.archives} archive(s) reprise(s).`) + noteCle);
       } catch (erreur) {
         message(erreur.message, 'alerte');
       }
@@ -756,12 +794,12 @@
     $('#archive-csv').addEventListener('click', () => archiveOuverte && Exporteur.tableur(archiveOuverte));
 
     $('#bouton-sauvegarde').addEventListener('click', () => {
-      Exporteur.sauvegarde();
+      Exporteur.sauvegarde(optionsDEnvoi());
       message('Sauvegarde téléchargée — gardez-la en lieu sûr.');
     });
 
     $('#bouton-envoyer').addEventListener('click', async () => {
-      const issue = await Exporteur.partagerFichier();
+      const issue = await Exporteur.partagerFichier(optionsDEnvoi());
       if (issue === 'telecharge') message('Fichier téléchargé : joignez-le à un courriel.');
       if (issue === 'partage') message('Fichier envoyé.');
     });

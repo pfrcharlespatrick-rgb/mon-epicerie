@@ -199,6 +199,23 @@ const Etat = (() => {
     return cible;
   }
 
+  /** Un nom ramené à l'essentiel : sans accents, sans casse, sans espaces en trop. */
+  const nomNormalise = (nom) => String(nom ?? '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/\s+/g, ' ').trim();
+
+  /**
+   * Retrouve un article déjà présent au même emplacement sous le même nom,
+   * à l'accent ou à la majuscule près. C'est la garde contre les doublons :
+   * deux analyses de la même tablette, ou deux personnes qui tapent le même
+   * article, ne doivent pas en faire deux.
+   */
+  function trouverParNom(nom, zoneId) {
+    const voulu = nomNormalise(nom);
+    if (!voulu) return null;
+    return donnees.articles.find((a) => !a.retire && a.zone === zoneId && nomNormalise(a.nom) === voulu) ?? null;
+  }
+
   /** Fabrique un identifiant lisible et unique à partir du nom. */
   function identifiant(nom) {
     const base = 'perso-' + nom
@@ -402,8 +419,27 @@ const Etat = (() => {
     let ajoutes = 0;
     let mis = 0;
 
+    // Les rayons et emplacements voyagent avec les articles : sans eux, un
+    // article rangé dans un rayon maison arriverait orphelin chez l'autre.
+    // Les identifiants dérivent du nom, si bien que deux personnes qui créent
+    // « Chasse » chacune de leur côté obtiennent le même — pas de doublon.
+    let listesAjoutees = 0;
+    for (const cle of ['rayons', 'zones']) {
+      const connus = new Set(donnees[cle].map((e) => e.id));
+      const parNom = new Set(donnees[cle].map((e) => nomNormalise(e.nom)));
+      for (const entree of entrant[cle] ?? []) {
+        if (!entree?.id || connus.has(entree.id)) continue;
+        // Même nom sous un autre identifiant : c'est le même rayon, on garde le nôtre.
+        if (parNom.has(nomNormalise(entree.nom))) continue;
+        donnees[cle].push({ ...entree });
+        connus.add(entree.id);
+        listesAjoutees++;
+      }
+    }
+
     for (const entrantArticle of entrant.articles) {
-      const cible = article(entrantArticle.id);
+      const cible = article(entrantArticle.id)
+        ?? (entrantArticle.retire ? null : trouverParNom(entrantArticle.nom, entrantArticle.zone));
       if (!cible) {
         donnees.articles.push({ ...entrantArticle });
         ajoutes++;
@@ -412,7 +448,11 @@ const Etat = (() => {
       const dateEntrante = entrantArticle.maj ? Date.parse(entrantArticle.maj) : 0;
       const dateLocale = cible.maj ? Date.parse(cible.maj) : 0;
       if (dateEntrante > dateLocale) {
-        Object.assign(cible, entrantArticle);
+        // L'identifiant reste le nôtre : c'est lui que nos archives connaissent.
+        // La pierre tombale suit la version la plus récente : un article
+        // retiré ici mais compté là-bas depuis revient — et inversement.
+        Object.assign(cible, entrantArticle, { id: cible.id });
+        if (!entrantArticle.retire) delete cible.retire;
         mis++;
       }
     }
@@ -431,7 +471,7 @@ const Etat = (() => {
 
     if (!donnees.responsable && entrant.responsable) donnees.responsable = entrant.responsable;
     sauver();
-    return { ajoutes, mis, archives: archivesAjoutees };
+    return { ajoutes, mis, archives: archivesAjoutees, listes: listesAjoutees };
   }
 
   /* ---------- Petits services partagés ---------- */
@@ -557,6 +597,6 @@ const Etat = (() => {
     majQuantite, ajusterQuantite, majArticle, ajouterArticle, supprimerArticle, retablirArticle,
     archiver, archives, supprimerArchive, restaurerArchive, reinitialiserComptage,
     exporter, importer, reglages, definirReglage, saison, definirSaison,
-    responsable, definirResponsable, rayon, zone, etatArticle,
+    responsable, definirResponsable, rayon, zone, etatArticle, trouverParNom,
   };
 })();
