@@ -336,6 +336,12 @@ mégarde :
   « non compté ». C'est l'ouverture de saison.
 - **Tout effacer** — l'inventaire redevient vide, articles compris. Les rayons
   et emplacements, avec les noms que vous leur avez donnés, sont conservés.
+  L'effacement voyage avec le fichier : un collègue qui fusionne votre envoi
+  voit ces articles partir de chez lui aussi, au lieu de vous les rendre.
+
+Pour faire d'un second appareil une **copie exacte** du premier, ouvrez-y le
+fichier envoyé et choisissez *remplacer* plutôt que *fusionner* : tout ce que
+cet appareil contenait, y compris d'anciens articles jamais comptés, s'efface.
 
 ### Modifier le stock suggéré
 

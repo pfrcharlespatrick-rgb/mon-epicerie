@@ -76,6 +76,12 @@ const Etat = (() => {
     for (const modele of ARTICLES_SUGGERES) {
       const existant = connus.get(modele.id);
 
+      // Un article saisi à la main sous le même nom, au même endroit, tient
+      // déjà cette place : le modèle ne vient pas le doubler.
+      if (!existant || existant.retire) {
+        if (trouverParNom(modele.nom, modele.zone)) continue;
+      }
+
       // Un article retiré porte une pierre tombale plutôt que de disparaître,
       // pour que la fusion d'un fichier ne le ressuscite pas dans le dos de
       // celui qui l'a écarté. Mais redemander le stock suggéré, c'est
@@ -363,10 +369,25 @@ const Etat = (() => {
    * Les archives sont conservées : ce sont les inventaires déjà signés, la
    * mémoire du domaine, et rien ici ne doit pouvoir l'effacer par mégarde.
    * Les rayons et emplacements restent eux aussi, avec leurs noms.
+   *
+   * Les articles du catalogue livré ne sont pas jetés mais marqués `retire`,
+   * datés d'aujourd'hui : ainsi l'effacement voyage avec le fichier, et un
+   * autre appareil qui les avait encore les voit disparaître à la fusion, au
+   * lieu de les rendre. Les ajouts maison, eux, s'en vont pour de bon.
+   *
+   * Retourne le nombre d'articles qui étaient visibles.
    */
   function effacerArticles() {
-    const combien = donnees.articles.length;
-    donnees.articles = [];
+    const combien = actifs().length;
+    donnees.articles = donnees.articles.filter((a) => a.origine !== 'ajout');
+    for (const a of donnees.articles) {
+      if (a.retire) continue;
+      a.retire = true;
+      a.quantite = null;
+      a.estime = false;
+      a.note = '';
+      signer(a);
+    }
     sauver();
     return combien;
   }

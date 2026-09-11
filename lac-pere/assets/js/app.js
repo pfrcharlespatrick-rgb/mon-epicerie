@@ -552,8 +552,8 @@
       // Deux questions plutôt qu'une : la fusion, sans danger, est proposée
       // d'abord ; le remplacement, qui écrase tout, demande un second oui.
       let mode = 'fusionner';
-      if (!confirm('Reprendre ce fichier ?\n\nOK : FUSIONNER — pour chaque article, la saisie la plus récente gagne. Rien ne se perd.\nAnnuler : voir l’autre façon de faire.')) {
-        if (!confirm('Autre façon : REMPLACER.\n\nTout votre inventaire actuel serait effacé et remplacé par celui du fichier.\n\nOK : remplacer. Annuler : ne rien faire.')) return;
+      if (!confirm('Reprendre ce fichier ?\n\nOK : FUSIONNER — pour chaque article, la saisie la plus récente gagne. Rien ne se perd.\nAnnuler : voir l’autre façon de faire (une copie exacte du fichier).')) {
+        if (!confirm('Autre façon : REMPLACER.\n\nCet appareil devient une copie exacte du fichier : tout ce qu’il contenait est effacé, y compris les articles que le fichier ne connaît pas.\n\nOK : remplacer. Annuler : ne rien faire.')) return;
         mode = 'remplacer';
       }
 
