@@ -332,7 +332,11 @@ const Analyseur = (() => {
       const nom = String(brut?.nom ?? '').trim().slice(0, 120);
       if (!nom) continue;
 
-      const existant = brut?.id ? Etat.article(String(brut.id)) : null;
+      // Sans identifiant, le modèle propose un nouvel article — mais s'il en
+      // existe déjà un du même nom au même emplacement, c'est celui-là qu'on
+      // met à jour. Deux analyses de la même tablette n'en font pas deux.
+      const existant = (brut?.id ? Etat.article(String(brut.id)) : null)
+        ?? Etat.trouverParNom(nom, zoneId);
       const rayon = existant?.rayon
         ?? (rayonsConnus.has(String(brut?.rayon)) ? String(brut.rayon) : Etat.rayons()[0].id);
 
