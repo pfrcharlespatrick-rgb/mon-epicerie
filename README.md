@@ -73,12 +73,17 @@ magasins**.
 - **Rayons** — nom et icône libres (Électronique, Pêche, Plats cuisinés…). Ils
   apparaissent aussitôt dans les filtres, dans la fiche des articles et dans le
   regroupement de la liste.
+- **Sous-rayons** — une famille de produits à l'intérieur d'un rayon :
+  « Gâteaux Vachon » sous les desserts, pour y ranger ensuite les
+  mille-feuilles, les Passion Flakie et le reste. Le « + » posé sur le bandeau
+  d'une famille ouvre la fiche déjà rangée au bon endroit.
 - **Magasins** — nom et couleur de pastille, pour une enseigne absente de la
   liste fournie.
 
 Supprimer ne détruit jamais un article : les produits d'un rayon supprimé sont
-déplacés dans « Divers & Animaux », et ceux d'un magasin supprimé se retrouvent
-simplement sans magasin. Renommer un magasin met à jour tous les articles qui le
+déplacés dans « Divers & Animaux », ceux d'un sous-rayon supprimé restent dans
+leur rayon en perdant seulement leur famille, et ceux d'un magasin supprimé se
+retrouvent simplement sans magasin. Supprimer un rayon emporte ses sous-rayons. Renommer un magasin met à jour tous les articles qui le
 portaient. Ces ajouts font partie de la sauvegarde `.json`.
 
 ## Modifier le catalogue livré

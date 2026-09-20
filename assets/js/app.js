@@ -23,6 +23,13 @@ import {
   definirFiltre,
   rayons,
   magasins,
+  rayonParId,
+  sousRayonsDuRayon,
+  sousRayonParId,
+  ajouterSousRayon,
+  modifierSousRayon,
+  supprimerSousRayon,
+  compterArticlesDuSousRayon,
   ajouterRayon,
   modifierRayon,
   supprimerRayon,
@@ -164,6 +171,8 @@ const champArticleId = document.getElementById('article-id');
 const champArticleNom = document.getElementById('article-nom');
 const champArticleRayon = document.getElementById('article-rayon');
 const champArticleMagasin = document.getElementById('article-magasin');
+const champArticleSousRayon = document.getElementById('article-sous-rayon');
+const blocSousRayon = document.getElementById('champ-sous-rayon');
 const champArticleQte = document.getElementById('article-qte');
 
 function remplirSelecteurs() {
@@ -185,7 +194,25 @@ function remplirSelecteurs() {
   champArticleMagasin.value = magasinChoisi;
 }
 
-function ouvrirFormulaireArticle(article = null) {
+/**
+ * Remplit le menu des sous-rayons selon le rayon sélectionné. Le champ reste
+ * caché tant que le rayon n'en a aucun : un menu vide n'apprendrait rien.
+ */
+function majSousRayonsDuFormulaire(choisi = '') {
+  const familles = sousRayonsDuRayon(champArticleRayon.value);
+  blocSousRayon.hidden = familles.length === 0;
+
+  champArticleSousRayon.replaceChildren(
+    new Option('— Aucun —', ''),
+    ...familles.map((famille) => new Option(famille.nom, famille.id)),
+  );
+
+  champArticleSousRayon.value = familles.some((f) => f.id === choisi) ? choisi : '';
+}
+
+champArticleRayon.addEventListener('change', () => majSousRayonsDuFormulaire());
+
+function ouvrirFormulaireArticle(article = null, sousRayonImpose = '') {
   const modification = Boolean(article);
 
   document.getElementById('dlg-article-libelle').textContent = modification
@@ -201,6 +228,14 @@ function ouvrirFormulaireArticle(article = null) {
   champArticleMagasin.value = article?.magasin ?? '';
   champArticleQte.value = article?.qte ?? '';
 
+  // Un sous-rayon imposé vient du « + » posé sur son bandeau : on ouvre alors
+  // la fiche déjà rangée au bon endroit.
+  if (sousRayonImpose) {
+    const famille = sousRayonParId(sousRayonImpose);
+    if (famille) champArticleRayon.value = famille.rayon;
+  }
+  majSousRayonsDuFormulaire(sousRayonImpose || article?.sousRayon || '');
+
   ouvrir(dlgArticle);
   champArticleNom.focus();
   champArticleNom.select();
@@ -210,6 +245,7 @@ formArticle.addEventListener('submit', () => {
   const champs = {
     nom: champArticleNom.value.trim(),
     rayon: champArticleRayon.value,
+    sousRayon: blocSousRayon.hidden ? '' : champArticleSousRayon.value,
     magasin: champArticleMagasin.value,
     qte: champArticleQte.value.trim(),
   };
@@ -326,6 +362,11 @@ dlgQte.addEventListener('close', () => {
 document.getElementById('liste').addEventListener('click', async (evenement) => {
   const bouton = evenement.target.closest('[data-action]');
   if (!bouton) return;
+
+  if (bouton.dataset.action === 'ajouter-dans') {
+    ouvrirFormulaireArticle(null, bouton.dataset.sousRayon);
+    return;
+  }
 
   const id = bouton.closest('.article')?.dataset.id;
   const article = id ? trouver(id) : null;
@@ -675,6 +716,21 @@ function rendreTaxonomie() {
     }),
   );
 
+  const listeSousRayons = document.getElementById('liste-sous-rayons');
+  listeSousRayons.replaceChildren(
+    ...etat.sousRayons.map((sousRayon) => {
+      const n = compterArticlesDuSousRayon(sousRayon.id);
+      const parent = rayonParId(sousRayon.rayon);
+      return creerLigneReglage({
+        embleme: parent?.emoji ?? '🏷️',
+        nom: `${sousRayon.nom}  ·  ${parent?.nom ?? '—'}`,
+        usage: n === 0 ? '' : `${n} article${n > 1 ? 's' : ''}`,
+        surModifier: () => commencerEditionSousRayon(sousRayon),
+        surSupprimer: () => demanderSuppressionSousRayon(sousRayon),
+      });
+    }),
+  );
+
   listeMagasins.replaceChildren(
     ...etat.magasinsPerso.map((magasin) => {
       const n = compterArticlesDuMagasin(magasin.nom);
@@ -756,6 +812,84 @@ formRayon.addEventListener('click', (evenement) => {
   if (bouton) champRayonEmoji.value = bouton.dataset.emoji;
 });
 
+// --- Formulaire des sous-rayons ---
+
+const formSousRayon = document.getElementById('form-sous-rayon');
+const champSousRayonId = document.getElementById('sous-rayon-id');
+const champSousRayonNom = document.getElementById('sous-rayon-nom');
+const champSousRayonParent = document.getElementById('sous-rayon-parent');
+const btnSousRayonAnnuler = document.getElementById('sous-rayon-annuler');
+
+function remplirParentsSousRayon() {
+  const choisi = champSousRayonParent.value;
+  champSousRayonParent.replaceChildren(
+    ...rayons().map((rayon) => new Option(`${rayon.emoji}  ${rayon.nom}`, rayon.id)),
+  );
+  champSousRayonParent.value = choisi || rayons()[0].id;
+}
+
+function reinitialiserFormulaireSousRayon() {
+  formSousRayon.reset();
+  champSousRayonId.value = '';
+  remplirParentsSousRayon();
+  btnSousRayonAnnuler.hidden = true;
+  document.getElementById('sous-rayon-valider').textContent = 'Ajouter le sous-rayon';
+}
+
+function commencerEditionSousRayon(sousRayon) {
+  champSousRayonId.value = sousRayon.id;
+  champSousRayonNom.value = sousRayon.nom;
+  champSousRayonParent.value = sousRayon.rayon;
+  btnSousRayonAnnuler.hidden = false;
+  document.getElementById('sous-rayon-valider').textContent = 'Enregistrer';
+  champSousRayonNom.focus();
+  champSousRayonNom.select();
+}
+
+async function demanderSuppressionSousRayon(sousRayon) {
+  const n = compterArticlesDuSousRayon(sousRayon.id);
+  const accepte = await confirmer({
+    titre: `Supprimer « ${sousRayon.nom} »`,
+    texte:
+      n === 0
+        ? 'Ce sous-rayon est vide, rien d’autre ne sera touché.'
+        : `${n} article(s) y sont rangés : ils restent dans leur rayon, simplement détachés de cette famille.`,
+    valider: 'Supprimer',
+  });
+
+  if (!accepte) return;
+
+  const { detaches } = supprimerSousRayon(sousRayon.id);
+  reinitialiserFormulaireSousRayon();
+  notifier(
+    detaches === 0
+      ? `Sous-rayon « ${sousRayon.nom} » supprimé.`
+      : `Sous-rayon supprimé, ${detaches} article(s) détachés.`,
+  );
+}
+
+formSousRayon.addEventListener('submit', (evenement) => {
+  evenement.preventDefault();
+
+  const champs = { nom: champSousRayonNom.value, rayon: champSousRayonParent.value };
+  const resultat = champSousRayonId.value
+    ? modifierSousRayon(champSousRayonId.value, champs)
+    : ajouterSousRayon(champs);
+
+  if (resultat.erreur) {
+    notifier(resultat.erreur, { type: 'erreur' });
+    return;
+  }
+
+  const creation = !champSousRayonId.value;
+  reinitialiserFormulaireSousRayon();
+  notifier(
+    creation ? `Sous-rayon « ${resultat.sousRayon.nom} » ajouté.` : 'Sous-rayon mis à jour.',
+  );
+});
+
+btnSousRayonAnnuler.addEventListener('click', reinitialiserFormulaireSousRayon);
+
 // --- Formulaire des magasins ---
 
 function reinitialiserFormulaireMagasin() {
@@ -820,6 +954,7 @@ btnMagasinAnnuler.addEventListener('click', reinitialiserFormulaireMagasin);
 
 document.getElementById('btn-taxonomie').addEventListener('click', () => {
   reinitialiserFormulaireRayon();
+  reinitialiserFormulaireSousRayon();
   reinitialiserFormulaireMagasin();
   rendreTaxonomie();
   ouvrir(dlgTaxonomie);
@@ -860,6 +995,7 @@ surChangement((portee) => {
   if (portee.type === 'taxonomie') {
     construireFiltres();
     remplirSelecteurs();
+    remplirParentsSousRayon();
     construireGrilleMagasins();
     if (dlgTaxonomie.open) rendreTaxonomie();
     rendreTout();

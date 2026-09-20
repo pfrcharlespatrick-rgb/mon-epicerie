@@ -9,7 +9,7 @@
  * fichiers soient remplacés.
  */
 
-const VERSION = 'v8';
+const VERSION = 'v9';
 const CACHE = `mon-epicerie-${VERSION}`;
 
 /** Fichiers indispensables au premier affichage. */

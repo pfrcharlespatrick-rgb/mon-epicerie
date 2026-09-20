@@ -13,6 +13,7 @@ import {
   rayons,
   magasins,
   magasinParNom,
+  sousRayonsDuRayon,
   trier,
 } from './etat.js';
 
@@ -350,7 +351,12 @@ function grouper(articlesBruts) {
     }
   } else {
     for (const rayon of rayons()) {
-      groupes.set(rayon.id, { titre: rayon.nom, emoji: rayon.emoji, articles: [] });
+      groupes.set(rayon.id, {
+        titre: rayon.nom,
+        emoji: rayon.emoji,
+        rayon: rayon.id,
+        articles: [],
+      });
     }
 
     for (const article of articles) {
@@ -360,6 +366,67 @@ function grouper(articlesBruts) {
   }
 
   return [...groupes.values()].filter((g) => g.articles.length > 0);
+}
+
+/**
+ * Découpe les articles d'un groupe en blocs : d'abord ceux qui ne sont rattachés
+ * à aucun sous-rayon, puis un bloc par sous-rayon utilisé.
+ *
+ * Les sous-rayons ne valent que pour le groupement par rayon : regroupés par
+ * magasin, les articles d'un même commerce viennent de rayons différents et le
+ * découpage n'aurait plus de sens.
+ */
+function decouperEnSousRayons(groupe) {
+  if (etat.groupement !== 'rayon' || !groupe.rayon) {
+    return [{ sousRayon: null, articles: groupe.articles }];
+  }
+
+  const familles = sousRayonsDuRayon(groupe.rayon);
+  if (familles.length === 0) return [{ sousRayon: null, articles: groupe.articles }];
+
+  const blocs = [{ sousRayon: null, articles: [] }];
+  const parId = new Map();
+  for (const famille of familles) {
+    const bloc = { sousRayon: famille, articles: [] };
+    parId.set(famille.id, bloc);
+    blocs.push(bloc);
+  }
+
+  for (const article of groupe.articles) {
+    (parId.get(article.sousRayon) ?? blocs[0]).articles.push(article);
+  }
+
+  return blocs.filter((bloc) => bloc.articles.length > 0);
+}
+
+/** Le bandeau qui ouvre un sous-rayon à l'intérieur d'un rayon. */
+function creerSousTitre(bloc) {
+  const li = document.createElement('li');
+  li.className = 'sous-rayon';
+
+  const titre = document.createElement('h3');
+  titre.className = 'sous-rayon__titre';
+  titre.textContent = bloc.sousRayon.nom;
+
+  const restants = bloc.articles.filter((a) => !a.coche).length;
+  const compte = document.createElement('span');
+  compte.className = 'sous-rayon__compte';
+  compte.textContent = `${restants} / ${bloc.articles.length}`;
+  compte.setAttribute(
+    'aria-label',
+    `${restants} article(s) restant(s) sur ${bloc.articles.length}`,
+  );
+
+  const ajouter = document.createElement('button');
+  ajouter.type = 'button';
+  ajouter.className = 'btn btn--icone';
+  ajouter.dataset.action = 'ajouter-dans';
+  ajouter.dataset.sousRayon = bloc.sousRayon.id;
+  ajouter.setAttribute('aria-label', `Ajouter un article dans ${bloc.sousRayon.nom}`);
+  ajouter.append(icone('i-plus', 14, 2.4));
+
+  li.append(titre, compte, ajouter);
+  return li;
 }
 
 function creerGroupe(groupe) {
@@ -396,7 +463,10 @@ function creerGroupe(groupe) {
   entete.append(identite, compte);
 
   const ul = document.createElement('ul');
-  for (const article of groupe.articles) ul.append(creerLigne(article));
+  for (const bloc of decouperEnSousRayons(groupe)) {
+    if (bloc.sousRayon) ul.append(creerSousTitre(bloc));
+    for (const article of bloc.articles) ul.append(creerLigne(article));
+  }
 
   section.append(entete, ul);
   return section;

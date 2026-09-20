@@ -38,6 +38,12 @@ export const etat = {
   rayonsPerso: [],
   /** Magasins créés par l'utilisateur : { nom, teinte }. */
   magasinsPerso: [],
+  /**
+   * Sous-rayons créés par l'utilisateur : { id, nom, rayon }. Ils découpent un
+   * rayon en familles de produits — « Gâteaux Vachon » sous les desserts — sans
+   * ajouter de niveau au parcours du magasin.
+   */
+  sousRayons: [],
 
   // Préférences d'affichage (persistées)
   vue: 'preparee',        // 'preparee' | 'catalogue'
@@ -55,6 +61,7 @@ export const etat = {
 
 let indexRayons = new Map();
 let indexMagasins = new Map();
+let indexSousRayons = new Map();
 
 /** Tous les rayons : ceux de l'application puis ceux de l'utilisateur. */
 export function rayons() {
@@ -70,6 +77,7 @@ export function magasins() {
 function reindexer() {
   indexRayons = new Map(rayons().map((r) => [r.id, r]));
   indexMagasins = new Map(magasins().map((m) => [m.nom, m]));
+  indexSousRayons = new Map(etat.sousRayons.map((s) => [s.id, s]));
 }
 
 export function rayonParId(id) {
@@ -78,6 +86,15 @@ export function rayonParId(id) {
 
 export function magasinParNom(nom) {
   return indexMagasins.get(nom) ?? null;
+}
+
+export function sousRayonParId(id) {
+  return indexSousRayons.get(id) ?? null;
+}
+
+/** Les sous-rayons d'un rayon donné, dans leur ordre de création. */
+export function sousRayonsDuRayon(rayonId) {
+  return etat.sousRayons.filter((s) => s.rayon === rayonId);
 }
 
 // --- Abonnements -----------------------------------------------------------
@@ -129,6 +146,7 @@ export function instantane() {
     supprimes: [...etat.supprimes],
     rayonsPerso: etat.rayonsPerso,
     magasinsPerso: etat.magasinsPerso,
+    sousRayons: etat.sousRayons,
     preferences: {
       vue: etat.vue,
       groupement: etat.groupement,
@@ -161,6 +179,11 @@ function assainirArticle(brut) {
   const rayonBrut = brut.rayon ?? brut.cat;
   const rayon = indexRayons.has(rayonBrut) ? rayonBrut : RAYON_DEFAUT;
 
+  // Un sous-rayon ne vaut que sous son propre rayon : déplacer un article
+  // ailleurs doit le détacher plutôt que le laisser pointer dans le vide.
+  const sousRayonBrut = indexSousRayons.get(brut.sousRayon);
+  const sousRayon = sousRayonBrut && sousRayonBrut.rayon === rayon ? sousRayonBrut.id : '';
+
   const texte = (v) => (typeof v === 'string' ? v.trim().slice(0, 120) : '');
 
   return {
@@ -169,6 +192,7 @@ function assainirArticle(brut) {
     qte: texte(brut.qte ?? brut.qty),
     magasin: texte(brut.magasin ?? brut.store),
     rayon,
+    sousRayon,
     coche: Boolean(brut.coche ?? brut.checked),
     catalogue: Boolean(brut.catalogue),
   };
@@ -191,6 +215,20 @@ function assainirRayonPerso(brut, idsPris) {
 
   const emoji = typeof brut.emoji === 'string' && brut.emoji.trim() ? brut.emoji.trim().slice(0, 4) : '🏷️';
   return { id, nom, emoji };
+}
+
+/** Nettoie un sous-rayon. Un parent inconnu le rend caduc : on l'écarte. */
+function assainirSousRayon(brut, idsPris) {
+  if (!brut || typeof brut !== 'object') return null;
+  if (typeof brut.nom !== 'string' || brut.nom.trim() === '') return null;
+  if (!indexRayons.has(brut.rayon)) return null;
+
+  const nom = brut.nom.trim().slice(0, 40);
+  let id = typeof brut.id === 'string' && brut.id ? brut.id : `sous-${identifiant(nom)}`;
+  while (idsPris.has(id)) id = `${id}-2`;
+  idsPris.add(id);
+
+  return { id, nom, rayon: brut.rayon };
 }
 
 /** Nettoie un magasin personnalisé venant du stockage ou d'un import. */
@@ -228,6 +266,14 @@ function chargerPerso(donnees) {
   const idsPris = new Set(RAYONS.map((r) => r.id));
   etat.rayonsPerso = (Array.isArray(donnees?.rayonsPerso) ? donnees.rayonsPerso : [])
     .map((brut) => assainirRayonPerso(brut, idsPris))
+    .filter(Boolean)
+    .slice(0, MAX_PERSO);
+
+  // Après les rayons : un sous-rayon a besoin de son parent pour être validé.
+  reindexer();
+  const idsSous = new Set();
+  etat.sousRayons = (Array.isArray(donnees?.sousRayons) ? donnees.sousRayons : [])
+    .map((brut) => assainirSousRayon(brut, idsSous))
     .filter(Boolean)
     .slice(0, MAX_PERSO);
 
@@ -335,8 +381,8 @@ export function basculerCoche(id) {
 }
 
 /** Ajoute un article créé à la main, en tête de liste. */
-export function ajouter({ nom, qte = '', magasin = '', rayon = RAYON_DEFAUT }) {
-  const article = assainirArticle({ id: nouvelIdentifiant(), nom, qte, magasin, rayon });
+export function ajouter({ nom, qte = '', magasin = '', rayon = RAYON_DEFAUT, sousRayon = '' }) {
+  const article = assainirArticle({ id: nouvelIdentifiant(), nom, qte, magasin, rayon, sousRayon });
   if (!article) return null;
 
   etat.articles.unshift(article);
@@ -473,10 +519,14 @@ export function supprimerRayon(id) {
 
   etat.rayonsPerso.splice(index, 1);
 
+  // Les sous-rayons n'existent que par leur parent : ils partent avec lui.
+  etat.sousRayons = etat.sousRayons.filter((s) => s.rayon !== id);
+
   let deplaces = 0;
   for (const article of etat.articles) {
     if (article.rayon !== id) continue;
     article.rayon = RAYON_DEFAUT;
+    article.sousRayon = '';
     deplaces++;
   }
 
@@ -491,6 +541,98 @@ export function supprimerRayon(id) {
 /** Combien d'articles se trouvent dans un rayon donné. */
 export function compterArticlesDuRayon(id) {
   return etat.articles.filter((a) => a.rayon === id).length;
+}
+
+// --- Écriture : sous-rayons ------------------------------------------------
+
+/**
+ * Crée un sous-rayon sous un rayon donné. Deux sous-rayons peuvent porter le
+ * même nom sous deux rayons différents — « Maison » sous les desserts et sous
+ * l'entretien ne se confondent pas.
+ */
+export function ajouterSousRayon({ nom, rayon }) {
+  const propre = String(nom ?? '').trim();
+  if (!propre) return { erreur: 'Donnez un nom au sous-rayon.' };
+  if (!indexRayons.has(rayon)) return { erreur: 'Choisissez un rayon.' };
+  if (etat.sousRayons.length >= MAX_PERSO) {
+    return { erreur: `Pas plus de ${MAX_PERSO} sous-rayons.` };
+  }
+  if (sousRayonsDuRayon(rayon).some((s) => normaliser(s.nom) === normaliser(propre))) {
+    return { erreur: `« ${propre} » existe déjà dans ce rayon.` };
+  }
+
+  const idsPris = new Set(etat.sousRayons.map((s) => s.id));
+  const sousRayon = assainirSousRayon({ nom: propre, rayon }, idsPris);
+  etat.sousRayons.push(sousRayon);
+
+  reindexer();
+  sauvegarder();
+  notifier({ type: 'taxonomie' });
+  return { sousRayon };
+}
+
+/**
+ * Renomme un sous-rayon, ou le déplace sous un autre rayon. Dans ce dernier
+ * cas les articles suivent : les laisser derrière les séparerait de leur
+ * famille sans que rien ne l'ait demandé.
+ */
+export function modifierSousRayon(id, { nom, rayon }) {
+  const sousRayon = indexSousRayons.get(id);
+  if (!sousRayon) return { erreur: 'Ce sous-rayon n’existe plus.' };
+
+  const propre = String(nom ?? '').trim();
+  if (!propre) return { erreur: 'Donnez un nom au sous-rayon.' };
+
+  const parent = indexRayons.has(rayon) ? rayon : sousRayon.rayon;
+  if (
+    sousRayonsDuRayon(parent).some(
+      (s) => s.id !== id && normaliser(s.nom) === normaliser(propre),
+    )
+  ) {
+    return { erreur: `« ${propre} » existe déjà dans ce rayon.` };
+  }
+
+  if (parent !== sousRayon.rayon) {
+    for (const article of etat.articles) {
+      if (article.sousRayon === id) article.rayon = parent;
+    }
+  }
+
+  sousRayon.nom = propre.slice(0, 40);
+  sousRayon.rayon = parent;
+
+  reindexer();
+  sauvegarder();
+  notifier({ type: 'taxonomie' });
+  return { sousRayon };
+}
+
+/**
+ * Supprime un sous-rayon. Les articles restent dans leur rayon, simplement
+ * détachés de la famille — rien ne disparaît de la liste.
+ */
+export function supprimerSousRayon(id) {
+  const index = etat.sousRayons.findIndex((s) => s.id === id);
+  if (index === -1) return { detaches: 0 };
+
+  etat.sousRayons.splice(index, 1);
+
+  let detaches = 0;
+  for (const article of etat.articles) {
+    if (article.sousRayon !== id) continue;
+    article.sousRayon = '';
+    detaches++;
+  }
+
+  reindexer();
+  sauvegarder();
+  notifier({ type: 'taxonomie' });
+  return { detaches };
+}
+
+/** Combien d'articles sont rangés dans ce sous-rayon. */
+export function compterArticlesDuSousRayon(id) {
+  return etat.articles.filter((a) => a.sousRayon === id).length;
 }
 
 // --- Écriture : magasins personnalisés -------------------------------------
