@@ -5,8 +5,10 @@ Liste de courses hebdomadaire pour la région de Québec : un catalogue de
 sauvegarde. Et, par la marmite en haut de la liste, **Ma Cuisine** : le
 conseiller culinaire qui mène ce qu'on rapporte du marché jusqu'à la table,
 piloté à la température à cœur. Et, par le chalet, **l'inventaire du Lac
-Péré** : ce que le domaine de pêche a en stock au moment de fermer. Le tout
-fonctionne hors ligne et sans compte.
+Péré** : ce que le domaine de pêche a en stock au moment de fermer. Et, dans
+son propre dépôt, **Le Parfum des émotions** : la parfumerie, où le client
+raconte ce qu'il ressent et où le parfumeur reçoit une fiche de composition.
+Le tout fonctionne hors ligne et sans compte.
 
 **→ [Ouvrir l'application](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/)**
 
@@ -16,6 +18,13 @@ voir [sa section](#ma-cuisine--le-conseiller-culinaire) plus bas.
 **→ [Ouvrir l'inventaire du Lac Péré](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/lac-pere/)** —
 l'inventaire de l'épicerie et du matériel du domaine de pêche, conçu pour la
 fermeture de saison ; voir [sa section](#lac-péré--linventaire-du-domaine).
+
+**→ [Ouvrir Le Parfum des émotions](https://pfrcharlespatrick-rgb.github.io/parfum-des-emotions/)** —
+la parfumerie : questionnaire du client, séance en salon sur tablette et palette du
+parfumeur. Elle a son propre dépôt,
+[parfum-des-emotions](https://github.com/pfrcharlespatrick-rgb/parfum-des-emotions),
+et existe aussi en
+[version anglaise](https://pfrcharlespatrick-rgb.github.io/parfum-des-emotions/en/).
 
 ---
 
