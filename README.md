@@ -23,8 +23,8 @@ fermeture de saison ; voir [sa section](#lac-péré--linventaire-du-domaine).
 la parfumerie : questionnaire du client, séance en salon sur tablette et palette du
 parfumeur. Elle a son propre dépôt,
 [parfum-des-emotions](https://github.com/pfrcharlespatrick-rgb/parfum-des-emotions),
-et existe aussi en
-[version anglaise](https://pfrcharlespatrick-rgb.github.io/parfum-des-emotions/en/).
+et passe du français à l'anglais d'un bouton, à la même adresse
+([ouvrir directement en anglais](https://pfrcharlespatrick-rgb.github.io/parfum-des-emotions/?lang=en)).
 
 ---
 
