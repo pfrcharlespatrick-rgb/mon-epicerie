@@ -191,7 +191,7 @@
              précédente, ce bouton finissait hors écran sur un téléphone. -->
         <button type="button" class="btn btn--doux filtres__perso" id="btn-taxonomie">
           <span aria-hidden="true">✏️</span>
-          Créer mes rayons, sous-rayons et magasins
+          Créer mes rayons et magasins
         </button>
       </div>
     </div>
@@ -341,11 +341,6 @@
         <div class="champ">
           <label class="champ__intitule" for="article-rayon">Rayon</label>
           <select id="article-rayon" class="champ__saisie"></select>
-        </div>
-
-        <div class="champ" id="champ-sous-rayon">
-          <label class="champ__intitule" for="article-sous-rayon">Sous-rayon</label>
-          <select id="article-sous-rayon" class="champ__saisie"></select>
         </div>
 
         <div class="duo">
@@ -513,35 +508,6 @@
             <div class="reglage__actions">
               <button type="button" class="btn btn--fantome" id="rayon-annuler" hidden>Annuler</button>
               <button type="submit" class="btn btn--primaire" id="rayon-valider">Ajouter le rayon</button>
-            </div>
-          </form>
-        </section>
-
-        <!-- ---------- Sous-rayons ---------- -->
-        <section class="reglage">
-          <h3 class="reglage__titre">Sous-rayons</h3>
-          <p class="boite__note">
-            Une famille de produits à l'intérieur d'un rayon — « Gâteaux Vachon »
-            sous les desserts, pour y ranger ensuite les mille-feuilles, les
-            Passion Flakie et le reste.
-          </p>
-
-          <ul class="reglage__liste" id="liste-sous-rayons"></ul>
-
-          <form class="reglage__form" id="form-sous-rayon">
-            <input type="hidden" id="sous-rayon-id">
-            <div class="champ">
-              <label class="champ__intitule" for="sous-rayon-parent">Dans quel rayon</label>
-              <select id="sous-rayon-parent" class="champ__saisie"></select>
-            </div>
-            <div class="champ">
-              <label class="champ__intitule" for="sous-rayon-nom">Nom du sous-rayon</label>
-              <input type="text" id="sous-rayon-nom" class="champ__saisie" maxlength="40" required
-                     placeholder="ex. : Gâteaux Vachon" autocomplete="off">
-            </div>
-            <div class="reglage__actions">
-              <button type="button" class="btn btn--fantome" id="sous-rayon-annuler" hidden>Annuler</button>
-              <button type="submit" class="btn btn--primaire" id="sous-rayon-valider">Ajouter le sous-rayon</button>
             </div>
           </form>
         </section>

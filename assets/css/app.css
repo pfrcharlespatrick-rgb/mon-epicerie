@@ -821,56 +821,6 @@ svg {
   color: var(--danger);
 }
 
-/* Bandeau d'un sous-rayon, à l'intérieur d'un rayon. Volontairement discret :
-   c'est une respiration dans la liste, pas un second en-tête de section. */
-.sous-rayon {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.5rem 0.3rem 0.75rem;
-  border-top: 1px solid var(--bord);
-}
-
-.sous-rayon:first-child {
-  border-top: none;
-}
-
-.sous-rayon__titre {
-  flex: 1;
-  min-width: 0;
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--accent-texte);
-  overflow-wrap: anywhere;
-}
-
-.sous-rayon__compte {
-  flex: none;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--texte-faible);
-}
-
-.sous-rayon .btn {
-  min-height: 1.9rem;
-  min-width: 1.9rem;
-  padding: 0.25rem;
-  color: var(--texte-faible);
-}
-
-.sous-rayon .btn:hover {
-  background: var(--accent-doux);
-  color: var(--accent-texte);
-}
-
-/* Les articles d'un sous-rayon sont légèrement rentrés, pour qu'on voie d'un
-   coup d'œil où la famille commence et finit. */
-.sous-rayon ~ .article {
-  padding-left: 1.5rem;
-}
-
 /* Étiquettes « magasin » et « quantité ». */
 .etiquette {
   display: inline-flex;
@@ -1519,20 +1469,6 @@ select.champ__saisie {
 
   .article[data-coche='true'] .case svg {
     opacity: 1;
-    color: #000;
-  }
-
-  .sous-rayon {
-    padding: 0.3rem 0 0.15rem;
-    border-top: none;
-    break-after: avoid;
-  }
-
-  .sous-rayon .btn {
-    display: none;
-  }
-
-  .sous-rayon__titre {
     color: #000;
   }
 
