@@ -37,6 +37,10 @@ on bascule sur « Ma liste » pour aller au magasin.
 - Une case à cocher par article, avec la progression en haut de l'écran.
 - **Grouper par magasin** (dans les filtres) réorganise la liste par enseigne
   plutôt que par rayon — pratique quand la tournée passe par trois commerces.
+- **Trier A → Z** (dans les filtres) classe les articles par ordre alphabétique
+  à l'intérieur de chaque groupe, pour retrouver un produit précis. Les accents
+  se rangent avec leur lettre : « Épinards » est avec les E. Par défaut les
+  articles suivent l'ordre des allées, qui fait gagner du temps en magasin.
 - La page fonctionne sans réseau une fois ouverte.
 - Sur téléphone, « Ajouter à l'écran d'accueil » l'installe comme une
   application.

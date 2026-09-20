@@ -3,7 +3,7 @@
  * restauration de fichier.
  */
 
-import { etat, articlesPrepares, rayons, magasins, rayonParId, instantane } from './etat.js';
+import { etat, articlesPrepares, rayons, magasins, rayonParId, instantane, trier } from './etat.js';
 
 const DATE_LONGUE = new Intl.DateTimeFormat('fr-CA', {
   year: 'numeric',
@@ -12,7 +12,9 @@ const DATE_LONGUE = new Intl.DateTimeFormat('fr-CA', {
 });
 
 /** Regroupe les articles préparés comme ils le sont à l'écran. */
-function grouperPourTexte(articles) {
+function grouperPourTexte(articlesBruts) {
+  // Le texte copié doit refléter ce que l'on voit à l'écran.
+  const articles = trier(articlesBruts);
   const groupes = new Map();
 
   if (etat.groupement === 'magasin') {

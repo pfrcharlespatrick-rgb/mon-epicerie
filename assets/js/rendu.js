@@ -13,6 +13,7 @@ import {
   rayons,
   magasins,
   magasinParNom,
+  trier,
 } from './etat.js';
 
 const SANS_MAGASIN = '__sans_magasin__';
@@ -125,6 +126,7 @@ export function construireFiltres() {
   dom.pucesMagasins = [...dom.filtresMagasins.querySelectorAll('.puce')];
   dom.pucesRayons = [...dom.filtresRayons.querySelectorAll('.puce')];
   dom.pucesGroupement = [...document.querySelectorAll('[data-groupement]')];
+  dom.pucesTri = [...document.querySelectorAll('[data-tri]')];
 }
 
 function creerPuce(libelle, cle, champ) {
@@ -183,6 +185,10 @@ function majFiltres() {
 
   for (const bouton of dom.pucesGroupement) {
     bouton.setAttribute('aria-pressed', String(etat.groupement === bouton.dataset.groupement));
+  }
+
+  for (const bouton of dom.pucesTri) {
+    bouton.setAttribute('aria-pressed', String(etat.tri === bouton.dataset.tri));
   }
 
   const actifs =
@@ -327,7 +333,9 @@ function majLigne(li, article) {
 // --- Groupes ---------------------------------------------------------------
 
 /** Répartit les articles visibles en groupes ordonnés, selon la préférence. */
-function grouper(articles) {
+function grouper(articlesBruts) {
+  // Trier l'entrée suffit : chaque groupe conserve l'ordre d'insertion.
+  const articles = trier(articlesBruts);
   const groupes = new Map();
 
   if (etat.groupement === 'magasin') {
