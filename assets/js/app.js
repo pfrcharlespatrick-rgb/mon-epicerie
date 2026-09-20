@@ -172,7 +172,6 @@ const champArticleNom = document.getElementById('article-nom');
 const champArticleRayon = document.getElementById('article-rayon');
 const champArticleMagasin = document.getElementById('article-magasin');
 const champArticleSousRayon = document.getElementById('article-sous-rayon');
-const blocSousRayon = document.getElementById('champ-sous-rayon');
 const champArticleQte = document.getElementById('article-qte');
 
 function remplirSelecteurs() {
@@ -194,23 +193,38 @@ function remplirSelecteurs() {
   champArticleMagasin.value = magasinChoisi;
 }
 
+/** Valeur sentinelle du menu : ouvrir la boîte de création. */
+const NOUVEAU_SOUS_RAYON = '__nouveau__';
+
 /**
- * Remplit le menu des sous-rayons selon le rayon sélectionné. Le champ reste
- * caché tant que le rayon n'en a aucun : un menu vide n'apprendrait rien.
+ * Remplit le menu des sous-rayons selon le rayon sélectionné.
+ *
+ * Le champ reste visible même quand le rayon n'a aucune famille : c'est ici
+ * qu'on pense à en créer une, et un champ caché ne dit à personne que la
+ * fonction existe.
  */
 function majSousRayonsDuFormulaire(choisi = '') {
   const familles = sousRayonsDuRayon(champArticleRayon.value);
-  blocSousRayon.hidden = familles.length === 0;
 
   champArticleSousRayon.replaceChildren(
     new Option('— Aucun —', ''),
     ...familles.map((famille) => new Option(famille.nom, famille.id)),
+    new Option('＋ Créer un sous-rayon…', NOUVEAU_SOUS_RAYON),
   );
 
   champArticleSousRayon.value = familles.some((f) => f.id === choisi) ? choisi : '';
 }
 
 champArticleRayon.addEventListener('change', () => majSousRayonsDuFormulaire());
+
+// Choisir « Créer un sous-rayon… » ouvre la boîte de gestion par-dessus la
+// fiche, déjà réglée sur le rayon en cours. La fiche reste ouverte dessous.
+champArticleSousRayon.addEventListener('change', () => {
+  if (champArticleSousRayon.value !== NOUVEAU_SOUS_RAYON) return;
+
+  champArticleSousRayon.value = '';
+  ouvrirGestionTaxonomie(champArticleRayon.value);
+});
 
 function ouvrirFormulaireArticle(article = null, sousRayonImpose = '') {
   const modification = Boolean(article);
@@ -245,7 +259,7 @@ formArticle.addEventListener('submit', () => {
   const champs = {
     nom: champArticleNom.value.trim(),
     rayon: champArticleRayon.value,
-    sousRayon: blocSousRayon.hidden ? '' : champArticleSousRayon.value,
+    sousRayon: champArticleSousRayon.value === NOUVEAU_SOUS_RAYON ? '' : champArticleSousRayon.value,
     magasin: champArticleMagasin.value,
     qte: champArticleQte.value.trim(),
   };
@@ -952,13 +966,26 @@ formMagasin.addEventListener('submit', (evenement) => {
 
 btnMagasinAnnuler.addEventListener('click', reinitialiserFormulaireMagasin);
 
-document.getElementById('btn-taxonomie').addEventListener('click', () => {
+/**
+ * Ouvre la boîte de gestion. `rayonVise` pré-règle le formulaire des
+ * sous-rayons et y amène la vue — on arrive alors de la fiche d'un article,
+ * avec une famille précise en tête.
+ */
+function ouvrirGestionTaxonomie(rayonVise = '') {
   reinitialiserFormulaireRayon();
   reinitialiserFormulaireSousRayon();
   reinitialiserFormulaireMagasin();
   rendreTaxonomie();
   ouvrir(dlgTaxonomie);
-});
+
+  if (!rayonVise) return;
+
+  champSousRayonParent.value = rayonVise;
+  formSousRayon.scrollIntoView({ block: 'center' });
+  champSousRayonNom.focus();
+}
+
+document.getElementById('btn-taxonomie').addEventListener('click', () => ouvrirGestionTaxonomie());
 
 // --- Raccourcis clavier ----------------------------------------------------
 
@@ -996,6 +1023,7 @@ surChangement((portee) => {
     construireFiltres();
     remplirSelecteurs();
     remplirParentsSousRayon();
+    if (dlgArticle.open) majSousRayonsDuFormulaire(champArticleSousRayon.value);
     construireGrilleMagasins();
     if (dlgTaxonomie.open) rendreTaxonomie();
     rendreTout();

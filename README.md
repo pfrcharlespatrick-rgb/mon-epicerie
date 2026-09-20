@@ -67,7 +67,7 @@ efface la liste — d'où l'intérêt de la sauvegarde `.json` avant un grand m�
 
 ## Vos propres rayons et magasins
 
-Depuis l'application, sans toucher au code : **Filtres → ✏️ Mes rayons et
+Depuis l'application, sans toucher au code : **Filtres → ✏️ Créer mes rayons, sous-rayons et
 magasins**.
 
 - **Rayons** — nom et icône libres (Électronique, Pêche, Plats cuisinés…). Ils
@@ -75,8 +75,10 @@ magasins**.
   regroupement de la liste.
 - **Sous-rayons** — une famille de produits à l'intérieur d'un rayon :
   « Gâteaux Vachon » sous les desserts, pour y ranger ensuite les
-  mille-feuilles, les Passion Flakie et le reste. Le « + » posé sur le bandeau
-  d'une famille ouvre la fiche déjà rangée au bon endroit.
+  mille-feuilles, les Passion Flakie et le reste. Le menu « Sous-rayon » de la
+  fiche d'un article permet aussi d'en créer un sans quitter la saisie, et le
+  « + » posé sur le bandeau d'une famille ouvre la fiche déjà rangée au bon
+  endroit.
 - **Magasins** — nom et couleur de pastille, pour une enseigne absente de la
   liste fournie.
 
