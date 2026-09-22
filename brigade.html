@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>La Brigade — l’école de cuisine qui cuisine avec vous</title>
+  <meta name="description" content="Des leçons de cuisine racontées par cinq chefs, en capsules animées qui s’adaptent à votre nombre de convives, un mode mains libres à la voix, un arbre de techniques à conquérir, et la liste d’épicerie qui se remplit toute seule. Trois leçons gratuites.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#1f3b5c" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#131c2b" media="(prefers-color-scheme: dark)">
+
+  <meta property="og:title" content="La Brigade — l’école de cuisine qui cuisine avec vous">
+  <meta property="og:description" content="Cinq chefs, des capsules qui connaissent votre cuisine, un mode mains libres. Trois leçons gratuites.">
+  <meta property="og:type" content="website">
+
+  <link rel="icon" href="assets/icones/favicon-brigade.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icones/icone-180.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="assets/css/brigade.css">
+</head>
+<body>
+
+  <a class="saut-contenu" href="#contenu">Aller au contenu</a>
+
+  <!-- Jeu d'icônes : un seul bloc SVG réutilisé par <use>, aucune requête. -->
+  <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+    <defs>
+      <g id="i-toque"><path d="M7 14.5V19a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-4.5"/><path d="M7 15a3.5 3.5 0 0 1-1-6.9A4 4 0 0 1 12 4a4 4 0 0 1 6 4.1A3.5 3.5 0 0 1 17 15Z"/><path d="M7 15h10"/></g>
+      <g id="i-panier"><path d="M5 11h14l-1.4 8.1a2 2 0 0 1-2 1.9H8.4a2 2 0 0 1-2-1.9L5 11Z"/><path d="m8.5 11 2.2-6M15.5 11l-2.2-6"/><path d="M3 11h18"/></g>
+      <g id="i-marmite"><path d="M4 9h16v7a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9Z"/><path d="M4 12H2.5M20 12h1.5"/><path d="M9 6V4M15 6V4M12 6.5V3.5"/></g>
+      <g id="i-theme"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" stroke="none"/></g>
+      <g id="i-lecture"><path d="M7 4.5v15l12-7.5Z" fill="currentColor" stroke="none"/></g>
+      <g id="i-pause"><rect x="6" y="4.5" width="4" height="15" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="4.5" width="4" height="15" rx="1" fill="currentColor" stroke="none"/></g>
+      <g id="i-suivant"><path d="m9 6 6 6-6 6"/></g>
+      <g id="i-precedent"><path d="m15 6-6 6 6 6"/></g>
+      <g id="i-retour"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></g>
+      <g id="i-micro"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><path d="M12 17.5V21M8.5 21h7"/></g>
+      <g id="i-micro-off"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><path d="M12 17.5V21M8.5 21h7"/><path d="m4 4 16 16"/></g>
+      <g id="i-son"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5Z"/><path d="M15.5 9a4.5 4.5 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/></g>
+      <g id="i-muet"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5Z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/></g>
+      <g id="i-chrono"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.5 1.8"/><path d="M9.5 2.5h5"/></g>
+      <g id="i-croix"><path d="m6 6 12 12M18 6 6 18"/></g>
+      <g id="i-coche"><path d="m4.5 12.5 5 5L19.5 7"/></g>
+      <g id="i-cadenas"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></g>
+      <g id="i-cadenas-ouvert"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 7.7-1.5"/></g>
+      <g id="i-etoile"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9Z"/></g>
+      <g id="i-imprimante"><path d="M7 9V3h10v6"/><path d="M7 18H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M7 15h10v6H7z"/></g>
+      <g id="i-plein-ecran"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></g>
+      <g id="i-arbre"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5V12M12 12l-6 4.5M12 12l6 4.5"/></g>
+      <g id="i-eclair"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H13L13 2Z"/></g>
+      <g id="i-cible"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></g>
+      <g id="i-repete"><path d="M3.5 12a8.5 8.5 0 1 0 2.9-6.4L3 8.5"/><path d="M3 3.5v5h5"/></g>
+      <g id="i-thermometre"><path d="M14 14.8V5a2 2 0 1 0-4 0v9.8a4 4 0 1 0 4 0Z"/><path d="M12 9v6.5"/></g>
+      <g id="i-oeil"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></g>
+    </defs>
+  </svg>
+
+  <!-- ================= Bandeau ================= -->
+  <header class="bandeau sans-impression">
+    <div class="bandeau__interieur">
+      <a class="marque" href="#accueil">
+        <svg class="marque__embleme" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-toque"></use></svg>
+        <span>
+          <span class="marque__titre">La Brigade</span>
+          <span class="marque__sous-titre">L’école qui cuisine avec vous</span>
+        </span>
+      </a>
+
+      <nav class="navigation" aria-label="Sections du site">
+        <a class="navigation__lien" href="#parcours" data-nav="parcours">Parcours</a>
+        <a class="navigation__lien" href="#techniques" data-nav="techniques"><span class="etiquette-large">Mes&nbsp;</span>techniques</a>
+        <a class="navigation__lien" href="#rejoindre" data-nav="rejoindre">Rejoindre</a>
+      </nav>
+
+      <div class="bandeau__actions">
+        <a class="btn btn--icone" href="./" title="Mon Épicerie — la liste de courses">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-panier"></use></svg>
+          <span class="visuellement-cache">Mon Épicerie — la liste de courses</span>
+        </a>
+        <a class="btn btn--icone" href="cuisine.html" title="Ma Cuisine — recettes et cuissons">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-marmite"></use></svg>
+          <span class="visuellement-cache">Ma Cuisine — recettes et cuissons</span>
+        </a>
+        <button type="button" class="btn btn--icone" id="btn-theme" title="Changer de thème">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-theme"></use></svg>
+          <span class="visuellement-cache">Changer de thème</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Bandeau visible tant que la vente n'est pas configurée. -->
+  <div class="bandeau-demo sans-impression" id="bandeau-demo" hidden>
+    <strong>Mode démonstration.</strong> Toutes les leçons sont ouvertes. Le guide de lancement explique comment
+    brancher le paiement et fermer ce mode.
+  </div>
+
+  <main class="contenu" id="contenu">
+
+    <!-- ---------- Vue : accueil ---------- -->
+    <section class="vue" id="vue-accueil" aria-label="Accueil">
+      <div class="heros">
+        <div class="heros__texte">
+          <p class="surtitre" id="heros-surtitre">Cinq chefs · Neuf leçons publiées · Trois gratuites</p>
+          <h1 class="heros__titre">Apprenez à cuisiner avec un chef qui <em>connaît votre cuisine</em>.</h1>
+          <p class="heros__accroche">
+            Pas des vidéos qu’on regarde : des leçons qui cuisinent avec vous. Chaque capsule est
+            racontée pour <strong>votre</strong> nombre de convives, s’écoute les mains dans la farine,
+            se pilote à la voix, et remplit votre liste d’épicerie d’un geste.
+          </p>
+          <div class="heros__actions">
+            <a class="btn btn--principal btn--grand" href="#lecon/couteau-cinq-coupes">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-lecture"></use></svg>
+              Commencer gratuitement
+            </a>
+            <a class="btn btn--grand" href="#rejoindre" id="heros-rejoindre">Rejoindre la Brigade</a>
+          </div>
+          <p class="heros__note" id="heros-prix"></p>
+        </div>
+        <div class="heros__visuel" id="heros-visuel" aria-hidden="true"></div>
+      </div>
+
+      <section class="section" aria-labelledby="titre-chefs">
+        <h2 class="section__titre" id="titre-chefs">La brigade</h2>
+        <p class="section__intro">
+          Cinq chefs, cinq façons d’enseigner. Ils sont nés pour cette école : ce sont des
+          personnages, pas des vedettes, et chacun a sa voix, ses tics et sa pédagogie.
+        </p>
+        <div class="chefs" id="galerie-chefs"></div>
+      </section>
+
+      <section class="section" aria-labelledby="titre-difference">
+        <h2 class="section__titre" id="titre-difference">Ce que personne d’autre ne fait</h2>
+        <div class="atouts">
+          <article class="atout">
+            <div class="atout__embleme"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-eclair"></use></svg></div>
+            <h3 class="atout__titre">Des capsules qui connaissent votre cuisine</h3>
+            <p>Une vidéo dit « 300 g de riz ». Nos capsules sont générées à l’instant : elles disent la quantité pour <em>vos</em> convives, dans la voix de votre chef, et s’arrêtent quand vous le demandez.</p>
+          </article>
+          <article class="atout">
+            <div class="atout__embleme"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-micro"></use></svg></div>
+            <h3 class="atout__titre">Le mode mains libres</h3>
+            <p>Les mains dans la pâte ? Dites « suivant », « répète », « minuterie ». Le chef lit chaque étape, lance les compte-à-rebours, et l’écran reste allumé jusqu’au service.</p>
+          </article>
+          <article class="atout">
+            <div class="atout__embleme"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-arbre"></use></svg></div>
+            <h3 class="atout__titre">Un arbre de techniques, pas une pile de recettes</h3>
+            <p>Chaque leçon vous fait gagner des techniques — tenir le couteau, lire une poêle, tempérer des œufs. Elles s’allument dans votre arbre, et c’est lui qui vous dit quoi apprendre ensuite.</p>
+          </article>
+          <article class="atout">
+            <div class="atout__embleme"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-panier"></use></svg></div>
+            <h3 class="atout__titre">De l’épicerie à l’assiette</h3>
+            <p>Un bouton envoie les ingrédients de la leçon — aux bonnes quantités, dans les bons rayons — dans votre liste Mon Épicerie. Vous faites vos courses, vous revenez, vous cuisinez.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="titre-parcours-apercu">
+        <h2 class="section__titre" id="titre-parcours-apercu">Les parcours</h2>
+        <p class="section__intro">
+          Commencez où vous voulez. Les leçons marquées <span class="jeton jeton--gratuit">Gratuit</span>
+          s’ouvrent sans rien payer : c’est notre façon de vous montrer ce qu’on fait.
+        </p>
+        <div class="parcours-grille" id="parcours-apercu"></div>
+        <p class="centre"><a class="btn" href="#parcours">Voir toutes les leçons</a></p>
+      </section>
+
+      <section class="section" aria-labelledby="titre-comment">
+        <h2 class="section__titre" id="titre-comment">Comment ça marche</h2>
+        <ol class="etapes-simples">
+          <li><strong>Choisissez une leçon</strong> et réglez votre nombre de convives : les quantités et la narration s’ajustent.</li>
+          <li><strong>Regardez la capsule</strong> (cinq à dix minutes), puis <strong>envoyez les ingrédients</strong> dans votre liste d’épicerie.</li>
+          <li><strong>Cuisinez en mode mains libres</strong> : le chef vous guide à la voix, étape par étape, minuteries comprises.</li>
+          <li><strong>Évaluez-vous</strong>. Réussi ? Vos techniques s’allument dans l’arbre. À refaire ? Le chef vous dit exactement quoi corriger.</li>
+        </ol>
+      </section>
+
+      <section class="section" aria-labelledby="titre-faq">
+        <h2 class="section__titre" id="titre-faq">Questions fréquentes</h2>
+        <div class="faq">
+          <details class="faq__item">
+            <summary>Que comprend l’accès ?</summary>
+            <p>Toutes les leçons publiées, et toutes celles qui s’ajouteront : l’accès est à vie, sans abonnement. Les leçons annoncées « en préparation » arrivent au fil des mois.</p>
+          </details>
+          <details class="faq__item">
+            <summary>Sur quels appareils ?</summary>
+            <p>Téléphone, tablette, ordinateur : tout se passe dans le navigateur, sans installation. Sur un téléphone, « Ajouter à l’écran d’accueil » l’installe comme une application. La voix et la reconnaissance vocale dépendent du navigateur : Chrome, Edge et Safari les prennent en charge.</p>
+          </details>
+          <details class="faq__item">
+            <summary>Faut-il un compte ?</summary>
+            <p>Non. Votre progression est enregistrée sur votre appareil. Après le paiement, vous recevez un code d’accès qui s’entre une seule fois par appareil.</p>
+          </details>
+          <details class="faq__item">
+            <summary>Et si je perds mon code ?</summary>
+            <p id="faq-soutien">Écrivez-nous avec votre reçu de paiement : on vous le renvoie.</p>
+          </details>
+          <details class="faq__item">
+            <summary>Les chefs existent-ils vraiment ?</summary>
+            <p>Ce sont des personnages créés pour La Brigade, avec chacun une pédagogie, une voix et un visage qui leur appartiennent. Aucune vedette n’est imitée : ce que vous entendez est écrit et vérifié par des cuisiniers, et raconté par la voix de synthèse de votre appareil.</p>
+          </details>
+        </div>
+      </section>
+    </section>
+
+    <!-- ---------- Vue : tous les parcours ---------- -->
+    <section class="vue" id="vue-parcours" aria-label="Les parcours et leurs leçons" hidden>
+      <div class="chapeau">
+        <h1 class="chapeau__titre">Les parcours</h1>
+        <p class="chapeau__sous-titre" id="parcours-sous-titre">Neuf leçons complètes, six annoncées. Un chef par parcours.</p>
+      </div>
+      <div id="liste-parcours"></div>
+    </section>
+
+    <!-- ---------- Vue : une leçon ---------- -->
+    <section class="vue" id="vue-lecon" aria-label="La leçon" hidden></section>
+
+    <!-- ---------- Vue : la capsule ---------- -->
+    <section class="vue vue--pleine" id="vue-capsule" aria-label="La capsule" hidden></section>
+
+    <!-- ---------- Vue : cuisine guidée, mains libres ---------- -->
+    <section class="vue vue--pleine" id="vue-guide" aria-label="Cuisine guidée" hidden></section>
+
+    <!-- ---------- Vue : l'arbre des techniques ---------- -->
+    <section class="vue" id="vue-techniques" aria-label="Mes techniques" hidden>
+      <div class="chapeau">
+        <h1 class="chapeau__titre">Mes techniques</h1>
+        <p class="chapeau__sous-titre" id="techniques-resume"></p>
+      </div>
+      <div id="arbre"></div>
+    </section>
+
+    <!-- ---------- Vue : rejoindre ---------- -->
+    <section class="vue" id="vue-rejoindre" aria-label="Rejoindre la Brigade" hidden>
+      <div class="offre">
+        <div class="offre__carte">
+          <p class="surtitre">Accès complet</p>
+          <p class="offre__prix"><span id="offre-prix"></span></p>
+          <p class="offre__detail" id="offre-detail"></p>
+          <ul class="offre__liste">
+            <li>Toutes les leçons, celles d’aujourd’hui et celles à venir</li>
+            <li>Les capsules adaptées à vos convives, avec la voix des chefs</li>
+            <li>Le mode mains libres et l’envoi vers votre liste d’épicerie</li>
+            <li>L’arbre des techniques et le mot du chef après chaque leçon</li>
+            <li>Aucun abonnement, aucun compte : un code, à vie</li>
+          </ul>
+          <a class="btn btn--principal btn--grand offre__bouton" id="btn-payer" href="#" rel="noopener">Payer et rejoindre</a>
+          <p class="offre__note" id="offre-note"></p>
+        </div>
+
+        <div class="offre__acces">
+          <h2 class="offre__titre">J’ai déjà un code</h2>
+          <p class="offre__texte">Il est sur la page de confirmation de votre paiement. Entrez-le une fois : cet appareil s’en souviendra.</p>
+          <form class="formulaire-code" id="form-code">
+            <label class="visuellement-cache" for="champ-code">Code d’accès</label>
+            <input type="text" id="champ-code" class="champ-code" placeholder="BRIGADE-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
+            <button type="submit" class="btn btn--principal">Déverrouiller</button>
+          </form>
+          <p class="formulaire-code__etat" id="code-etat" role="status"></p>
+          <p class="offre__texte offre__texte--petit" id="acces-etat"></p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="pied sans-impression">
+    <div class="pied__interieur">
+      <p><strong>La Brigade</strong> fait partie de <a href="./">Mon Épicerie</a>. Vos données — progression, réglages, accès — restent sur votre appareil. Le paiement est traité par Stripe ; nous ne voyons jamais votre carte.</p>
+      <p class="pied__mention">Les chefs de la Brigade sont des personnages originaux. Toute ressemblance avec des personnes réelles serait fortuite. <span id="pied-editeur"></span></p>
+    </div>
+  </footer>
+
+  <!-- Minuteries flottantes -->
+  <div class="minuterie" id="minuteries" aria-live="polite"></div>
+
+  <!-- Notifications éphémères -->
+  <div class="notifications" id="notifications" role="status" aria-live="polite"></div>
+
+  <!-- Leçon verrouillée -->
+  <dialog id="dlg-acces" aria-labelledby="dlg-acces-titre">
+    <div class="boite">
+      <div class="boite__entete">
+        <h2 class="boite__titre" id="dlg-acces-titre">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-cadenas"></use></svg>
+          Cette leçon fait partie de l’accès complet
+        </h2>
+        <button type="button" class="btn btn--icone btn--fantome" data-fermer>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><use href="#i-croix"></use></svg>
+          <span class="visuellement-cache">Fermer</span>
+        </button>
+      </div>
+      <div class="boite__corps">
+        <p class="boite__note">Trois leçons sont gratuites pour vous faire une idée. Celle-ci s’ouvre avec l’accès complet — ou avec votre code, si vous l’avez déjà.</p>
+        <form class="formulaire-code" id="form-code-dialogue">
+          <label class="visuellement-cache" for="champ-code-dialogue">Code d’accès</label>
+          <input type="text" id="champ-code-dialogue" class="champ-code" placeholder="BRIGADE-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
+          <button type="submit" class="btn">Déverrouiller</button>
+        </form>
+        <p class="formulaire-code__etat" id="code-etat-dialogue" role="status"></p>
+      </div>
+      <div class="boite__pied">
+        <a class="btn btn--fantome" href="#lecon/couteau-cinq-coupes" data-fermer>Voir une leçon gratuite</a>
+        <a class="btn btn--principal" href="#rejoindre" data-fermer>Rejoindre la Brigade</a>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Auto-évaluation après une leçon -->
+  <dialog id="dlg-evaluation" aria-labelledby="dlg-evaluation-titre">
+    <div class="boite">
+      <div class="boite__entete">
+        <h2 class="boite__titre" id="dlg-evaluation-titre">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-cible"></use></svg>
+          Alors, comment c’était ?
+        </h2>
+        <button type="button" class="btn btn--icone btn--fantome" data-fermer>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><use href="#i-croix"></use></svg>
+          <span class="visuellement-cache">Fermer</span>
+        </button>
+      </div>
+      <div class="boite__corps" id="evaluation-corps"></div>
+      <div class="boite__pied boite__pied--reparti">
+        <button type="button" class="btn" id="btn-a-refaire">À refaire</button>
+        <button type="button" class="btn btn--principal" id="btn-reussi">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-coche"></use></svg>
+          J’ai réussi
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <noscript>
+    <p style="padding:1rem;text-align:center">La Brigade a besoin de JavaScript : les capsules, la voix et les minuteries en dépendent.</p>
+  </noscript>
+
+  <script type="module" src="assets/js/brigade.js"></script>
+</body>
+</html>

@@ -16,6 +16,12 @@
       "short_name": "Ma Cuisine",
       "description": "Fiches de cuisson à cœur, calendrier à rebours et photos du garde-manger.",
       "url": "./cuisine.html"
+    },
+    {
+      "name": "La Brigade — école de cuisine",
+      "short_name": "La Brigade",
+      "description": "Leçons de cuisine en capsules narrées, mode mains libres, arbre des techniques.",
+      "url": "./brigade.html"
     }
   ],
   "icons": [

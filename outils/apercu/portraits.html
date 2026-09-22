@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><title>Aperçu des portraits</title>
+<style>body{font-family:system-ui;background:#f1f5f9;padding:1rem}.rangee{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}figure{margin:0;text-align:center;font-size:.8rem}</style></head>
+<body>
+<div class="rangee" id="grands"></div>
+<div class="rangee" id="parlent"></div>
+<div class="rangee" id="petits"></div>
+<script type="module">
+  import { CHEFS, portraitChef } from '../../assets/js/chefs.js';
+  for (const chef of CHEFS) {
+    document.getElementById('grands').insertAdjacentHTML('beforeend', `<figure>${portraitChef(chef, { taille: 180 })}<figcaption>${chef.titre} — ${chef.role}</figcaption></figure>`);
+    document.getElementById('parlent').insertAdjacentHTML('beforeend', `<figure>${portraitChef(chef, { taille: 120, parle: true })}</figure>`);
+    document.getElementById('petits').insertAdjacentHTML('beforeend', `<figure>${portraitChef(chef, { taille: 48 })}</figure>`);
+  }
+</script>
+</body></html>
