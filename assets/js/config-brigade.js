@@ -1,9 +1,14 @@
 /**
  * La Brigade — réglages de vente et d'accès.
  *
- * C'est LE fichier à modifier pour lancer les ventes. Il n'y a rien d'autre
- * à toucher : le guide de lancement (GUIDE-LANCEMENT.md) explique chaque
- * ligne, pas à pas, sans rien connaître à la programmation.
+ * C'est LE fichier à modifier pour lancer les ventes. Le guide de
+ * lancement (GUIDE-LANCEMENT.md) explique chaque ligne, pas à pas, sans rien
+ * connaître à la programmation.
+ *
+ * Après chaque modification, augmentez aussi VERSION dans `sw.js` (v12 → v13).
+ * Le service worker sert ce fichier depuis son cache : sans ce changement de
+ * version, les appareils déjà venus garderaient les anciens réglages — le
+ * mode démonstration compris.
  *
  *   modeDemo        true  : tout le contenu est ouvert et un bandeau
  *                           « démonstration » l'annonce. Parfait pour

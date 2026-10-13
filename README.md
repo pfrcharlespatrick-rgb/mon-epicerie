@@ -446,9 +446,11 @@ s'annonce dans le parcours sans être ouverte.
 
 ### Vendre
 
-Un seul fichier à toucher : [`assets/js/config-brigade.js`](assets/js/config-brigade.js) —
+Les réglages tiennent dans [`assets/js/config-brigade.js`](assets/js/config-brigade.js) —
 le lien de paiement Stripe, le prix, et les *empreintes* des codes d'accès
-(jamais les codes eux-mêmes). Les codes se fabriquent avec
+(jamais les codes eux-mêmes). Après chaque modification, augmenter `VERSION`
+dans [`sw.js`](sw.js) : le service worker sert ce fichier depuis son cache, et
+les appareils déjà venus garderaient sinon les anciens réglages. Les codes se fabriquent avec
 [`outils/codes.html`](outils/codes.html), dans le navigateur, ou avec
 `node outils/generer-codes.mjs`. Tant que `modeDemo` vaut `true`, tout est
 ouvert et un bandeau le dit.

@@ -125,8 +125,12 @@ son code vous écrit avec ce reçu, et vous lui renvoyez le code.
 
 ## Étape 3 — Écrire ces informations dans le site
 
-Le seul fichier à modifier est `assets/js/config-brigade.js`. On le fait
-directement dans GitHub, sans rien installer.
+On modifie deux fichiers, directement dans GitHub, sans rien installer :
+`assets/js/config-brigade.js`, qui contient les réglages de vente, puis
+`sw.js`, dont on augmente le numéro de version. Ce second fichier est ce qui
+oblige les téléphones et les ordinateurs déjà venus sur le site à relire les
+nouveaux réglages ; sans lui, ils garderaient le mode démonstration et ne
+verraient jamais le bouton de paiement.
 
 1. Allez sur `https://github.com/pfrcharlespatrick-rgb/mon-epicerie`.
 2. Cliquez sur le dossier **assets**, puis **js**, puis sur
@@ -153,7 +157,22 @@ directement dans GitHub, sans rien installer.
    Chaque empreinte est une ligne, entre guillemets simples, terminée par une
    virgule. L'outil de l'étape 1 les donne déjà dans ce format.
 5. En haut à droite, cliquez **Commit changes…** (Valider), puis encore
-   **Commit changes**. GitHub Pages republie le site en une ou deux minutes.
+   **Commit changes**.
+6. Revenez à la racine du dépôt et ouvrez le fichier **sw.js**. Cliquez sur
+   le **crayon**. Vers la ligne 12, vous trouvez :
+
+   ```js
+   const VERSION = 'v12';
+   ```
+
+   Augmentez le nombre d'un cran — `'v12'` devient `'v13'` — sans toucher aux
+   guillemets ni au point-virgule. La prochaine fois, ce sera `'v14'`, et
+   ainsi de suite : le nombre ne redescend jamais.
+7. Cliquez **Commit changes…**, puis **Commit changes**. GitHub Pages
+   republie le site en une ou deux minutes.
+
+**Chaque fois que vous modifiez `config-brigade.js`, refaites les étapes 6
+et 7.**
 
 > **Ne mettez jamais un code d'accès dans ce fichier — seulement des
 > empreintes.** Tout ce qui est dans ce dépôt est public.
@@ -180,7 +199,8 @@ directement dans GitHub, sans rien installer.
 
 Quand tout marche, dans Stripe : éteignez le **Mode test**, refaites le lien
 de paiement (étape 2.4) en mode réel — les liens de test ne fonctionnent pas
-en réel —, et remplacez `lienPaiement` par le nouveau lien (étape 3). Faites
+en réel —, et remplacez `lienPaiement` par le nouveau lien (étape 3, sans
+oublier d'augmenter la version dans `sw.js`). Faites
 un vrai achat de 49 $ vous-même pour voir passer l'argent, puis remboursez-le
 depuis Stripe (**Paiements** → le paiement → **Rembourser**).
 
@@ -213,9 +233,11 @@ garderont tout — c'est ce qu'on leur a promis.
 - Chaque fois que vous modifiez un fichier et validez (*Commit*), le site se
   met à jour en une ou deux minutes.
 - Les visiteurs qui ont déjà ouvert le site gardent parfois l'ancienne
-  version en mémoire : le fichier `sw.js` porte un numéro de version (`v12`)
-  qu'il faut augmenter (`v13`, `v14`…) quand on change autre chose que la
-  configuration.
+  version en mémoire : le fichier `sw.js` porte un numéro de version (`v12`
+  aujourd'hui) qu'il faut augmenter (`v13`, `v14`…) chaque fois qu'on change
+  un fichier du site, la configuration de la Brigade comprise. Un numéro ne
+  redescend jamais : les appareils déjà à jour ignoreraient la nouvelle
+  version.
 
 ### Faire connaître le site
 
