@@ -2,13 +2,36 @@
 
 Liste de courses hebdomadaire pour la région de Québec : un catalogue de
 163 produits habituels, des quantités, des enseignes, l'impression et la
-sauvegarde. **Ma Cuisine** : les fiches de cuisson de ce qu'on rapporte du
-marché, pilotées à la température à cœur. Et **La Brigade** : une école de
-cuisine payante, enseignée par cinq chefs originaux, en capsules narrées qui
-s'adaptent à votre tablée. Le tout dans trois pages qui fonctionnent hors
-ligne et sans compte.
+sauvegarde. Et, par la marmite en haut de la liste, **Ma Cuisine** : le
+conseiller culinaire qui mène ce qu'on rapporte du marché jusqu'à la table,
+piloté à la température à cœur. Et, par le chalet, **l'inventaire du Lac
+Péré** : ce que le domaine de pêche a en stock au moment de fermer. Et, par
+la toque, **La Brigade** : une école de cuisine payante, enseignée par cinq
+chefs originaux en capsules narrées qui s'adaptent à la tablée. Et, dans
+son propre dépôt, **Le Parfum des émotions** : la parfumerie, où le client
+raconte ce qu'il ressent et où le parfumeur reçoit une fiche de composition.
+Le tout fonctionne hors ligne et sans compte.
 
 **→ [Ouvrir l'application](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/)**
+
+**→ [Ouvrir Ma Cuisine](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/cuisine/)** —
+voir [sa section](#ma-cuisine--le-conseiller-culinaire) plus bas.
+
+**→ [Ouvrir l'inventaire du Lac Péré](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/lac-pere/)** —
+l'inventaire de l'épicerie et du matériel du domaine de pêche, conçu pour la
+fermeture de saison ; voir [sa section](#lac-péré--linventaire-du-domaine).
+
+**→ [Ouvrir La Brigade](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/brigade.html)** —
+l'école de cuisine : trois leçons gratuites, les autres par paiement unique ;
+voir [sa section](#la-brigade--lécole-de-cuisine) et le
+[guide de lancement](GUIDE-LANCEMENT.md) pour brancher le paiement.
+
+**→ [Ouvrir Le Parfum des émotions](https://pfrcharlespatrick-rgb.github.io/parfum-des-emotions/)** —
+la parfumerie : questionnaire du client, séance en salon sur tablette et palette du
+parfumeur. Elle a son propre dépôt,
+[parfum-des-emotions](https://github.com/pfrcharlespatrick-rgb/parfum-des-emotions),
+et passe du français à l'anglais d'un bouton, à la même adresse
+([ouvrir directement en anglais](https://pfrcharlespatrick-rgb.github.io/parfum-des-emotions/?lang=en)).
 
 ---
 
@@ -30,6 +53,10 @@ on bascule sur « Ma liste » pour aller au magasin.
 - Une case à cocher par article, avec la progression en haut de l'écran.
 - **Grouper par magasin** (dans les filtres) réorganise la liste par enseigne
   plutôt que par rayon — pratique quand la tournée passe par trois commerces.
+- **Trier A → Z** (dans les filtres) classe les articles par ordre alphabétique
+  à l'intérieur de chaque groupe, pour retrouver un produit précis. Les accents
+  se rangent avec leur lettre : « Épinards » est avec les E. Par défaut les
+  articles suivent l'ordre des allées, qui fait gagner du temps en magasin.
 - La page fonctionne sans réseau une fois ouverte.
 - Sur téléphone, « Ajouter à l'écran d'accueil » l'installe comme une
   application.
@@ -45,148 +72,13 @@ Le bouton **Exporter** propose quatre choses :
 | Sauvegarde `.json` | Fichier réutilisable, à conserver |
 | Restaurer | Recharge un fichier de sauvegarde |
 
-## Ma Cuisine
-
-Une seconde page, accessible par l'icône de marmite en haut de la liste :
-[`cuisine.html`](cuisine.html). Elle sert à cuisiner ce qu'on vient d'acheter.
-
-Chaque recette y est écrite pour **14 convives** et pilotée par la **température
-à cœur**, en **degrés Fahrenheit** — l'équivalent Celsius est donné à côté — parce
-qu'un four au gaz ne suit pas son thermostat et qu'une horloge ne dit rien de ce
-qui se passe dans la viande.
-
-| Onglet | Ce qu'on y trouve |
-|---|---|
-| Le menu | Le plat principal, ses entrées et ses accompagnements proposés, avec la raison de chaque accord. On retient ce qu'on veut ; le reste de l'application suit |
-| La recette | Chapeau, avertissements de salubrité, chiffres à viser, ingrédients, étapes numérotées avec durée, pièges et signes de réussite |
-| Calendrier à rebours | Tous les plats du menu sur **une seule** ligne du temps, chaque geste ramené à son heure réelle |
-| Garde-manger & frigo | Photos des tablettes, du frigo, du congélateur et des étiquettes de viande, avec une note par photo |
-| Mes notes | Le carnet de bord d'une fois à l'autre |
-
-Quatre détails valent la peine d'être connus :
-
-- **Un menu, pas une recette.** Pris un par un, six plats sont six recettes
-  faciles ; pris ensemble, ce sont six plats qui se disputent un four et une paire
-  de mains. Mettre un plat au menu le fait entrer dans la ligne du temps et dans la
-  liste d'épicerie, à sa place.
-- **Le nombre de convives met tout à l'échelle.** Les quantités se recalculent et
-  s'arrondissent à quelque chose de mesurable — personne ne pèse 43,7 g de paprika.
-- **Chaque étape courte porte un minuteur.** Il sonne, même si l'on a changé
-  d'onglet entretemps.
-- **Deux impressions.** *Imprimer le menu* sort toutes les recettes retenues, une
-  par page, plus le calendrier commun et les photos ; le bouton des réglages
-  n'imprime que la recette ouverte. C'est la feuille qu'on colle sur la porte de
-  l'armoire.
-
-### Ajouter ou corriger une recette
-
-Tout le contenu tient dans [`assets/js/recettes.js`](assets/js/recettes.js), en
-clair. Le modèle est documenté en tête de fichier ; l'essentiel :
-
-Une recette porte un `type` — `'principal'`, `'entree'` ou `'accompagnement'` —
-et un plat principal porte ses accords, avec la raison de chacun :
-
-```js
-suggestions: [
-  { id: 'salade-chou-cremeuse', pourquoi: 'Pourquoi ça va ensemble.' },
-],
-```
-
-Le champ `pourquoi` appartient au couple, pas à l'un des deux plats : le même
-accompagnement peut se justifier autrement à côté d'un autre plat principal.
-
-```js
-etapes: [
-  {
-    titre: 'Le salage à sec',
-    duree: '12 à 24 h au frigo',   // un minuteur apparaît si c'est ≤ 6 h
-    temperature: 275,              // en °F ; le °C est calculé
-    texte: 'Ce qu’on fait, et pourquoi.',
-    piege: 'L’endroit précis où l’on peut tout gâcher.',
-    reussite: 'À quoi se reconnaît le succès, au toucher ou à l’œil.',
-  },
-],
-rebours: [
-  { avant: 1200, texte: 'Saler à sec.' },        // minutes avant le service
-  { avant: 240, texte: 'Enfourner.', four: 275 }, // `four` s'affiche dans la ligne du temps
-],
-```
-
-C'est `avant` qui fait tout le travail du calendrier commun : les gestes de tous
-les plats retenus sont versés dans la même liste et triés. Écrire une recette,
-c'est donc surtout décider à quel moment chacun de ses gestes tombe par rapport
-au service — et vérifier, ce faisant, qu'on ne demande pas deux températures de
-four différentes au même moment.
-
-Les quantités s'écrivent pour le nombre indiqué dans `portions` ; l'application
-se charge du reste. Corriger une recette n'efface jamais les cases cochées, les
-notes ni les photos de l'utilisateur.
-
-## La Brigade
-
-La troisième page, [`brigade.html`](brigade.html), est une école de cuisine —
-et le volet transactionnel du site. Trois leçons sont gratuites ; les autres
-s'ouvrent avec un code d'accès remis après paiement. **Le guide de lancement,
-[`GUIDE-LANCEMENT.md`](GUIDE-LANCEMENT.md), explique pas à pas comment brancher
-le paiement, sans rien connaître à la programmation.**
-
-Ce qui la distingue d'un site de vidéos :
-
-| Ce qu'on y trouve | Ce que ça change |
-|---|---|
-| **Cinq chefs originaux** — Aurèle, Rosalie, Amadou, Naoko, Léa | Des personnages créés pour l'école, avec chacun une pédagogie, une voix et un portrait dessinés en code. Aucune vedette imitée : ils appartiennent au site et peuvent être déclinés en vidéos sans risque |
-| **Des capsules génératives** | La leçon n'est pas une vidéo enregistrée : c'est une scène animée par étape, racontée par la voix de synthèse du chef, avec les quantités de *votre* nombre de convives dans sa bouche |
-| **Le mode mains libres** | Gros caractères, écran qui reste allumé, et la voix dans les deux sens : le chef lit, vous dites « suivant », « répète », « minuterie », « combien de temps », « le piège » |
-| **L'arbre des techniques** | Chaque leçon réussie allume des techniques (tenir le couteau, lire une poêle, tempérer des œufs…) ; l'arbre conseille la prochaine leçon |
-| **De l'épicerie à l'assiette** | Un bouton verse les ingrédients de la leçon, aux bonnes quantités et dans les bons rayons, dans la liste de Mon Épicerie |
-
-### Écrire ou corriger une leçon
-
-Tout le contenu tient dans [`assets/js/lecons.js`](assets/js/lecons.js), les
-chefs dans [`assets/js/chefs.js`](assets/js/chefs.js). Une étape porte la
-consigne écrite, la narration parlée, le piège et le signe de réussite :
-
-```js
-{
-  titre: 'Le frémissement, jamais l’ébullition',
-  scene: 'thermometre',           // l'illustration animée, voir scenes.js
-  duree: '5 min',
-  minuterie: null,                // en minutes, propose un compte à rebours
-  texte: 'La consigne, écrite.',
-  voix: 'Ce que le chef dit, à la première personne. Versez {{eau}}.',
-  piege: 'Là où l’on peut tout gâcher.',
-  reussite: 'À quoi se reconnaît le succès.',
-},
-```
-
-`{{eau}}` devient « 3,5 L d’eau » pour la tablée choisie ; `{{eau:q}}` ne
-donne que la quantité. Les ingrédients portent un `rayon` pour rejoindre le
-bon endroit de la liste d'épicerie, et une leçon `statut: 'en-preparation'`
-s'annonce dans le parcours sans être ouverte.
-
-### Vendre
-
-Un seul fichier à toucher : [`assets/js/config-brigade.js`](assets/js/config-brigade.js) —
-le lien de paiement Stripe, le prix, et les *empreintes* des codes d'accès
-(jamais les codes eux-mêmes). Les codes se fabriquent avec
-[`outils/codes.html`](outils/codes.html), dans le navigateur, ou avec
-`node outils/generer-codes.mjs`. Tant que `modeDemo` vaut `true`, tout est
-ouvert et un bandeau le dit.
-
-### Produire de vraies vidéos
-
-Le dossier [`production/`](production/) contient la bible des personnages, les
-consignes pour les outils de génération d'images et de vidéo, et
-`node outils/exporter-scenarios.mjs` écrit un scénario de tournage par leçon
-à partir des données. `node outils/enregistrer-capsule.mjs <id>` enregistre
-une capsule en vidéo depuis un navigateur automatisé.
-
 ## Vos données
 
-Tout est stocké dans le navigateur — `localStorage` pour les listes et les
-réglages, IndexedDB pour les photos de la cuisine —, sur votre appareil.
+Tout est stocké dans le navigateur (`localStorage`), sur votre appareil.
 L'application n'a pas de serveur, pas de compte, pas de traceur, et n'envoie
-aucune requête vers l'extérieur. Corollaire : vider les données du navigateur
+aucune requête vers l'extérieur — à deux exceptions près, choisies et
+expliquées : l'analyse de photo de Ma Cuisine et celle de l'inventaire du Lac
+Péré, qui parlent directement à l'API d'Anthropic avec votre propre clé. Corollaire : vider les données du navigateur
 efface la liste — d'où l'intérêt de la sauvegarde `.json` avant un grand ménage.
 
 ## Vos propres rayons et magasins
@@ -248,6 +140,350 @@ aucun numéro à gérer à la main. Un produit ajouté au catalogue apparaît ch
 utilisateurs existants au prochain chargement, sans effacer leur liste en cours
 — et sans faire revenir ceux qu'ils ont volontairement supprimés.
 
+## Ma Cuisine — le conseiller culinaire
+
+Dans le dossier [`cuisine/`](cuisine/), une seconde application, bâtie dans le
+même esprit — sans dépendance, sans serveur, hors ligne — mais pour l'autre
+bout de la chaîne : une fois la pièce rapportée de l'épicerie, elle compose la
+recette complète qui la mènera à la table.
+
+**→ [Ouvrir Ma Cuisine](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/cuisine/)**
+
+On choisit la pièce (une vingtaine, de la côte de bœuf à la dinde des Fêtes,
+du saumon au chou-fleur entier), on donne le poids inscrit sur l'étiquette, la
+cuisson désirée et, si l'on veut, l'heure du service. L'application produit
+alors des étapes numérotées, titrées et minutées, selon des règles constantes :
+
+- **La température à cœur décide, jamais l'horloge seule** — chiffre exact au
+  retrait du feu et après repos, avec la fenêtre de temps en ordre de grandeur.
+- **Salage à sec la veille** chaque fois que la pièce s'y prête, avec la dose
+  calculée d'après le poids, et l'explication du pourquoi.
+- **Repos après cuisson**, toujours ; **sucs et fonds jamais jetés** — chaque
+  recette se termine par la sauce qui les récupère.
+- Les étapes où tout peut se gâcher sont marquées, avec les signes de réussite
+  au toucher, à l'œil et à l'odeur.
+- Système métrique, degrés Celsius, vocabulaire d'ici ; les méthodes populaires
+  inférieures sont signalées avec leur compromis, sans sermon.
+- Une note de conservation et de réchauffage, une suggestion d'accompagnement,
+  et le **calendrier à rebours** : depuis l'heure du service, l'application
+  date chaque départ, jusqu'au dégel de la dinde plusieurs jours avant.
+
+Le bouton **🍳 Ma cuisine** consigne l'équipement possédé (thermomètre à
+sonde, fonte, cocotte…) : les recettes s'y adaptent et proposent des
+substitutions plutôt que de renvoyer au magasin. Le **📖 Carnet** garde les
+recettes composées (localStorage, comme la liste d'épicerie). Chaque recette
+affichée s'emporte de quatre façons : **Imprimer / PDF** (la feuille épurée,
+que le navigateur sait enregistrer en PDF), **📄 Word** (un `.docx` véritable,
+fabriqué dans le navigateur sans bibliothèque — une archive ZIP OOXML
+minimale), et **📤 Partager** (la feuille de partage native du téléphone —
+messagerie, courriel —, avec repli sur la copie dans le presse-papiers).
+
+### Le conseiller à l'œil : la photo
+
+En tête de page, une seconde manière d'entrer : **photographier la pièce**,
+étiquette visible, et dire ce qu'on en attend — ou écrire sa demande **sans
+photo** (« un souper pour quatre avec ce que j'ai au congélateur ») : le
+conseiller compose alors depuis l'inventaire et la liste. La photo, quand il
+y en a une, est analysée par
+Claude (Anthropic) — identification de la coupe et du poids — puis la recette
+est composée selon les mêmes règles que le reste de l'application, calendrier
+à rebours compris si l'on a donné l'heure du service. Le poids suit trois
+voies : inscrit dans le champ prévu s'il est connu, lu sur l'étiquette sinon,
+estimé à l'œil en dernier recours — en le disant, pour qu'on puisse le
+corriger d'une réplique. Les dates de péremption ne sont ni lues ni
+commentées. On peut ensuite **répliquer** sur la même photo (« et sans
+four ? », « pour huit plutôt que quatre ? »).
+
+Deux ponts avec la liste d'épicerie, permise par le domaine commun
+(même `localStorage`) :
+
+- le conseiller **reçoit la liste de la semaine** et l'équipement coché, et en
+  tient compte dans ses substitutions ;
+- le bouton **🛒 Manquants vers Mon Épicerie** verse les ingrédients absents
+  directement dans la liste, où l'application d'à côté les assainit et les
+  range à son prochain chargement.
+
+### L'inventaire : cuisiner avec ce qu'on a
+
+Le bouton **🧺 Inventaire** tient le registre du garde-manger, du frigidaire
+et du congélateur. Chaque zone se nourrit d'une **photo d'ensemble** —
+tablettes éclairées, étiquettes vers l'objectif — que le conseiller dépouille
+en liste d'aliments ; la liste reste éditable à la main, un aliment par
+ligne, et c'est elle (jamais la photo) qui accompagne ensuite chaque
+consultation. Le conseiller compose d'abord avec ce stock, nomme ce qu'il y
+puise, et ne verse dans les « manquants » que ce qui n'est ni en stock ni
+déjà sur la liste d'épicerie. L'inventaire vit dans le navigateur
+(localStorage) et ne se met pas à jour tout seul : on refait les photos après
+une grosse épicerie, ou l'on retouche les lignes.
+
+Cette analyse exige une **clé API personnelle** (bouton **🔑 Conseiller**, qui
+explique comment l'obtenir sur console.anthropic.com). La clé reste dans le
+navigateur ; le navigateur parle directement à `api.anthropic.com`, sans aucun
+serveur intermédiaire, et chaque consultation coûte quelques sous, débités
+chez Anthropic. Sans clé, tout le reste — le choix à la main, les vingt
+pièces, le carnet — fonctionne hors ligne et gratuitement, comme avant.
+
+### Organisation de `cuisine/`
+
+```
+cuisine/index.html              structure de la page
+cuisine/assets/css/app.css      mise en forme (thèmes clair/sombre, impression)
+cuisine/assets/js/pieces.js     la base de connaissances : pièces, températures, étapes
+cuisine/assets/js/moteur.js     composition de la recette et calendrier à rebours
+cuisine/assets/js/conseiller.js analyse de photo (API Claude), pont vers l'épicerie
+cuisine/assets/js/app.js        branchement de l'interface, carnet, équipement
+cuisine/sw.js                   cache hors-ligne (VERSION à incrémenter au déploiement)
+outils/generer-icones-cuisine.mjs  régénère les icônes PNG
+```
+
+Pour ajouter une pièce, tout tient dans
+[`cuisine/assets/js/pieces.js`](cuisine/assets/js/pieces.js) : une entrée dans
+`PIECES` avec ses cuissons (température de retrait et cible), ses étapes et
+ses textes. Contrairement à l'épicerie, ces fichiers n'utilisent pas de
+modules : la page s'ouvre aussi par un double-clic sur `index.html`.
+
+## Lac Péré — l'inventaire du domaine
+
+**→ [Ouvrir l'application](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/lac-pere/)**
+
+L'inventaire complet de ce que possède le domaine de pêche du Lac Péré :
+l'épicerie et le matériel, du garde-manger au hangar à moteurs. Il répond à
+une question précise, celle qu'on se pose tout l'hiver — **qu'est-ce qu'il
+restait au moment de la fermeture ?**
+
+Ce qu'il fait :
+
+- **Un inventaire qui commence vide** : il ne contient que ce qu'on y met.
+  Une liste de deux cents articles qu'on n'a pas est un brouillard, pas un
+  inventaire.
+- **Un stock suggéré à verser d'un bouton** — 218 articles classés en 16
+  rayons (épicerie sèche, congelé, literie, pêche et embarcations, carburants,
+  premiers soins…) et répartis dans 13 emplacements —, à tailler ensuite à la
+  mesure du domaine.
+- **Des rayons et des emplacements qui vous appartiennent** : renommez-les,
+  changez leur icône, ajoutez les vôtres, retirez ce qui ne sert pas. Retirer
+  un rayon ne perd jamais d'article : ce qui s'y trouvait est déplacé, et
+  l'écran dit où.
+- **Un décompte par article** — au clavier ou par les boutons − et +, avec un
+  seuil d'alerte qui fait passer l'article en « à commander ».
+- **Des quantités estimées assumées** : une case « estimée » distingue le
+  compté à l'unité de l'évalué à l'œil, et le rapport le dit.
+- **Une archive de fermeture** datée et signée, qui ne bouge plus. C'est la
+  mémoire du domaine, saison après saison.
+- **L'analyse de photo** : photographiez une armoire, Claude en dresse la
+  liste avec les quantités (voir plus bas).
+- **Un rapport imprimable** avec lignes de signature, un tableur `.csv` pour
+  Excel, et une sauvegarde `.json` qui sert à passer le relais.
+
+### Le geste de la fermeture
+
+L'onglet **Fermeture** mène la tournée : chaque emplacement affiche son
+avancement (`0 / 18`), et un contact ouvre la liste de ses seuls articles.
+Quand tout est compté, un bouton fige l'ensemble dans une archive — titre,
+date, nom du responsable, remarque. Les articles laissés vides en sont
+exclus : une archive ne contient que du compté.
+
+L'onglet **Archives** garde ces photographies du stock. On les consulte, on
+les imprime, et on peut *recharger* l'une d'elles dans l'inventaire courant
+pour repartir de l'état de l'automne dernier.
+
+### Photographier plutôt que compter
+
+L'onglet **📷 Analyse** confie les tablettes à Claude : on choisit
+l'emplacement, on prend jusqu'à six photos — plusieurs angles de la même
+tablette valent mieux qu'une seule vue —, et la liste revient article par
+article, avec les quantités.
+
+Ce qui gouverne cette page tient en une phrase : **une estimation ne doit
+jamais passer pour un décompte**. Chaque ligne dit lequel des deux elle est, et
+sur quoi elle se fonde (« trois sacs debout, un quatrième possible derrière »).
+Ce qui est évalué à l'œil entre dans l'inventaire marqué *estimé*, et le reste
+jusqu'à ce qu'on le corrige. Rien n'est écrit avant que vous n'ayez relu et
+appliqué ; chaque quantité proposée reste modifiable dans la liste même.
+
+Deux garde-fous du côté du code : le catalogue de l'emplacement est envoyé au
+modèle pour qu'il reprenne les identifiants exacts plutôt que d'inventer des
+noms, et toute proposition mal formée — quantité absurde, article sans nom,
+rayon inconnu — est écartée avant de pouvoir toucher l'inventaire. Un article
+inconnu du catalogue est proposé comme *nouvel article*, à accepter ou non.
+
+**La clé.** Cette analyse est la seule partie de l'application qui parle à
+l'extérieur. Elle s'adresse directement à `api.anthropic.com` depuis le
+navigateur, avec une clé personnelle obtenue sur `console.anthropic.com` — pas
+de serveur intermédiaire, pas de compte chez nous. La clé vit dans le
+`localStorage` de l'appareil et s'efface d'un bouton. Comptez environ **5 à
+10 ¢ par analyse** selon le nombre de photos ; le catalogue est mis en cache
+d'un appel à l'autre, si bien que la deuxième armoire coûte moins que la
+première. Sans clé, tout le reste de l'application fonctionne comme avant,
+gratuitement et hors ligne.
+
+### Partager avec ses employeurs
+
+L'application n'a pas de serveur : chaque appareil garde ses propres données.
+Le partage se fait par fichier, en trois gestes.
+
+1. **Vous** — onglet *Partage* → **💾 Sauvegarder (.json)**, ou
+   **📤 Envoyer à un collègue** sur téléphone, qui propose directement le
+   courriel ou la messagerie.
+2. **Eux** — ils ouvrent la même adresse web, puis onglet *Partage* →
+   **📥 Ouvrir un fichier reçu**.
+3. **Deux comptages à la fois** — l'application demande alors *fusionner* ou
+   *remplacer*. **Fusionner** est le choix sûr : article par article, la
+   saisie la plus récente gagne. Deux personnes peuvent compter chacune leur
+   bâtiment et réunir les deux fichiers sans rien perdre.
+
+C'est aussi pour cela que le bouton « Qui compte ? » demande un nom : chaque
+quantité retient qui l'a saisie et quand, et c'est ce qui départage deux
+versions.
+
+### Installer sur un téléphone
+
+- **iPhone / iPad** — ouvrir l'adresse dans Safari, bouton de partage, *Sur
+  l'écran d'accueil*.
+- **Android** — ouvrir l'adresse dans Chrome, menu ⋮, *Installer
+  l'application*.
+
+Une fois installée, elle fonctionne sans réseau : au domaine, c'est
+l'essentiel.
+
+### Recommencer
+
+Deux gestes, dans l'onglet **Fermeture**, et les archives survivent aux deux —
+ce sont les inventaires déjà signés, rien ne doit pouvoir les effacer par
+mégarde :
+
+- **Vider les décomptes** — les articles restent, les quantités repartent à
+  « non compté ». C'est l'ouverture de saison.
+- **Tout effacer** — l'inventaire redevient vide, articles compris. Les rayons
+  et emplacements, avec les noms que vous leur avez donnés, sont conservés.
+  L'effacement voyage avec le fichier : un collègue qui fusionne votre envoi
+  voit ces articles partir de chez lui aussi, au lieu de vous les rendre.
+
+Pour faire d'un second appareil une **copie exacte** du premier, ouvrez-y le
+fichier envoyé et choisissez *remplacer* plutôt que *fusionner* : tout ce que
+cet appareil contenait, y compris d'anciens articles jamais comptés, s'efface.
+
+### Modifier le stock suggéré
+
+Comme pour l'épicerie, ajouter un article *à la liste que tout le monde peut
+verser* tient dans un seul fichier,
+[`lac-pere/assets/js/catalogue.js`](lac-pere/assets/js/catalogue.js) :
+
+```js
+{ id: 'sec-riz-brun', nom: 'Riz brun', rayon: 'sec', zone: 'garde-manger',
+  unite: 'sac', format: '8 kg', seuil: 1 },
+```
+
+L'`id` ne se réutilise jamais : c'est lui qui relie un article à son décompte
+et à toutes les archives où il figure. Un article ajouté ici entre dans le
+stock suggéré ; il arrive chez les autres quand ils versent ce stock, **sans
+jamais toucher à ce qu'ils ont déjà**. Depuis l'application elle-même, le
+bouton *＋ Ajouter un article* fait la même chose pour un seul appareil, et
+*🏷️ Rayons et emplacements* y ajoute les classements maison.
+
+### Organisation de `lac-pere/`
+
+```
+lac-pere/index.html               structure de la page
+lac-pere/assets/css/app.css       mise en forme (thèmes clair/sombre, feuille imprimée)
+lac-pere/assets/js/catalogue.js   données : emplacements, rayons, articles livrés
+lac-pere/assets/js/etat.js        décomptes, archives, fusion des sauvegardes
+lac-pere/assets/js/rendu.js       construction du DOM
+lac-pere/assets/js/analyseur.js   analyse de photo (API Claude, clé personnelle)
+lac-pere/assets/js/export.js      impression, tableur, sauvegarde, partage
+lac-pere/assets/js/app.js         branchement de l'interface
+lac-pere/assets/photos/           les photos du domaine, pour la présentation
+lac-pere/sw.js                    cache hors-ligne (VERSION à incrémenter au déploiement)
+outils/generer-icones-lac-pere.mjs  régénère les icônes PNG
+```
+
+Comme `cuisine/`, ces fichiers n'utilisent pas de modules : la page s'ouvre
+aussi par un double-clic sur `index.html`.
+
+## La Brigade — l'école de cuisine
+
+**→ [Ouvrir La Brigade](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/brigade.html)**
+
+Une page, [`brigade.html`](brigade.html), qui est le volet transactionnel du
+site. Trois leçons sont gratuites ; les autres s'ouvrent avec un code d'accès
+remis après paiement. **Le guide de lancement,
+[`GUIDE-LANCEMENT.md`](GUIDE-LANCEMENT.md), explique pas à pas comment brancher
+le paiement, sans rien connaître à la programmation.**
+
+Ce qui la distingue d'un site de vidéos :
+
+| Ce qu'on y trouve | Ce que ça change |
+|---|---|
+| **Cinq chefs originaux** — Aurèle, Rosalie, Amadou, Naoko, Léa | Des personnages créés pour l'école, avec chacun une pédagogie, une voix et un portrait dessinés en code. Aucune vedette imitée : ils appartiennent au site et peuvent être déclinés en vidéos sans risque |
+| **Des capsules génératives** | La leçon n'est pas une vidéo enregistrée : c'est une scène animée par étape, racontée par la voix de synthèse du chef, avec les quantités de *votre* nombre de convives dans sa bouche |
+| **Le mode mains libres** | Gros caractères, écran qui reste allumé, et la voix dans les deux sens : le chef lit, vous dites « suivant », « répète », « minuterie », « combien de temps », « le piège » |
+| **L'arbre des techniques** | Chaque leçon réussie allume des techniques (tenir le couteau, lire une poêle, tempérer des œufs…) ; l'arbre conseille la prochaine leçon |
+| **De l'épicerie à l'assiette** | Un bouton verse les ingrédients de la leçon, aux bonnes quantités et dans les bons rayons, dans la liste de Mon Épicerie |
+
+### Écrire ou corriger une leçon
+
+Tout le contenu tient dans [`assets/js/lecons.js`](assets/js/lecons.js), les
+chefs dans [`assets/js/chefs.js`](assets/js/chefs.js). Une étape porte la
+consigne écrite, la narration parlée, le piège et le signe de réussite :
+
+```js
+{
+  titre: 'Le frémissement, jamais l’ébullition',
+  scene: 'thermometre',           // l'illustration animée, voir scenes.js
+  duree: '5 min',
+  minuterie: null,                // en minutes, propose un compte à rebours
+  texte: 'La consigne, écrite.',
+  voix: 'Ce que le chef dit, à la première personne. Versez {{eau}}.',
+  piege: 'Là où l’on peut tout gâcher.',
+  reussite: 'À quoi se reconnaît le succès.',
+},
+```
+
+`{{eau}}` devient « 3,5 L d’eau » pour la tablée choisie ; `{{eau:q}}` ne
+donne que la quantité. Les ingrédients portent un `rayon` pour rejoindre le
+bon endroit de la liste d'épicerie, et une leçon `statut: 'en-preparation'`
+s'annonce dans le parcours sans être ouverte.
+
+### Vendre
+
+Un seul fichier à toucher : [`assets/js/config-brigade.js`](assets/js/config-brigade.js) —
+le lien de paiement Stripe, le prix, et les *empreintes* des codes d'accès
+(jamais les codes eux-mêmes). Les codes se fabriquent avec
+[`outils/codes.html`](outils/codes.html), dans le navigateur, ou avec
+`node outils/generer-codes.mjs`. Tant que `modeDemo` vaut `true`, tout est
+ouvert et un bandeau le dit.
+
+### Produire de vraies vidéos
+
+Le dossier [`production/`](production/) contient la bible des personnages, les
+consignes pour les outils de génération d'images et de vidéo, et
+`node outils/exporter-scenarios.mjs` écrit un scénario de tournage par leçon
+à partir des données. `node outils/enregistrer-capsule.mjs <id>` enregistre
+une capsule en vidéo depuis un navigateur automatisé.
+
+### Organisation de La Brigade
+
+```
+brigade.html                   la page de l'école
+assets/css/brigade.css         sa mise en forme, animations des scènes comprises
+assets/js/chefs.js             données : les cinq chefs et leurs portraits
+assets/js/lecons.js            données : parcours, techniques, leçons
+assets/js/scenes.js            les illustrations animées des capsules
+assets/js/config-brigade.js    réglages de vente : lien Stripe, prix, empreintes
+assets/js/acces.js             codes d'accès (empreintes SHA-256, mémoire locale)
+assets/js/brigade.js           capsule, mains libres, arbre, liste d'épicerie
+outils/codes.html              fabrique des codes d'accès, dans le navigateur
+outils/generer-codes.mjs       la même chose, en ligne de commande
+outils/exporter-scenarios.mjs  écrit les scénarios de tournage (production/)
+outils/enregistrer-capsule.mjs enregistre une capsule en vidéo
+GUIDE-LANCEMENT.md             brancher le paiement et publier, pas à pas
+production/                    bible des personnages, consignes vidéo, scénarios
+```
+
+La Brigade partage le `sw.js` et le `manifest.webmanifest` de la liste
+d'épicerie, et importe ses modules `etat.js` et `catalogue.js` pour remplir la
+liste : comme elle, elle demande le protocole `http(s)`.
+
 ## Développement
 
 Aucune dépendance, aucune étape de compilation. Il suffit de servir le dossier :
@@ -272,37 +508,14 @@ assets/js/export.js     impression, presse-papiers, sauvegarde/restauration
 assets/js/app.js        branchement de l'interface
 sw.js                   mise en cache pour le hors-ligne
 outils/generer-icones.mjs  régénère les icônes PNG (node outils/generer-icones.mjs)
-
-cuisine.html            la page des recettes
-assets/css/cuisine.css  sa mise en forme, thèmes et impression compris
-assets/js/recettes.js   données : les recettes livrées
-assets/js/cuisine.js    échelle, calendrier à rebours, minuteries, photos
-
-brigade.html            l'école de cuisine
-assets/css/brigade.css  sa mise en forme, animations des scènes comprises
-assets/js/chefs.js      données : les cinq chefs et leurs portraits
-assets/js/lecons.js     données : parcours, techniques, leçons
-assets/js/scenes.js     les illustrations animées des capsules
-assets/js/config-brigade.js  réglages de vente : lien Stripe, prix, empreintes
-assets/js/acces.js      codes d'accès (empreintes SHA-256, mémoire locale)
-assets/js/brigade.js    capsule, mains libres, arbre, liste d'épicerie
-outils/codes.html       fabrique des codes d'accès, dans le navigateur
-outils/generer-codes.mjs      la même chose, en ligne de commande
-outils/exporter-scenarios.mjs écrit les scénarios de tournage (production/)
-outils/enregistrer-capsule.mjs enregistre une capsule en vidéo
-GUIDE-LANCEMENT.md      brancher le paiement et publier, pas à pas
-production/             bible des personnages, consignes vidéo, scénarios
 ```
-
-Les photos du garde-manger vivent dans IndexedDB (`mon-epicerie-cuisine`) plutôt
-que dans `localStorage` : une image dépasse largement ce que ce dernier tolère.
-Elles sont réduites à 1400 px et compressées en JPEG à l'ajout — une photo de
-téléphone de 3,5 Mo tombe autour de 250 ko.
 
 ### Après un déploiement
 
-Incrémenter `VERSION` dans [`sw.js`](sw.js), sinon les navigateurs qui ont déjà
-visité le site continueront de servir les anciens fichiers depuis leur cache.
+Incrémenter `VERSION` dans le `sw.js` de l'application touchée —
+[`sw.js`](sw.js), [`cuisine/sw.js`](cuisine/sw.js) ou
+[`lac-pere/sw.js`](lac-pere/sw.js) —, sinon les navigateurs qui ont déjà visité
+le site continueront de servir les anciens fichiers depuis leur cache.
 
 ## Publication
 

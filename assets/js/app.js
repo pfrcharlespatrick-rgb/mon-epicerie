@@ -408,10 +408,17 @@ for (const groupe of [
   });
 }
 
+// Le regroupement et le tri sont deux réglages du même panneau : un seul
+// écouteur les sert, chacun nommant la préférence qu'il pilote.
 panneauFiltres.addEventListener('click', (evenement) => {
-  const bouton = evenement.target.closest('[data-groupement]');
+  const bouton = evenement.target.closest('[data-groupement], [data-tri]');
   if (!bouton) return;
-  definirPreference('groupement', bouton.dataset.groupement);
+
+  if (bouton.dataset.groupement !== undefined) {
+    definirPreference('groupement', bouton.dataset.groupement);
+  } else {
+    definirPreference('tri', bouton.dataset.tri);
+  }
 });
 
 const champRecherche = document.getElementById('champ-recherche');

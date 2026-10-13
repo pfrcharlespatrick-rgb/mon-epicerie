@@ -1,0 +1,16 @@
+{
+  "name": "Lac Péré — Inventaire du domaine",
+  "short_name": "Inventaire",
+  "description": "L'inventaire complet de l'épicerie et du matériel du domaine de pêche du Lac Péré : ce qui reste à la fermeture, classé, archivé, partageable. Hors ligne, sans compte.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f7f5",
+  "theme_color": "#0f766e",
+  "icons": [
+    { "src": "assets/icones/icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icones/icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icones/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

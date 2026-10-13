@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ma Cuisine — le conseiller culinaire</title>
+  <meta name="description" content="De la pièce crue à la table : recettes raisonnées par température à cœur, salage à sec, repos et sauce des sucs. Sans compte, sans serveur, hors ligne." />
+  <meta name="theme-color" content="#b45309" />
+  <link rel="icon" href="assets/icones/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/icones/icone-180.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="assets/css/app.css" />
+  <script defer src="assets/js/pieces.js"></script>
+  <script defer src="assets/js/moteur.js"></script>
+  <script defer src="assets/js/conseiller.js"></script>
+  <script defer src="assets/js/exporteur.js"></script>
+  <script defer src="assets/js/app.js"></script>
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete-titre">
+    <svg class="logo" viewBox="0 0 100 100" aria-hidden="true">
+      <rect width="100" height="100" rx="20" fill="#b45309"/>
+      <circle cx="50" cy="30" r="5.5" fill="#fff"/>
+      <rect x="24" y="38" width="52" height="9" rx="4.5" fill="#fff"/>
+      <path d="M27 51h46v18a10 10 0 0 1-10 10H37a10 10 0 0 1-10-10Z" fill="#fff"/>
+      <rect x="14" y="53" width="12" height="7" rx="3.5" fill="#fff"/>
+      <rect x="74" y="53" width="12" height="7" rx="3.5" fill="#fff"/>
+    </svg>
+    <div>
+      <h1>Ma Cuisine</h1>
+      <p class="sous-titre">De la pièce crue à la table, sans rien laisser au hasard.</p>
+    </div>
+  </div>
+  <div class="entete-boutons">
+    <button type="button" id="bouton-cle" class="bouton discret">🔑 Conseiller</button>
+    <button type="button" id="bouton-inventaire" class="bouton discret">🧺 Inventaire</button>
+    <button type="button" id="bouton-equipement" class="bouton discret">🍳 Ma cuisine</button>
+    <button type="button" id="bouton-carnet" class="bouton discret">📖 Carnet</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- Le conseiller à l'œil : la photo d'abord -->
+  <section id="section-conseiller" class="carte">
+    <h2>Le conseiller</h2>
+    <p class="explication">
+      Photographiez la pièce — l'étiquette bien visible — ou dites simplement ce
+      que vous voulez cuisiner : la photo n'est pas obligatoire. Le conseiller
+      consulte votre inventaire, votre liste d'épicerie et votre équipement,
+      puis compose la recette. Vous pourrez ensuite lui répliquer.
+    </p>
+
+    <div id="conseiller-hors-ligne" class="encart" hidden>
+      <p><b>Le conseiller a besoin d'une clé.</b> L'analyse de photo passe par
+      Claude, avec votre propre clé — le bouton <b>🔑 Conseiller</b> en haut
+      explique comment l'obtenir en cinq minutes. Sans elle, le choix à la main
+      ci-dessous fonctionne toujours, gratuitement et hors ligne.</p>
+    </div>
+
+    <form id="formulaire-conseiller">
+      <label id="zone-photo" class="zone-photo" for="champ-photo">
+        <!-- Pas d'attribut `capture` : il ouvrirait l'appareil photo d'autorité,
+             sans laisser le choix de l'album. La pièce est souvent déjà
+             photographiée — chez le boucher, ou au retour du marché. -->
+        <input type="file" id="champ-photo" accept="image/*" hidden />
+        <img id="apercu-photo" alt="" hidden />
+        <span id="invite-photo">📷 Photographier la pièce, ou en choisir une dans l’album (facultatif)</span>
+      </label>
+
+      <div class="champ">
+        <label for="champ-poids-photo">Le poids, si vous le connaissez <span class="facultatif">(facultatif — sinon le conseiller le lira sur l'étiquette, ou l'estimera à l'œil en vous le disant)</span></label>
+        <div class="champ-poids">
+          <input type="number" id="champ-poids-photo" inputmode="numeric" min="20" max="20000" step="5" />
+          <span class="unite">grammes</span>
+        </div>
+      </div>
+
+      <div class="champ">
+        <label for="champ-demande">Votre demande</label>
+        <textarea id="champ-demande" rows="2"
+          placeholder="p. ex. : Un souper pour quatre avec ce que j'ai au congélateur — ou photographiez une pièce ci-dessus."></textarea>
+      </div>
+
+      <div class="champ">
+        <label for="champ-service-photo">L'heure du service <span class="facultatif">(facultatif — pour le calendrier à rebours)</span></label>
+        <input type="datetime-local" id="champ-service-photo" />
+      </div>
+
+      <button type="submit" id="bouton-consulter" class="bouton principal">Consulter le conseiller</button>
+    </form>
+
+    <div id="attente-conseiller" class="attente" hidden>
+      <span class="mijote" aria-hidden="true"></span>
+      <span id="attente-texte">Le conseiller examine la pièce…</span>
+    </div>
+
+    <div id="erreur-conseiller" class="encart alerte" hidden></div>
+
+    <div id="resultat-conseiller" hidden>
+      <div id="contenu-conseil"></div>
+      <div class="actions-recette">
+        <button type="button" id="bouton-epicerie" class="bouton" hidden>🛒 Manquants vers Mon Épicerie</button>
+        <button type="button" id="bouton-garder-conseil" class="bouton">💾 Garder au carnet</button>
+        <button type="button" id="bouton-imprimer-conseil" class="bouton">🖨️ Imprimer / PDF</button>
+        <button type="button" id="bouton-word-conseil" class="bouton">📄 Word</button>
+        <button type="button" id="bouton-partager-conseil" class="bouton">📤 Partager</button>
+      </div>
+      <div id="fil-conseil" class="fil-conseil"></div>
+      <form id="formulaire-replique" class="replique">
+        <input type="text" id="champ-replique" placeholder="Répliquez au conseiller — même photo, autre question…" />
+        <button type="submit" class="bouton">Envoyer</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Choix de la pièce -->
+  <section id="section-choix" class="carte">
+    <h2>Ou à la main, sans connexion</h2>
+    <p class="explication">
+      Nommez ce que vous rapportez de l'épicerie ou de chez le boucher — la pièce
+      telle que l'étiquette la désigne. Choisissez-la ci-dessous, puis donnez son
+      poids : tout le reste en découlera, la température à cœur d'abord, l'horloge
+      ensuite.
+    </p>
+    <nav id="filtres-categories" class="chips" aria-label="Catégories"></nav>
+    <div id="grille-pieces" class="grille-pieces"></div>
+  </section>
+
+  <!-- Détails : poids, cuisson, service -->
+  <section id="section-details" class="carte" hidden>
+    <h2 id="details-titre">Les détails</h2>
+    <form id="formulaire-details">
+      <div class="champ">
+        <label for="champ-poids">Le poids, tel qu'inscrit sur l'étiquette</label>
+        <div class="champ-poids">
+          <input type="number" id="champ-poids" inputmode="numeric" min="50" max="15000" step="10" required />
+          <span class="unite">grammes</span>
+        </div>
+        <p class="indice" id="indice-poids"></p>
+      </div>
+
+      <fieldset class="champ" id="champ-cuissons">
+        <legend>La cuisson que vous visez</legend>
+        <div id="choix-cuissons" class="chips"></div>
+        <p class="indice" id="indice-cuisson"></p>
+      </fieldset>
+
+      <div class="champ">
+        <label for="champ-service">L'heure du service <span class="facultatif">(facultatif — pour le calendrier à rebours)</span></label>
+        <input type="datetime-local" id="champ-service" />
+      </div>
+
+      <button type="submit" class="bouton principal">Composer la recette</button>
+    </form>
+  </section>
+
+  <!-- Recette composée -->
+  <section id="section-recette" class="carte" hidden>
+    <div id="contenu-recette"></div>
+    <div class="actions-recette">
+      <button type="button" id="bouton-enregistrer" class="bouton">💾 Garder au carnet</button>
+      <button type="button" id="bouton-imprimer" class="bouton">🖨️ Imprimer / PDF</button>
+      <button type="button" id="bouton-word-recette" class="bouton">📄 Word</button>
+      <button type="button" id="bouton-partager-recette" class="bouton">📤 Partager</button>
+      <button type="button" id="bouton-recommencer" class="bouton discret">↩︎ Une autre pièce</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- Ce que j'ai dans ma cuisine -->
+<dialog id="dialogue-equipement">
+  <form method="dialog">
+    <h2>Ce que j'ai dans ma cuisine</h2>
+    <p class="explication">
+      Cochez ce que vous possédez : les recettes s'y adapteront et proposeront
+      des substitutions plutôt que de vous renvoyer au magasin.
+    </p>
+    <div id="liste-equipement" class="liste-equipement"></div>
+    <div class="actions-dialogue">
+      <button type="submit" class="bouton principal">C'est noté</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- L'inventaire : garde-manger, frigidaire, congélateur -->
+<dialog id="dialogue-inventaire">
+  <form method="dialog" id="formulaire-inventaire">
+    <h2>Mon inventaire</h2>
+    <p class="explication">
+      Photographiez chaque zone d'ensemble — tablettes bien éclairées, étiquettes
+      vers l'objectif — et le conseiller dressera la liste de ce qu'il y
+      reconnaît. Corrigez-la ensuite à votre guise, un aliment par ligne :
+      c'est cette liste, pas la photo, qui accompagnera chaque recette.
+    </p>
+    <div id="zones-inventaire"></div>
+    <p class="indice">
+      L'inventaire ne se met pas à jour tout seul : après une grosse épicerie ou
+      une grosse semaine, refaites les photos, ou retouchez les lignes à la main.
+    </p>
+    <div class="actions-dialogue">
+      <button type="submit" class="bouton principal">C'est noté</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- La clé du conseiller -->
+<dialog id="dialogue-cle">
+  <form method="dialog">
+    <h2>Connexion au conseiller</h2>
+    <p class="explication">
+      L'analyse de photo est confiée à Claude, d'Anthropic, avec une clé qui
+      vous appartient. Elle reste dans ce navigateur — aucun serveur à nous ne
+      la voit passer — et chaque recette coûte quelques sous, débités chez
+      Anthropic, jamais ici.
+    </p>
+    <p class="explication">
+      Pour l'obtenir : rendez-vous sur <b>console.anthropic.com</b>, créez un
+      compte, déposez un petit montant sous « Billing », puis sous
+      « API&nbsp;Keys » cliquez « Create Key » et copiez la clé (elle commence
+      par <code>sk-ant-</code>). Collez-la ci-dessous, une seule fois.
+    </p>
+    <div class="champ">
+      <label for="champ-cle">Votre clé</label>
+      <input type="password" id="champ-cle" placeholder="sk-ant-…" autocomplete="off" />
+    </div>
+    <div class="actions-dialogue">
+      <button type="button" id="bouton-oublier-cle" class="bouton discret">Oublier la clé</button>
+      <button type="submit" id="bouton-garder-cle" class="bouton principal">Garder</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Carnet des recettes gardées -->
+<dialog id="dialogue-carnet">
+  <form method="dialog">
+    <h2>Mon carnet</h2>
+    <div id="liste-carnet"></div>
+    <div class="actions-dialogue">
+      <button type="submit" class="bouton discret">Fermer</button>
+    </div>
+  </form>
+</dialog>
+
+<footer class="pied">
+  <p>
+    Tout reste dans votre navigateur : pas de compte, pas de serveur, aucune
+    requête vers l'extérieur. La page fonctionne sans réseau une fois ouverte.
+    <a href="../">← Retour à Mon Épicerie</a>
+  </p>
+</footer>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
+  }
+</script>
+</body>
+</html>

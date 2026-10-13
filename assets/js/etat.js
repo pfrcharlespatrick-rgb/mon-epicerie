@@ -42,6 +42,7 @@ export const etat = {
   // Préférences d'affichage (persistées)
   vue: 'preparee',        // 'preparee' | 'catalogue'
   groupement: 'rayon',    // 'rayon' | 'magasin'
+  tri: 'catalogue',       // 'catalogue' = ordre des allées | 'alpha'
   theme: 'auto',          // 'auto' | 'clair' | 'sombre'
 
   // Filtres (non persistés : on repart propre à chaque visite)
@@ -131,6 +132,7 @@ export function instantane() {
     preferences: {
       vue: etat.vue,
       groupement: etat.groupement,
+      tri: etat.tri,
       theme: etat.theme,
     },
   };
@@ -267,6 +269,7 @@ export function charger() {
   if (prefs.groupement === 'rayon' || prefs.groupement === 'magasin') {
     etat.groupement = prefs.groupement;
   }
+  if (prefs.tri === 'catalogue' || prefs.tri === 'alpha') etat.tri = prefs.tri;
   if (['auto', 'clair', 'sombre'].includes(prefs.theme)) etat.theme = prefs.theme;
 }
 
@@ -283,6 +286,23 @@ export function estPrepare(article) {
 /** Les articles retenus pour les courses de la semaine. */
 export function articlesPrepares() {
   return etat.articles.filter(estPrepare);
+}
+
+/**
+ * Ordonne des articles selon la préférence de tri.
+ *
+ * Par défaut on garde l'ordre du catalogue, qui suit le parcours des allées —
+ * c'est lui qui fait gagner du temps en magasin. Le tri alphabétique sert
+ * plutôt à retrouver un produit précis dans une longue liste.
+ *
+ * `localeCompare` en français range « Épinards » avec les E plutôt qu'en fin
+ * de liste, et `numeric` met « Lait 2% » avant « Lait 3.25% ».
+ */
+export function trier(articles) {
+  if (etat.tri !== 'alpha') return articles;
+  return [...articles].sort((a, b) =>
+    a.nom.localeCompare(b.nom, 'fr', { sensitivity: 'base', numeric: true }),
+  );
 }
 
 /** Retrouve un article par identifiant. */

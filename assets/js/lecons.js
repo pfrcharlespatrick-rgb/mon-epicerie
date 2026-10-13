@@ -1,7 +1,7 @@
 /**
  * La Brigade — les parcours et les leçons.
  *
- * Même principe que `recettes.js` : tout le contenu tient ici, en clair. Ce que
+ * Même principe que `catalogue.js` : tout le contenu tient ici, en clair. Ce que
  * l'élève accumule — leçons réussies, techniques acquises, portions choisies —
  * vit à côté, dans le navigateur, et n'est jamais écrasé quand une leçon est
  * corrigée.

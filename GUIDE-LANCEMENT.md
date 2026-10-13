@@ -213,8 +213,8 @@ garderont tout — c'est ce qu'on leur a promis.
 - Chaque fois que vous modifiez un fichier et validez (*Commit*), le site se
   met à jour en une ou deux minutes.
 - Les visiteurs qui ont déjà ouvert le site gardent parfois l'ancienne
-  version en mémoire : le fichier `sw.js` porte un numéro de version (`v7`)
-  qu'il faut augmenter (`v8`, `v9`…) quand on change autre chose que la
+  version en mémoire : le fichier `sw.js` porte un numéro de version (`v12`)
+  qu'il faut augmenter (`v13`, `v14`…) quand on change autre chose que la
   configuration.
 
 ### Faire connaître le site

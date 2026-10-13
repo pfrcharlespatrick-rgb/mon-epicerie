@@ -9,24 +9,20 @@
  * fichiers soient remplacés.
  */
 
-const VERSION = 'v7';
+const VERSION = 'v12';
 const CACHE = `mon-epicerie-${VERSION}`;
 
 /** Fichiers indispensables au premier affichage. */
 const COQUILLE = [
   './',
   'index.html',
-  'cuisine.html',
   'manifest.webmanifest',
   'assets/css/app.css',
-  'assets/css/cuisine.css',
   'assets/js/app.js',
   'assets/js/catalogue.js',
   'assets/js/etat.js',
   'assets/js/rendu.js',
   'assets/js/export.js',
-  'assets/js/cuisine.js',
-  'assets/js/recettes.js',
   'brigade.html',
   'assets/css/brigade.css',
   'assets/js/brigade.js',
