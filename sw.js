@@ -9,7 +9,7 @@
  * fichiers soient remplacés.
  */
 
-const VERSION = 'v11';
+const VERSION = 'v12';
 const CACHE = `mon-epicerie-${VERSION}`;
 
 /** Fichiers indispensables au premier affichage. */
@@ -23,6 +23,15 @@ const COQUILLE = [
   'assets/js/etat.js',
   'assets/js/rendu.js',
   'assets/js/export.js',
+  'brigade.html',
+  'assets/css/brigade.css',
+  'assets/js/brigade.js',
+  'assets/js/chefs.js',
+  'assets/js/lecons.js',
+  'assets/js/scenes.js',
+  'assets/js/config-brigade.js',
+  'assets/js/acces.js',
+  'assets/icones/favicon-brigade.svg',
   'assets/icones/favicon.svg',
   'assets/icones/icone-192.png',
   'assets/icones/icone-512.png',

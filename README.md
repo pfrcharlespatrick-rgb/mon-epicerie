@@ -5,7 +5,9 @@ Liste de courses hebdomadaire pour la région de Québec : un catalogue de
 sauvegarde. Et, par la marmite en haut de la liste, **Ma Cuisine** : le
 conseiller culinaire qui mène ce qu'on rapporte du marché jusqu'à la table,
 piloté à la température à cœur. Et, par le chalet, **l'inventaire du Lac
-Péré** : ce que le domaine de pêche a en stock au moment de fermer. Et, dans
+Péré** : ce que le domaine de pêche a en stock au moment de fermer. Et, par
+la toque, **La Brigade** : une école de cuisine payante, enseignée par cinq
+chefs originaux en capsules narrées qui s'adaptent à la tablée. Et, dans
 son propre dépôt, **Le Parfum des émotions** : la parfumerie, où le client
 raconte ce qu'il ressent et où le parfumeur reçoit une fiche de composition.
 Le tout fonctionne hors ligne et sans compte.
@@ -18,6 +20,11 @@ voir [sa section](#ma-cuisine--le-conseiller-culinaire) plus bas.
 **→ [Ouvrir l'inventaire du Lac Péré](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/lac-pere/)** —
 l'inventaire de l'épicerie et du matériel du domaine de pêche, conçu pour la
 fermeture de saison ; voir [sa section](#lac-péré--linventaire-du-domaine).
+
+**→ [Ouvrir La Brigade](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/brigade.html)** —
+l'école de cuisine : trois leçons gratuites, les autres par paiement unique ;
+voir [sa section](#la-brigade--lécole-de-cuisine) et le
+[guide de lancement](GUIDE-LANCEMENT.md) pour brancher le paiement.
 
 **→ [Ouvrir Le Parfum des émotions](https://pfrcharlespatrick-rgb.github.io/parfum-des-emotions/)** —
 la parfumerie : questionnaire du client, séance en salon sur tablette et palette du
@@ -392,6 +399,92 @@ outils/generer-icones-lac-pere.mjs  régénère les icônes PNG
 
 Comme `cuisine/`, ces fichiers n'utilisent pas de modules : la page s'ouvre
 aussi par un double-clic sur `index.html`.
+
+## La Brigade — l'école de cuisine
+
+**→ [Ouvrir La Brigade](https://pfrcharlespatrick-rgb.github.io/mon-epicerie/brigade.html)**
+
+Une page, [`brigade.html`](brigade.html), qui est le volet transactionnel du
+site. Trois leçons sont gratuites ; les autres s'ouvrent avec un code d'accès
+remis après paiement. **Le guide de lancement,
+[`GUIDE-LANCEMENT.md`](GUIDE-LANCEMENT.md), explique pas à pas comment brancher
+le paiement, sans rien connaître à la programmation.**
+
+Ce qui la distingue d'un site de vidéos :
+
+| Ce qu'on y trouve | Ce que ça change |
+|---|---|
+| **Cinq chefs originaux** — Aurèle, Rosalie, Amadou, Naoko, Léa | Des personnages créés pour l'école, avec chacun une pédagogie, une voix et un portrait dessinés en code. Aucune vedette imitée : ils appartiennent au site et peuvent être déclinés en vidéos sans risque |
+| **Des capsules génératives** | La leçon n'est pas une vidéo enregistrée : c'est une scène animée par étape, racontée par la voix de synthèse du chef, avec les quantités de *votre* nombre de convives dans sa bouche |
+| **Le mode mains libres** | Gros caractères, écran qui reste allumé, et la voix dans les deux sens : le chef lit, vous dites « suivant », « répète », « minuterie », « combien de temps », « le piège » |
+| **L'arbre des techniques** | Chaque leçon réussie allume des techniques (tenir le couteau, lire une poêle, tempérer des œufs…) ; l'arbre conseille la prochaine leçon |
+| **De l'épicerie à l'assiette** | Un bouton verse les ingrédients de la leçon, aux bonnes quantités et dans les bons rayons, dans la liste de Mon Épicerie |
+
+### Écrire ou corriger une leçon
+
+Tout le contenu tient dans [`assets/js/lecons.js`](assets/js/lecons.js), les
+chefs dans [`assets/js/chefs.js`](assets/js/chefs.js). Une étape porte la
+consigne écrite, la narration parlée, le piège et le signe de réussite :
+
+```js
+{
+  titre: 'Le frémissement, jamais l’ébullition',
+  scene: 'thermometre',           // l'illustration animée, voir scenes.js
+  duree: '5 min',
+  minuterie: null,                // en minutes, propose un compte à rebours
+  texte: 'La consigne, écrite.',
+  voix: 'Ce que le chef dit, à la première personne. Versez {{eau}}.',
+  piege: 'Là où l’on peut tout gâcher.',
+  reussite: 'À quoi se reconnaît le succès.',
+},
+```
+
+`{{eau}}` devient « 3,5 L d’eau » pour la tablée choisie ; `{{eau:q}}` ne
+donne que la quantité. Les ingrédients portent un `rayon` pour rejoindre le
+bon endroit de la liste d'épicerie, et une leçon `statut: 'en-preparation'`
+s'annonce dans le parcours sans être ouverte.
+
+### Vendre
+
+Les réglages tiennent dans [`assets/js/config-brigade.js`](assets/js/config-brigade.js) —
+le lien de paiement Stripe, le prix, et les *empreintes* des codes d'accès
+(jamais les codes eux-mêmes). Après chaque modification, augmenter `VERSION`
+dans [`sw.js`](sw.js) : le service worker sert ce fichier depuis son cache, et
+les appareils déjà venus garderaient sinon les anciens réglages. Les codes se fabriquent avec
+[`outils/codes.html`](outils/codes.html), dans le navigateur, ou avec
+`node outils/generer-codes.mjs`. Tant que `modeDemo` vaut `true`, tout est
+ouvert et un bandeau le dit.
+
+### Produire de vraies vidéos
+
+Le dossier [`production/`](production/) contient la bible des personnages, les
+consignes pour les outils de génération d'images et de vidéo, et
+`node outils/exporter-scenarios.mjs` écrit un scénario de tournage par leçon
+à partir des données. `node outils/enregistrer-capsule.mjs <id>` enregistre
+une capsule en vidéo depuis un navigateur automatisé.
+
+### Organisation de La Brigade
+
+```
+brigade.html                   la page de l'école
+assets/css/brigade.css         sa mise en forme, animations des scènes comprises
+assets/js/chefs.js             données : les cinq chefs et leurs portraits
+assets/js/lecons.js            données : parcours, techniques, leçons
+assets/js/scenes.js            les illustrations animées des capsules
+assets/js/config-brigade.js    réglages de vente : lien Stripe, prix, empreintes
+assets/js/acces.js             codes d'accès (empreintes SHA-256, mémoire locale)
+assets/js/brigade.js           capsule, mains libres, arbre, liste d'épicerie
+outils/codes.html              fabrique des codes d'accès, dans le navigateur
+outils/generer-codes.mjs       la même chose, en ligne de commande
+outils/exporter-scenarios.mjs  écrit les scénarios de tournage (production/)
+outils/enregistrer-capsule.mjs enregistre une capsule en vidéo
+GUIDE-LANCEMENT.md             brancher le paiement et publier, pas à pas
+production/                    bible des personnages, consignes vidéo, scénarios
+```
+
+La Brigade partage le `sw.js` et le `manifest.webmanifest` de la liste
+d'épicerie, et importe ses modules `etat.js` et `catalogue.js` pour remplir la
+liste : comme elle, elle demande le protocole `http(s)`.
 
 ## Développement
 

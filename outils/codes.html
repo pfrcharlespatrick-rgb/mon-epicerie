@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>La Brigade — générer des codes d'accès</title>
+  <meta name="robots" content="noindex">
+  <meta name="color-scheme" content="light dark">
+  <style>
+    :root { color-scheme: light dark; --accent: #7c3aed; --fond: #f6f3fb; --surface: #fff; --texte: #1e1b2e; --doux: #6b6480; --bord: #e2dcf0; }
+    @media (prefers-color-scheme: dark) { :root { --fond: #0f0c1a; --surface: #1b1730; --texte: #ece8f7; --doux: #a79fc2; --bord: #342d52; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, sans-serif; background: var(--fond); color: var(--texte); line-height: 1.55; padding: 1rem; }
+    main { max-width: 46rem; margin: 0 auto; }
+    h1 { font-size: 1.5rem; margin: .5rem 0; }
+    p { margin: .4rem 0 .9rem; color: var(--doux); }
+    .carte { background: var(--surface); border: 1px solid var(--bord); border-radius: 1rem; padding: 1.1rem 1.2rem; margin-bottom: 1rem; }
+    .carte h2 { font-size: 1.05rem; margin: 0 0 .5rem; }
+    label { display: block; font-size: .8rem; font-weight: 700; color: var(--doux); margin-bottom: .3rem; }
+    input, button { font: inherit; }
+    input { width: 100%; padding: .65rem .8rem; border: 1px solid var(--bord); border-radius: .7rem; background: transparent; color: inherit; }
+    button { cursor: pointer; padding: .65rem 1rem; border-radius: .7rem; border: 1px solid var(--bord); background: var(--surface); color: inherit; font-weight: 600; }
+    button.principal { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .rangee { display: flex; gap: .5rem; flex-wrap: wrap; align-items: end; }
+    .rangee > div { flex: 1 1 12rem; }
+    .resultat { margin-top: 1rem; display: grid; gap: .6rem; }
+    .ligne { display: grid; grid-template-columns: 1fr; gap: .3rem; padding: .7rem .8rem; border: 1px dashed var(--bord); border-radius: .7rem; }
+    .code { font: 700 1.25rem ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .05em; }
+    .empreinte { font: .78rem ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; color: var(--doux); }
+    .etiquette { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--doux); }
+    pre { background: rgba(124, 58, 237, .08); border-radius: .7rem; padding: .8rem; overflow: auto; font-size: .82rem; }
+    .note { font-size: .85rem; }
+    .ok { color: #059669; font-weight: 700; }
+    .erreur { color: #dc2626; font-weight: 700; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Générer des codes d’accès</h1>
+  <p>
+    Cet outil fabrique des codes à remettre à vos clients, et l’empreinte de chaque code à coller
+    dans <code>assets/js/config-brigade.js</code>. Tout se passe dans votre navigateur : rien n’est
+    envoyé nulle part, et personne ne peut retrouver un code à partir de son empreinte.
+  </p>
+
+  <section class="carte">
+    <h2>1. Créer des codes</h2>
+    <div class="rangee">
+      <div>
+        <label for="nombre">Combien ?</label>
+        <input id="nombre" type="number" min="1" max="50" value="3">
+      </div>
+      <button class="principal" id="btn-generer">Générer</button>
+    </div>
+    <div class="resultat" id="resultat"></div>
+    <div id="bloc-config" hidden>
+      <p class="note" style="margin-top:1rem">
+        Copiez ces lignes dans la liste <code>empreintes</code> de <code>config-brigade.js</code> — le guide de
+        lancement montre exactement où. Gardez les codes eux-mêmes dans un endroit sûr (une note, un tableur) :
+        un code perdu ne se retrouve pas.
+      </p>
+      <pre id="pre-config"></pre>
+      <button id="btn-copier">Copier les empreintes</button>
+      <span id="copie-etat" class="note"></span>
+    </div>
+  </section>
+
+  <section class="carte">
+    <h2>2. Vérifier un code existant</h2>
+    <p class="note">Pour retrouver l’empreinte d’un code que vous avez déjà distribué, ou pour tester.</p>
+    <div class="rangee">
+      <div>
+        <label for="code-existant">Code</label>
+        <input id="code-existant" type="text" placeholder="BRIGADE-XXXX-XXXX" autocomplete="off">
+      </div>
+      <button id="btn-empreinte">Calculer l’empreinte</button>
+    </div>
+    <p class="empreinte" id="empreinte-existante" style="margin-top:.6rem"></p>
+  </section>
+
+  <p class="note" id="avertissement-https" hidden>
+    <span class="erreur">Cette page doit être ouverte en https ou sur localhost</span> : le navigateur refuse de
+    calculer des empreintes autrement. Ouvrez-la depuis votre site publié, ou avec <code>python3 -m http.server</code>.
+  </p>
+</main>
+
+<script>
+  const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  const normaliser = (code) => String(code).toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+  async function empreinte(code) {
+    const octets = new TextEncoder().encode(normaliser(code));
+    const condensat = await crypto.subtle.digest('SHA-256', octets);
+    return [...new Uint8Array(condensat)].map((o) => o.toString(16).padStart(2, '0')).join('');
+  }
+
+  function groupe(n) {
+    const tampon = new Uint32Array(n);
+    crypto.getRandomValues(tampon);
+    return [...tampon].map((v) => ALPHABET[v % ALPHABET.length]).join('');
+  }
+
+  if (!crypto.subtle) document.getElementById('avertissement-https').hidden = false;
+
+  document.getElementById('btn-generer').addEventListener('click', async () => {
+    const nombre = Math.max(1, Math.min(50, Number(document.getElementById('nombre').value) || 1));
+    const lignes = [];
+    const empreintes = [];
+    for (let i = 0; i < nombre; i++) {
+      const code = `BRIGADE-${groupe(4)}-${groupe(4)}`;
+      const e = await empreinte(code);
+      empreintes.push(e);
+      lignes.push(`
+        <div class="ligne">
+          <span class="etiquette">Code à remettre au client</span>
+          <span class="code">${code}</span>
+          <span class="etiquette">Empreinte</span>
+          <span class="empreinte">${e}</span>
+        </div>`);
+    }
+    document.getElementById('resultat').innerHTML = lignes.join('');
+    document.getElementById('pre-config').textContent = empreintes.map((e) => `    '${e}',`).join('\n');
+    document.getElementById('bloc-config').hidden = false;
+    document.getElementById('copie-etat').textContent = '';
+  });
+
+  document.getElementById('btn-copier').addEventListener('click', async () => {
+    const texte = document.getElementById('pre-config').textContent;
+    try {
+      await navigator.clipboard.writeText(texte);
+      document.getElementById('copie-etat').innerHTML = '<span class="ok">Copié.</span>';
+    } catch {
+      document.getElementById('copie-etat').textContent = 'Sélectionnez le texte et copiez-le à la main.';
+    }
+  });
+
+  document.getElementById('btn-empreinte').addEventListener('click', async () => {
+    const code = document.getElementById('code-existant').value;
+    const cible = document.getElementById('empreinte-existante');
+    if (normaliser(code).length < 6) {
+      cible.innerHTML = '<span class="erreur">Code trop court.</span>';
+      return;
+    }
+    cible.textContent = `'${await empreinte(code)}',`;
+  });
+</script>
+</body>
+</html>
