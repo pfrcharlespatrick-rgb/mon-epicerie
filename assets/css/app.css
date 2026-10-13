@@ -327,14 +327,46 @@ svg {
   gap: 0.25rem;
 }
 
-/* Libellé de bouton qui cède la place aux icônes sur petit écran. */
+/* Libellé de bouton qui cède la place aux icônes sur petit écran. Le seuil
+   tient compte des sept boutons de l'en-tête : plus tôt, « Exporter » ne
+   trouverait sa place qu'en poussant le titre sous les icônes. */
 .etiquette-large {
   display: none;
 }
 
-@media (min-width: 30rem) {
+@media (min-width: 40rem) {
   .etiquette-large {
     display: inline;
+  }
+}
+
+/* Sept boutons — trois applications sœurs et quatre actions — ne tiennent
+   pas à côté du titre sur un téléphone. Le titre cède alors sa place au
+   panier, qui sert de logo et reste lu par les lecteurs d'écran, et les
+   boutons se partagent la largeur au lieu de déborder. L'en-tête garde une
+   seule rangée : sur un téléphone, chaque ligne qu'il prend est retirée à la
+   liste. */
+@media (max-width: 36rem) {
+  .marque > div {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .bandeau__actions {
+    flex: 1 1 auto;
+    justify-content: flex-end;
+    gap: 0;
+    min-width: 0;
+  }
+
+  .bandeau__actions > .btn {
+    flex: 0 1 var(--cible);
+    min-width: 0;
+    padding-inline: 0;
   }
 }
 
